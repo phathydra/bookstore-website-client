@@ -1,0 +1,56 @@
+.container {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 600px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #e8f5e9;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.time-display,
+.payment-display,
+.status-display,
+.phone-display,
+.address-display,
+.total-display {
+    font-size: 1rem;
+    margin: 10px 0;
+}
+
+.items-display {
+    margin: 15px 0;
+    font-size: 1rem;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.items-display p {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.items-display span {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.total-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #3fabb0;
+    text-align: right;
+}
+
+.container p {
+    color: #333;
+}
+
+.container span {
+    color: #777;
+}
