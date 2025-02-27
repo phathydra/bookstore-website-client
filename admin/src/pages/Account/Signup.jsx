@@ -1,26 +1,42 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
-import "./style.css"; // Assuming your custom styles are still in place
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import icon mắt
+import "./style.css";
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra mật khẩu và xác nhận mật khẩu có khớp không
     if (password !== confirmPassword) {
       setError("Mật khẩu và xác nhận mật khẩu không khớp.");
       return;
     }
 
     setError("");
-    // Handle form submission (thực hiện đăng ký)
-    console.log("Email:", email);
-    console.log("Password:", password);
+
+    try {
+      const response = await axios.post("http://localhost:8080/api/account/create", {
+        username,
+        password,
+        role: "User", // Quyền mặc định
+      });
+
+      if (response.status === 201) {
+        alert("Đăng ký thành công! Chuyển đến trang đăng nhập...");
+        navigate("/login"); // Điều hướng đến trang login
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -32,39 +48,51 @@ const Signup = () => {
         <form onSubmit={handleSubmit}>
           <div className="relative mb-6">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Username"
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              Email Address
-            </label>
           </div>
+
+          {/* Input Password có icon mắt */}
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+              placeholder="Password"
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              Password
-            </label>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+            >
+              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+            </button>
           </div>
+
+          {/* Input Confirm Password có icon mắt */}
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+              placeholder="Confirm Password"
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              Confirm Password
-            </label>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+            >
+              {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+            </button>
           </div>
 
           {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
