@@ -2,7 +2,7 @@ import React from 'react';
 
 const SideNavProfile = () => {
   return (
-    <div className="fixed top-[calc(4rem+1rem)] left-[20%] w-[21%] bg-white shadow-md border-r-2 border-gray-300 h-[calc(100vh-5rem)] overflow-hidden rounded-lg">
+    <div className="fixed top-[calc(4rem+1rem)] left-[17.3%] w-[21%] bg-white shadow-md border-r-2 border-gray-300 h-[calc(100vh-5rem)] overflow-hidden rounded-lg">
       <div className="w-full p-4">
         <ul className="space-y-2">
           <li>

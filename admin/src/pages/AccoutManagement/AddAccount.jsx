@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import './style.css'; // Assuming you have a style.css for custom styles
+import axios from 'axios';
+import './style.css';
 
 const AddAccount = ({ onAdd, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
+    password: '',
     role: '',
   });
 
@@ -17,10 +18,27 @@ const AddAccount = ({ onAdd, onClose }) => {
     });
   };
 
-  const handleAdd = () => {
-    onAdd(formData);
-    onClose();
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    
+    try {
+      console.log('FormData:', formData);
+      
+      const response = await axios.post('http://localhost:8080/api/account/create', formData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (onAdd) {
+        onAdd();  // Gọi lại API để cập nhật danh sách
+      }
+      
+      onClose(); // Đóng form sau khi thêm thành công
+    } catch (error) {
+      console.error('Error creating account:', error);
+    }
   };
+  
+  
 
   return (
     <Box className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
@@ -43,11 +61,12 @@ const AddAccount = ({ onAdd, onClose }) => {
           </div>
           <div className="relative mb-6">
             <TextField
-              label="Email"
-              name="email"
+              label="Mật khẩu"
+              name="password"
+              type="password"
               fullWidth
               variant="outlined"
-              value={formData.email}
+              value={formData.password}
               onChange={handleChange}
               className="input-field"
               required
@@ -72,7 +91,7 @@ const AddAccount = ({ onAdd, onClose }) => {
             <Button variant="text" onClick={onClose} className="cancel-button">
               Hủy
             </Button>
-            <Button variant="contained" color="primary" onClick={handleAdd} className="submit-button">
+            <Button variant="contained" color="primary" type="submit" className="submit-button">
               Lưu
             </Button>
           </Box>

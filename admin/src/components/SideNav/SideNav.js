@@ -3,7 +3,7 @@ import { FaBook, FaFileInvoice, FaUsers, FaUserCog, FaFileImport } from 'react-i
 
 const SideNav = () => {
   return (
-    <aside className="fixed top-0 left-0 w-[20%] bg-gray-800 text-white h-screen px-4 py-5 flex flex-col justify-between">
+    <aside className="fixed top-0 left-0 w-[16%] bg-gray-800 text-white h-screen px-4 py-5 flex flex-col justify-between">
       <div>
         <h1 className="text-2xl font-bold mb-8">ADMINDEK</h1>
         <nav className="space-y-5">

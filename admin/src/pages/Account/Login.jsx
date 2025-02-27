@@ -1,19 +1,44 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
-import "./style.css"; // Assuming your custom styles are still in place
+import { Link, useNavigate } from "react-router-dom"; 
+import { FaEye, FaEyeSlash } from "react-icons/fa"; 
+import "./style.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Email:", email);
-    console.log("Password:", password);
-    console.log("Remember Me:", rememberMe);
+    setError("");
+  
+    try {
+      const response = await fetch("http://localhost:8080/api/account/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      const responseData = await response.json();
+      console.log("API Response:", responseData);
+  
+      if (!response.ok) {
+        throw new Error(responseData.statusMsg || "Invalid credentials");
+      }
+  
+      // Chỉ lưu accountId
+      localStorage.setItem("accountId", responseData.accountId);
+  
+      navigate("/book-management");
+    } catch (error) {
+      console.error("Error during login:", error);
+      setError(error.message);
+    }
   };
+  
 
   return (
     <div className="h-screen flex justify-center items-center bg-gray-200">
@@ -24,27 +49,30 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div className="relative mb-6">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Username"
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              Email Address
-            </label>
           </div>
           <div className="relative mb-6">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"} 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+              placeholder="Password"
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              Password
-            </label>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+            >
+              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />} 
+            </button>
           </div>
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
@@ -60,10 +88,10 @@ const Login = () => {
               </label>
             </div>
             <div className="text-blue-600 hover:underline">
-              {/* Use Link instead of <a> for routing */}
               <Link to="/forgot-password">Forgot password?</Link>
             </div>
           </div>
+          {error && <div className="mb-6 text-red-500 text-center">{error}</div>}
           <div className="mb-6">
             <input
               type="submit"
@@ -73,7 +101,9 @@ const Login = () => {
           </div>
           <div className="text-center text-gray-600">
             Not a member?{" "}
-            <Link to="/signup" className="text-blue-600 hover:underline">Signup now</Link>
+            <Link to="/signup" className="text-blue-600 hover:underline">
+              Signup now
+            </Link>
           </div>
         </form>
       </div>
