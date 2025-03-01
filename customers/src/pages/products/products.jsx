@@ -1,6 +1,6 @@
 import React from "react";
 import Categories from "../../components/categories/categories";
-import Product from "../../components/product/product";
+import Product from "../../components/book/book";
 import data from "../../data.jsx";
 import "./products.css";
 

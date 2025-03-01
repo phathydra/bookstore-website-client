@@ -1,58 +1,43 @@
-import { useRef } from 'react';
-import { Carousel, Image } from 'react-bootstrap';
+import { useState, useEffect, useRef } from "react";
+import { Carousel, Image } from "react-bootstrap";
+import axios from "axios"; // Import axios
 import "./slider.css";
-import imagesources from '../../assets/images';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function Slider() {
-  const carouselRef1 = useRef(null);
-  const carouselRef2 = useRef(null);
-  const carouselRef3 = useRef(null);
-  return (
-    <div>
-      <div className="row slider-container">
-        <div className="col-4 slider-item-container">
-          <Carousel ref={carouselRef1} controls={false} indicators={false} interval={5000} pause={false}>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[0]} alt="First slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[1]} alt="Second slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[2]} alt="Third slide" rounded/>
-            </Carousel.Item>
-          </Carousel>
+    const [books, setBooks] = useState([]);
+    const carouselRefs = [useRef(null), useRef(null), useRef(null)];
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get("http://localhost:8081/api/book"); // Gọi API bằng axios
+                setBooks(response.data);
+            } catch (error) {
+                console.error("Lỗi khi lấy danh sách sách:", error);
+            }
+        };
+
+        fetchBooks();
+    }, []);
+
+    return (
+        <div>
+            <div className="row slider-container">
+                {carouselRefs.map((ref, index) => (
+                    <div key={index} className="col-4 slider-item-container">
+                        <Carousel ref={ref} controls={false} indicators={false} interval={5000} pause={false}>
+                            {books.slice(index * 3, index * 3 + 3).map((book, i) => (
+                                <Carousel.Item key={i}>
+                                    <Image className="slider-item" src={book.bookImage} alt={book.bookName} rounded />
+                                </Carousel.Item>
+                            ))}
+                        </Carousel>
+                    </div>
+                ))}
+            </div>
         </div>
-        <div className="col-4 slider-item-container">
-          <Carousel ref={carouselRef2} controls={false} indicators={false} interval={5000} pause={false}>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[1]} alt="First slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[2]} alt="Second slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[0]} alt="Third slide" rounded/>
-            </Carousel.Item>
-          </Carousel>
-        </div>
-        <div className="col-4 slider-item-container">
-          <Carousel ref={carouselRef3} controls={false} indicators={false} interval={5000} pause={false}>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[2]} alt="First slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[0]} alt="Second slide" rounded/>
-            </Carousel.Item>
-            <Carousel.Item>
-              <Image className="slider-item" src={imagesources[1]} alt="Third slide" rounded/>
-            </Carousel.Item>
-          </Carousel>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default Slider;

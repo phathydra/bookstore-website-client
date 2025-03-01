@@ -13,6 +13,10 @@
 }
 
 .slider-item {
-    height: auto;
-    width: 100%;
+    width: 100%; /* Thu nhỏ ảnh còn 80% của khung chứa */
+    max-height: 400px; /* Đặt chiều cao tối đa */
+    height: auto; /* Giữ nguyên tỷ lệ ảnh */
+    object-fit: contain; /* Đảm bảo ảnh không bị méo hoặc cắt */
+    display: block;
+    margin: 0 auto; /* Căn giữa ảnh */
 }

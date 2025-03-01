@@ -33,7 +33,7 @@ const Header = ({ title }) => {
   };
 
   return (
-    <header className="fixed top-0 left-[15%] w-[86%] flex justify-between items-center bg-white shadow-md py-4 px-10 z-40">
+    <header className="fixed top-0 left-[16%] w-[86%] flex justify-between items-center bg-white shadow-md py-4 px-10 z-40">
 
       <h2 className="text-2xl font-bold text-center">{title}</h2>
       <div className="flex items-center space-x-3 relative" ref={menuRef}>

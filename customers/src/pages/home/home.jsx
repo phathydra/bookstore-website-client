@@ -1,21 +1,35 @@
-import React from "react";
-import data from "../../data.jsx";
+import React, { useEffect, useState } from "react";
+import axios from "axios"; // Import axios
 import Slider from "../../components/slider/slider.jsx";
-import Product from "../../components/product/product.jsx";
-import "./home.css"
+import Book from "../../components/book/book.jsx"; 
+import "./home.css";
 
 const Home = () => {
+    const [books, setBooks] = useState([]);
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get("http://localhost:8081/api/book"); // Gọi API trực tiếp bằng axios
+                setBooks(response.data);
+            } catch (error) {
+                console.error("Lỗi khi lấy danh sách sách:", error);
+            }
+        };
+
+        fetchBooks();
+    }, []);
 
     return (
         <>
-            <Slider/>
+            <Slider />
             <div className="home-container">
-                {data.products.map((product, index) => (
-                    <Product product={product} key = {index}/>
+                {books.map((book) => (
+                    <Book book={book} key={book.bookId} />
                 ))}
             </div>
         </>
     );
-}
+};
 
 export default Home;
