@@ -19,15 +19,18 @@ const BookManagement = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
+  const [displayedBooks, setDisplayedBooks] = useState([])
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const fetchBooks = async () => {
     try {
-      const response = await axios.get('http://localhost:8081/api/book');
+      const response = await axios.get(`http://localhost:8081/api/book?page=${page}&size=${rowsPerPage}`);
+      console.log("fetching with " + page + " " + rowsPerPage);
       setBooks(response.data);
+      setDisplayedBooks(response.data?.content || [])
     } catch (error) {
       console.error('Lỗi khi lấy danh sách sách:', error);
     }
@@ -68,7 +71,7 @@ const BookManagement = () => {
   const handleUpdateBook = async (updatedBook) => {
     try {
       await axios.put(`http://localhost:8081/api/book/${selectedBook.bookId}`, updatedBook);
-      setBooks(books.map(book => book.bookId === selectedBook.bookId ? updatedBook : book));
+      setBooks(books.content.map(book => book.bookId === selectedBook.bookId ? updatedBook : book));
       setSelectedBook(null);
       setIsUpdateModalOpen(false); 
       setIsDrawerOpen(false);
@@ -112,7 +115,7 @@ const BookManagement = () => {
     setPage(0);
   };
 
-  const displayedBooks = books.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // const displayedBooks = books.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <div className="flex h-screen">
@@ -171,7 +174,7 @@ const BookManagement = () => {
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
-              count={books.length}
+              count={books.totalElements}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
