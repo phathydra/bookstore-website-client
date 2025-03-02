@@ -27,7 +27,7 @@ function Slider() {
                 {carouselRefs.map((ref, index) => (
                     <div key={index} className="col-4 slider-item-container">
                         <Carousel ref={ref} controls={false} indicators={false} interval={5000} pause={false}>
-                            {books.slice(index * 3, index * 3 + 3).map((book, i) => (
+                            {(books?.content || []).slice(index * 3, index * 3 + 3).map((book, i) => (
                                 <Carousel.Item key={i}>
                                     <Image className="slider-item" src={book.bookImage} alt={book.bookName} rounded />
                                 </Carousel.Item>

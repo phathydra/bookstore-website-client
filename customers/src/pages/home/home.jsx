@@ -8,23 +8,24 @@ const Home = () => {
     const [books, setBooks] = useState([]);
 
     useEffect(() => {
-        const fetchBooks = async () => {
-            try {
-                const response = await axios.get("http://localhost:8081/api/book"); // Gọi API trực tiếp bằng axios
-                setBooks(response.data);
-            } catch (error) {
-                console.error("Lỗi khi lấy danh sách sách:", error);
-            }
-        };
-
         fetchBooks();
     }, []);
+
+    const fetchBooks = async () => {
+        try {
+            const response = await axios.get("http://localhost:8081/api/book"); // Gọi API trực tiếp bằng axios
+            console.log(response.data)
+            setBooks(response.data);
+        } catch (error) {
+            console.error("Lỗi khi lấy danh sách sách:", error);
+        }
+    };
 
     return (
         <>
             <Slider />
             <div className="home-container">
-                {books.map((book) => (
+                {(books?.content || []).map((book) => (
                     <Book book={book} key={book.bookId} />
                 ))}
             </div>
