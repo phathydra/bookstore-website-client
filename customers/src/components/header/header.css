@@ -110,3 +110,8 @@
 .menu-button:hover {
   background-color: #f1f1f1;
 }
+.logo-image {
+  width: 100px; /* Giảm kích thước chiều rộng */
+  height: auto; /* Giữ tỉ lệ ảnh */
+  display: block; /* Đảm bảo ảnh không bị ảnh hưởng bởi khoảng trắng */
+}
