@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import "./bookdetail.css";
 
 const BookDetail = () => {
-    const { id } = useParams(); // Lấy bookId từ URL
-    console.log("Book ID from URL:", id); // Debug lỗi
+    const { id } = useParams();
+    console.log("Book ID from URL:", id);
 
     const [book, setBook] = useState(null);
+    const [recommendedBooks, setRecommendedBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -29,7 +30,17 @@ const BookDetail = () => {
             }
         };
 
+        const fetchRecommendedBooks = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8081/api/book/${id}/recommendations`);
+                setRecommendedBooks(response.data);
+            } catch (err) {
+                console.error("Lỗi tải sách đề xuất:", err);
+            }
+        };
+
         fetchBook();
+        fetchRecommendedBooks();
     }, [id]);
 
     if (loading) return <div className="book-details-container">Đang tải...</div>;
@@ -61,11 +72,26 @@ const BookDetail = () => {
                     <p>{book.bookDescription}</p>
                 </div>
 
-                {/* Căn giữa nút Thêm vào giỏ hàng */}
                 <div className="book-action">
                     <button className="add-to-cart-btn">
                         <span className="cart-icon">🛒</span> Thêm vào giỏ hàng
                     </button>
+                </div>
+            </div>
+
+            <div className="recommended-books">
+                <h3>DÀNH CHO BẠN</h3>
+                <div className="recommended-list">
+                    {recommendedBooks.length > 0 ? (
+                        recommendedBooks.map((recBook) => (
+                            <Link key={recBook.bookId} to={`/productdetail/${recBook.bookId}`} className="recommended-card">
+                                <img src={recBook.bookImage} alt={recBook.bookName} />
+                                <p>{recBook.bookName}</p>
+                            </Link>
+                        ))
+                    ) : (
+                        <p>Không có sách đề xuất.</p>
+                    )}
                 </div>
             </div>
         </div>

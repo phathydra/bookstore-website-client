@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import "./header.css";
+import logo from "../../assets/logo.png"; // Import ảnh logo
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,17 +52,28 @@ const Header = () => {
     navigate("/profile"); // Navigate to profile page
   };
 
+  const handleLogoClick = () => {
+    navigate("/"); // Navigate to home page
+  };
+
   return (
     <header className="header">
-      <div className="logo">LOGO</div>
+      {/* Thay LOGO bằng ảnh và thêm sự kiện click */}
+      <div className="logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
+        <img src={logo} alt="Logo" className="logo-image" />
+      </div>
+
+
       <nav className="nav-buttons">
         <button className="nav-button">Home</button>
         <button className="nav-button">Products</button>
         <button className="nav-button">About</button>
       </nav>
+
       <div className="search-bar">
         <input type="text" placeholder="Search..." />
       </div>
+
       <div className="avatar-container" ref={menuRef}>
         <img
           className="avatar"

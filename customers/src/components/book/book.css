@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin: 10px;
+    margin: 9px;
     padding: 10px;
     height: 280px;
     width: 220px;
@@ -50,12 +50,19 @@
 
 /* Chỉ giữ tên sách nằm trên */
 .book-name-text {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     color: #333;
-    flex-grow: 1;
-    margin-top: 10px; /* Tạo khoảng cách giữa ảnh và tên */
+    margin-top: 10px;
+    max-height: 40px; /* Giới hạn chiều cao để vừa 2 dòng */
+    line-height: 1.2; /* Tăng khoảng cách dòng */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Hiển thị tối đa 2 dòng */
+    -webkit-box-orient: vertical;
+    word-break: break-word; /* Xuống dòng khi cần */
 }
+
 
 
 /* Cố định phần giá và số lượng */
