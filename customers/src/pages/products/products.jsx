@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Categories from "../../components/categories/categories";
 import Book from "../../components/book/book";
 import axios from "axios"
+import { useLocation } from "react-router-dom";
 import "./products.css";
 
 const Products = () => {
@@ -9,16 +10,22 @@ const Products = () => {
     const [page, setPage] = useState(0)
     const [size, setSize] = useState(4)
     const [pagesArr, setPagesArr] = useState([])
+    const location = useLocation();
+    const searchParam = new URLSearchParams(location.search);
 
     useEffect(() =>{
         fetchBooks()
-    }, [page, size])
+    }, [page, size, searchParam])
 
     const fetchBooks = async() =>{
         try {
-            const response = await axios.get("http://localhost:8081/api/book", {
-                params: { page, size }
-            });
+            const response = searchParam === ""?
+                await axios.get("http://localhost:8081/api/book", {
+                    params: { page, size }
+                }) :
+                await axios.post("http://localhost:8081/api/book/search", {}, {
+                    params: { page, size, input: searchParam.get("searchParam") }
+                });
             console.log(response.data)
             setBooks(response.data);
             if(page === 0){
@@ -64,7 +71,7 @@ const Products = () => {
                             <Book book={book} key = {index}/>
                         ))}
                     </div>
-                    <div className="page">
+                    <div className="page" style={books.totalPages === 0 ? { display: "none" } : {}}                    >
                         <button disabled = {books.first} onClick = {handlePrevPage}> &lt; </button>
                         {pagesArr.map((number, index) => (
                             <button key={index} onClick={() => handleChangePage(number)} disabled={number === books.number}> {number + 1} </button>

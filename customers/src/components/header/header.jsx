@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 import "./header.css";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState({ name: "", avatar: "" });
+  const [input, setInput] = useState("")
   const menuRef = useRef(null);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const accountId = localStorage.getItem("accountId");
@@ -23,6 +25,14 @@ const Header = () => {
         .catch((error) => console.error("Error fetching user data:", error));
     }
   }, []);
+
+  const handleChange = (e) => {
+    setInput(e.target.value)
+  }
+
+  const handleSearch = async() => {
+    navigate(`/products?searchParam=${input}`)
+  }
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
@@ -60,7 +70,8 @@ const Header = () => {
         <button className="nav-button">About</button>
       </nav>
       <div className="search-bar">
-        <input type="text" placeholder="Search..." />
+        <input type="text" placeholder="Search..." onChange={handleChange}/>
+        <button onClick={handleSearch}>Search</button>
       </div>
       <div className="avatar-container" ref={menuRef}>
         <img
