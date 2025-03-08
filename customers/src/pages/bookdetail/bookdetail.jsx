@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom"; // Thêm useNavigate
 import axios from "axios";
 import "./bookdetail.css";
 
 const BookDetail = () => {
     const { id } = useParams();
-    console.log("Book ID from URL:", id);
+    const navigate = useNavigate(); // Hook để chuyển trang
 
     const [book, setBook] = useState(null);
     const [recommendedBooks, setRecommendedBooks] = useState([]);
@@ -43,6 +43,51 @@ const BookDetail = () => {
         fetchRecommendedBooks();
     }, [id]);
 
+    const addToCart = async () => {
+        if (!book) return;
+    
+        const accountId = localStorage.getItem("accountId");
+        if (!accountId) {
+            alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
+            navigate("/login");
+            return;
+        }
+    
+        if (book.bookStockQuantity <= 0) {
+            alert("Sách này đã hết hàng!");
+            return;
+        }
+    
+        const cartData = {
+            accountId: accountId,
+            cartItems: [
+                {
+                    bookId: book.bookId,
+                    bookName: book.bookName,  // Thêm tên sách
+                    price: parseFloat(book.bookPrice),  // Thêm giá sách
+                    quantity: 1,
+                    bookImage: book.bookImage // Thêm ảnh sách
+                }
+            ]
+        };
+    
+        try {
+            const response = await axios.post("http://localhost:8082/cart/add", cartData);
+            
+            if (response.status === 200) {
+                alert("Sách đã được thêm vào giỏ hàng!");
+                navigate("/cart");
+            } else {
+                alert("Thêm vào giỏ hàng thất bại! Hãy thử lại.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi thêm vào giỏ hàng:", error.response?.data || error.message);
+            alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
+        }
+    };
+    
+    
+    
     if (loading) return <div className="book-details-container">Đang tải...</div>;
     if (error) return <div className="book-details-container">{error}</div>;
     if (!book) return <div className="book-details-container">Sách không tồn tại.</div>;
@@ -73,7 +118,7 @@ const BookDetail = () => {
                 </div>
 
                 <div className="book-action">
-                    <button className="add-to-cart-btn">
+                    <button className="add-to-cart-btn" onClick={addToCart}>
                         <span className="cart-icon">🛒</span> Thêm vào giỏ hàng
                     </button>
                 </div>
