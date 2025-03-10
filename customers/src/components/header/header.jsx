@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import "./header.css";
-import logo from "../../assets/logo.png"; // Import ảnh logo
+import logo from "../../assets/logo.png"; 
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState({ name: "", avatar: "" });
-  const [input, setInput] = useState("")
+  const [input, setInput] = useState("");
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const accountId = localStorage.getItem("accountId");
@@ -27,17 +26,11 @@ const Header = () => {
     }
   }, []);
 
-  const handleChange = (e) => {
-    setInput(e.target.value)
-  }
+  const handleChange = (e) => setInput(e.target.value);
 
-  const handleSearch = async() => {
-    navigate(`/products?searchParam=${input}`)
-  }
+  const handleSearch = () => navigate(`/products?searchParam=${input}`);
 
-  const toggleMenu = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   const handleClickOutside = (event) => {
     if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -53,31 +46,22 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("accountId"); // Remove account information
-    navigate("/login"); // Redirect to login page
-    window.location.reload(); // Reload the page
+    localStorage.removeItem("accountId");
+    navigate("/login");
+    window.location.reload();
   };
 
-  const handleProfileClick = () => {
-    navigate("/profile"); // Navigate to profile page
-  };
-
-  const handleLogoClick = () => {
-    navigate("/"); // Navigate to home page
-  };
-
-  const handleCartClick = () => {
-    navigate("/cart"); // Điều hướng đến trang giỏ hàng
-  };
-  
+  const handleProfileClick = () => navigate("/profile");
+  const handleLogoClick = () => navigate("/");
+  const handleCartClick = () => navigate("/cart");
+  const handleAddressClick = () => navigate("/address");
+  const handlehistoryClick = () => navigate("/orderHistory");
 
   return (
     <header className="header">
-      {/* Thay LOGO bằng ảnh và thêm sự kiện click */}
       <div className="logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
         <img src={logo} alt="Logo" className="logo-image" />
       </div>
-
 
       <nav className="nav-buttons">
         <button className="nav-button">Home</button>
@@ -86,31 +70,20 @@ const Header = () => {
       </nav>
 
       <div className="search-bar">
-        <input type="text" placeholder="Search..." onChange={handleChange}/>
+        <input type="text" placeholder="Search..." onChange={handleChange} />
         <button onClick={handleSearch}>Search</button>
       </div>
 
       <div className="avatar-container" ref={menuRef}>
-        <img
-          className="avatar"
-          src={user.avatar}
-          alt="Profile"
-          onClick={toggleMenu}
-        />
+        <img className="avatar" src={user.avatar} alt="Profile" onClick={toggleMenu} />
         <span className="username">{user.name}</span>
         {isMenuOpen && (
           <div className="avatar-menu">
-            <button className="menu-button" onClick={handleProfileClick}>
-              Trang cá nhân
-            </button>
-            <button className="menu-button" onClick={handleCartClick}>
-            Giỏ hàng
-          </button>
-
-            <button className="menu-button">Lịch sử mua hàng</button>
-            <button className="menu-button" onClick={handleLogout}>
-              Đăng xuất
-            </button>
+            <button className="menu-button" onClick={handleProfileClick}>Trang cá nhân</button>
+            <button className="menu-button" onClick={handleCartClick}>Giỏ hàng</button>
+            <button className="menu-button"onClick={handlehistoryClick}>Lịch sử mua hàng</button>
+            <button className="menu-button" onClick={handleAddressClick}>Địa chỉ nhận hàng</button>
+            <button className="menu-button" onClick={handleLogout}>Đăng xuất</button>
           </div>
         )}
       </div>

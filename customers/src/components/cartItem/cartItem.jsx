@@ -4,7 +4,6 @@ import "./CartItem.css";
 
 const CartItem = ({ item, accountId, onUpdate, onRemove }) => {
     const [quantity, setQuantity] = useState(item.quantity || 299);
-    const [isChecked, setIsChecked] = useState(false);
 
     const updateQuantity = async (newQuantity) => {
         if (newQuantity <= 0) return;
@@ -29,23 +28,17 @@ const CartItem = ({ item, accountId, onUpdate, onRemove }) => {
     };
 
     return (
-        <div className={`cart-item ${isChecked ? "cart-item-checked" : ""}`}>
-            <input
-                type="checkbox"
-                className="cart-item-checkbox"
-                checked={isChecked}
-                onChange={(e) => setIsChecked(e.target.checked)}
-            />
+        <div className="cart-item">
             <img src={item.bookImage} alt={item.bookName} className="cart-item-image" />
             <div className="cart-item-details">
                 <p className="cart-item-name">{item.bookName}</p>
                 <p className="cart-item-price">{Number(item.price || 1).toLocaleString("vi-VN")} VND</p>
-                <div className="cart-item-quantity">
+                <div className="cart-item-actions">
                     <button onClick={() => updateQuantity(quantity - 1)} className="quantity-button">-</button>
                     <span>{quantity}</span>
                     <button onClick={() => updateQuantity(quantity + 1)} className="quantity-button">+</button>
+                    <button className="remove-button" onClick={removeItem}>Xóa</button>
                 </div>
-                <button className="remove-button" onClick={removeItem}>Xóa</button>
             </div>
         </div>
     );
