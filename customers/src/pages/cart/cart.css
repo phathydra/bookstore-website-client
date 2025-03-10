@@ -1,86 +1,44 @@
 .cart {
-    display: grid;
-    grid-template-columns: 50% 50%;
-    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.cart-grid {
+    display: flex;
     width: 100%;
-    padding: 0;
-    gap: 20px;
-}
-
-.container-cart {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-right: 1px solid #ddd;
-    gap: 10px;
-}
-
-.container-payment {
-    padding: 20px;
-    background-color: #e8f5e9;
-    display: flex;
+    max-width: 800px;
     flex-direction: column;
     gap: 20px;
 }
 
-.cart-item-checkbox {
-    margin-right: 15px;
-    transform: scale(1.5);
-    cursor: pointer;
-}
-
-.payment-products {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-}
-
-.payment-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.address-section {
+.cart-items {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
-.address-section label {
+.total-section {
     display: flex;
     flex-direction: column;
-    font-weight: bold;
-}
-
-.address-section input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-top: 5px;
-}
-
-.payment-methods {
-    display: flex;
-    gap: 20px;
     align-items: center;
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 8px;
+    width: 100%;
 }
 
-.radio-button {
+.select-total {
     display: flex;
     align-items: center;
     gap: 10px;
-    cursor: pointer;
-}
-
-.radio-button img {
-    width: 50px;
-    height: 50px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    font-size: 16px;
 }
 
 .confirm-button {
+    margin-top: 10px;
     background-color: #4caf50;
     color: white;
     padding: 12px;
@@ -93,29 +51,4 @@
 
 .confirm-button:hover {
     background-color: #45a049;
-}
-.cart-item img {
-    width: 100px; /* Hoặc kích thước mong muốn */
-    height: 100px;
-    object-fit: cover; /* Giữ tỷ lệ ảnh, cắt phần dư nếu cần */
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-.payment-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.cart-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.payment-info {
-    display: flex;
-    flex-direction: column;
 }

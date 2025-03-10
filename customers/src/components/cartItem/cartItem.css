@@ -55,3 +55,24 @@
 .quantity-button:hover {
     background-color: #f1f1f1;
 }
+
+.remove-button {
+    padding: 5px 15px;
+    border: none;
+    background-color: #ff4d4f;
+    color: white;
+    font-size: 16px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.remove-button:hover {
+    background-color: #d9363e;
+    transform: scale(1.05);
+}
+
+.remove-button:active {
+    background-color: #b52b31;
+    transform: scale(0.95);
+}

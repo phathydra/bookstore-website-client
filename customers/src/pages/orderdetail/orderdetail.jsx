@@ -1,67 +1,138 @@
-import React from 'react';
-import './orderdetail.css';
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./orderDetail.css";
 
 const OrderDetail = () => {
-  const order = {
-    id: 1,
-    customerId: 123,
-    totalPrice: 150000,
-    orderDate: '2023-10-15',
-    paymentMethod: 'Credit Card',
-    paymentStatus: 'Completed',
-    deliveryStatus: 'Shipped',
-    phone: '0123456789',
-    deliveryAddress: '123 Literature Street, Book Town, BT',
-  };
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { selectedBooks, address, totalAmount } = location.state;
 
-  const orderDetails = [
-    { bookId: 101, quantity: 2, unitPrice: 50000, totalPrice: 100000 },
-    { bookId: 102, quantity: 1, unitPrice: 50000, totalPrice: 50000 },
-  ];
+    const [paymentMethod, setPaymentMethod] = useState("COD"); // Default payment method
 
-  return (
-    <div className="order-details-container">
-      <div className="order-card">
-        <h2>Order Details</h2>
-        <div className="order-summary">
-          <h3>Order Information</h3>
-          <p><strong>Order ID:</strong> {order.id}</p>
-          <p><strong>Customer ID:</strong> {order.customerId}</p>
-          <p><strong>Total Price:</strong> ${order.totalPrice}</p>
-          <p><strong>Order Date:</strong> {order.orderDate}</p>
-          <p><strong>Payment Method:</strong> {order.paymentMethod}</p>
-          <p><strong>Payment Status:</strong> {order.paymentStatus}</p>
-          <p><strong>Delivery Status:</strong> {order.deliveryStatus}</p>
-          <p><strong>Phone:</strong> {order.phone}</p>
-          <p><strong>Delivery Address:</strong> {order.deliveryAddress}</p>
+    const handlePlaceOrder = async () => {
+        const order = {
+            accountId: localStorage.getItem("accountId"),
+            phoneNumber: address.phoneNumber,
+            recipientName: address.recipientName,
+            country: "Vietnam",
+            city: address.city,
+            district: address.district,
+            ward: address.ward,
+            note: address.note,
+            totalPrice: totalAmount,
+            paymentMethod: paymentMethod, // Adding the payment method to the order
+            orderItems: selectedBooks.map(item => ({
+                bookId: item.bookId,
+                bookName: item.bookName,
+                bookImage: item.bookImage,
+                quantity: item.quantity,
+                price: item.price
+            })),
+            orderStatus: "Chưa thanh toán",
+            shippingStatus: "Chờ xử lý"
+        };
+
+        try {
+            const response = await axios.post("http://localhost:8082/api/orders/create", order);
+            if (response.status === 200) {
+                alert("Đặt hàng thành công!");
+                navigate("/orderhistory");  // Navigate to success page
+            } else {
+                alert("Có lỗi xảy ra khi đặt hàng.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi gửi đơn hàng:", error);
+            alert("Đặt hàng không thành công, vui lòng thử lại sau.");
+        }
+    };
+
+    return (
+        <div className="order-detail-wrapper">
+            <div className="order-detail">
+                <h2>Chi tiết đơn hàng</h2>
+                <div className="order-info">
+                    <h3>Thông tin người nhận</h3>
+                    <div className="info-item">
+                        <label>Tên người nhận: </label>
+                        <span>{address.recipientName}</span>
+                    </div>
+                    <div className="info-item">
+                        <label>Số điện thoại: </label>
+                        <span>{address.phoneNumber}</span>
+                    </div>
+                    <div className="info-item">
+                        <label>Địa chỉ: </label>
+                        <span>{address.city}, {address.district}, {address.ward}</span>
+                    </div>
+                    <div className="info-item">
+                        <label>Ghi chú: </label>
+                        <span>{address.note}</span>
+                    </div>
+                </div>
+                <div className="order-items">
+                    <h3>Sản phẩm đã chọn</h3>
+                    {selectedBooks.map(item => (
+                        <div key={item.bookId} className="order-item">
+                            <img src={item.bookImage} alt={item.bookName} className="order-item-image" />
+                            <div className="order-item-info">
+                                <div className="order-item-name">
+                                    <label>Tên sản phẩm: </label>
+                                    <span>{item.bookName}</span>
+                                </div>
+                                <div className="order-item-quantity">
+                                    <label>Số lượng: </label>
+                                    <span>{item.quantity}</span>
+                                </div>
+                                <div className="order-item-price">
+                                    <label>Giá: </label>
+                                    <span>{item.price.toLocaleString("vi-VN")} VND</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Payment method section */}
+                <div className="payment-method">
+                    <h3>Phương thức thanh toán</h3>
+                    <div className="payment-options">
+                        <div>
+                            <input
+                                type="radio"
+                                id="cod"
+                                name="paymentMethod"
+                                value="COD"
+                                checked={paymentMethod === "COD"}
+                                onChange={() => setPaymentMethod("COD")}
+                            />
+                            <label htmlFor="cod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div>
+                            <input
+                                type="radio"
+                                id="bank"
+                                name="paymentMethod"
+                                value="Bank"
+                                checked={paymentMethod === "Bank"}
+                                onChange={() => setPaymentMethod("Bank")}
+                            />
+                            <label htmlFor="bank">Chuyển khoản ngân hàng</label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Total price section */}
+                <div className="order-total">
+                    <h3>Tổng tiền: {totalAmount.toLocaleString("vi-VN")} VND</h3>
+                </div>
+
+                <button className="place-order-button" onClick={handlePlaceOrder}>
+                    Đặt hàng
+                </button>
+            </div>
         </div>
-
-        <div className="order-items">
-          <h3>Order Items</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Book ID</th>
-                <th>Quantity</th>
-                <th>Unit Price ($)</th>
-                <th>Total Price ($)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderDetails.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.bookId}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.unitPrice}</td>
-                  <td>{item.totalPrice}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default OrderDetail;
