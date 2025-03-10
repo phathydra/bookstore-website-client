@@ -7,6 +7,8 @@ const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [checkoutItems, setCheckoutItems] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const accountId = localStorage.getItem("accountId"); // Lấy accountId từ localStorage
 
@@ -21,6 +23,7 @@ const Cart = () => {
             try {
                 const response = await axios.get(`http://localhost:8082/cart/${accountId}`);
                 setCartItems(response.data.cartItems || []);
+                setCheckoutItems(Array(response.data.cartItems.length).fill(false))
             } catch (error) {
                 console.error("Lỗi khi tải giỏ hàng", error);
                 setError("Không thể tải giỏ hàng, vui lòng thử lại sau.");
@@ -32,6 +35,12 @@ const Cart = () => {
         fetchCart();
     }, [accountId]);
 
+    useEffect(() => {
+        const filteredItems = cartItems.filter((_, index) => checkoutItems[index]);
+        setSelectedItems(filteredItems);
+        console.log(checkoutItems)
+    }, [checkoutItems, cartItems]);
+
     const updateQuantity = useCallback((bookId, newQuantity) => {
         setCartItems(prevCart =>
             prevCart.map(item => item.bookId === bookId ? { ...item, quantity: newQuantity } : item)
@@ -42,7 +51,13 @@ const Cart = () => {
         setCartItems(prevCart => prevCart.filter(item => item.bookId !== bookId));
     }, []);
 
-    const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const updateCheckoutItems = (e, index) => {
+        setCheckoutItems((prevArray) => 
+            prevArray.map((_, i) => {if(i === index) return e.target.checked})
+        )
+    }
+
+    const totalAmount = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     return (
         <div className="cart">
@@ -54,14 +69,22 @@ const Cart = () => {
                 ) : cartItems.length === 0 ? (
                     <p>Giỏ hàng của bạn đang trống.</p>
                 ) : (
-                    cartItems.map((item) => (
-                        <CartItem 
-                            key={item.bookId} 
-                            item={item} 
-                            accountId={accountId}
-                            onUpdate={updateQuantity} 
-                            onRemove={removeItem}
-                        />
+                    cartItems.map((item, index) => (
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <input
+                                type="checkbox"
+                                className="cart-item-checkbox"
+                                checked={checkoutItems[index]}
+                                onChange={(e) => updateCheckoutItems(e, index)}
+                            />
+                            <CartItem 
+                                key={item.bookId} 
+                                item={item} 
+                                accountId={accountId}
+                                onUpdate={updateQuantity} 
+                                onRemove={removeItem}
+                            />
+                        </div>
                     ))
                 )}
             </div>
@@ -69,9 +92,9 @@ const Cart = () => {
             <div className="container-payment">
                 <h2>Order Summary</h2>
                 <div className="payment-products">
-                    {cartItems.map((item) => (
+                    {selectedItems.map((item) => (
                         <div key={item.bookId} className="payment-item">
-                            <img src={item.bookImage} alt={item.bookName} className="cart-image" />  
+                            <img src={item.bookImage} alt={item.bookName} className="cart-image" />
                             <div className="payment-info">
                                 <span>{item.bookName} (x{item.quantity})</span>
                                 <span>{(item.price * item.quantity).toLocaleString("vi-VN")} VND</span>
