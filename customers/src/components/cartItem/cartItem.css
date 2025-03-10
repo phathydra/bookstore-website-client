@@ -8,16 +8,6 @@
     width: 500px;
 }
 
-.cart-item-checked {
-    background-color: #e0f7fa;
-}
-
-.cart-item-checkbox {
-    margin-right: 15px;
-    transform: scale(1.5);
-    cursor: pointer;
-}
-
 .cart-item-image {
     width: 80px;
     height: 120px;
