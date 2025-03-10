@@ -57,7 +57,7 @@ const Header = () => {
   const handleProfileClick = () => isLogin ? navigate("/profile") : navigate("/login");
   const handleLogoClick = () => navigate("/");
   const handleCartClick = () => isLogin ? navigate("/cart") : navigate("/login");
-  const handleAddressClick = () => isLogin ? navigate("/adress") : navigate("/login");
+  const handleAddressClick = () => isLogin ? navigate("/address") : navigate("/login");
   const handlehistoryClick = () => isLogin ? navigate("/orderHistory") : navigate("/login");
 
   return (
