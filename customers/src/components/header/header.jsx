@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 import "./header.css";
 import logo from "../../assets/logo.png"; // Import ảnh logo
+import GUEST from "../../assets/GUEST.jpg"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,6 +11,7 @@ const Header = () => {
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [isLogin, setIsLogin] = useState(false);
 
   useEffect(() => {
     const accountId = localStorage.getItem("accountId");
@@ -24,6 +26,7 @@ const Header = () => {
           });
         })
         .catch((error) => console.error("Error fetching user data:", error));
+        setIsLogin(true);
     }
   }, []);
 
@@ -59,7 +62,7 @@ const Header = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile"); // Navigate to profile page
+    isLogin ? navigate("/profile") : navigate("/login"); // Navigate to profile page
   };
 
   const handleLogoClick = () => {
@@ -67,8 +70,12 @@ const Header = () => {
   };
 
   const handleCartClick = () => {
-    navigate("/cart"); // Điều hướng đến trang giỏ hàng
+    isLogin ? navigate("/cart") : navigate("/login"); // Điều hướng đến trang giỏ hàng
   };
+
+  const handleOrderHistoryClick = () => {
+    isLogin ? navigate("/orderhistory") : navigate("/login")
+  }
   
 
   return (
@@ -93,7 +100,7 @@ const Header = () => {
       <div className="avatar-container" ref={menuRef}>
         <img
           className="avatar"
-          src={user.avatar}
+          src={isLogin ? user.avatar : GUEST}
           alt="Profile"
           onClick={toggleMenu}
         />
@@ -106,9 +113,9 @@ const Header = () => {
             <button className="menu-button" onClick={handleCartClick}>
             Giỏ hàng
           </button>
-            <button className="menu-button">Lịch sử mua hàng</button>
+            <button className="menu-button" onClick={handleOrderHistoryClick}>Lịch sử mua hàng</button>
             <button className="menu-button" onClick={handleLogout}>
-              Đăng xuất
+              {isLogin ? "Đăng xuất" : "Đăng nhập"}
             </button>
           </div>
         )}
