@@ -71,47 +71,52 @@ const AddressPage = () => {
     setIsUpdating(true);
   };
 
-  // Handle checkbox change (to set active address)
-  const handleCheckboxChange = async (addressId) => {
+  // Handle click to set ACTIVE address
+  const handleSetActiveAddress = async (addressId) => {
     // Kiểm tra ID không hợp lệ
     if (!addressId) {
       console.error("ID không hợp lệ:", addressId);
       setError("ID không hợp lệ");
       return;
     }
-  
+
     try {
-      console.log(`Đang đặt trạng thái 'ACTIVE' cho địa chỉ ID: ${addressId}`);
-      
-      // Gửi yêu cầu PUT đến API để đặt địa chỉ này là ACTIVE
-      const response = await fetch(`http://localhost:8080/api/address/setActive/${addressId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
-      if (response.ok) {
-        // Sau khi cập nhật thành công, cập nhật lại trạng thái của toàn bộ danh sách địa chỉ
-        const updatedAddresses = addresses.map((address) =>
-          address._id === addressId
-            ? { ...address, status: "ACTIVE" } // Đặt trạng thái ACTIVE cho địa chỉ được chọn
-            : { ...address, status: "INACTIVE" } // Hủy trạng thái ACTIVE của các địa chỉ khác
-        );
-        setAddresses(updatedAddresses); // Cập nhật danh sách địa chỉ trong state
-        setSuccessMessage(`Địa chỉ với ID ${addressId} đã được đặt là 'ACTIVE'.`);
-      } else {
-        // Xử lý lỗi từ API
-        const errorData = await response.json();
-        console.error("Lỗi khi cập nhật trạng thái:", errorData);
-        setError(`Không thể cập nhật trạng thái: ${errorData.message || "Lỗi không xác định"}`);
+      // Lấy accountId của địa chỉ
+      const accountId = localStorage.getItem("accountId");
+
+      // Cập nhật trạng thái của tất cả các địa chỉ có cùng accountId thành 'INACTIVE'
+      const updatedAddresses = addresses.map((address) =>
+        address.accountId === accountId
+          ? { ...address, status: address.id === addressId ? "ACTIVE" : "INACTIVE" } // Đặt ACTIVE cho địa chỉ được chọn, INACTIVE cho các địa chỉ còn lại
+          : address
+      );
+      setAddresses(updatedAddresses); // Cập nhật danh sách địa chỉ trong state
+
+      // Gửi yêu cầu PUT cho từng địa chỉ để cập nhật trạng thái
+      for (const address of updatedAddresses) {
+        const response = await fetch(`http://localhost:8080/api/address/updateStatus/${address.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: address.status }), // Gửi trạng thái của từng địa chỉ
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Lỗi khi cập nhật trạng thái:", errorData);
+          setError(`Không thể cập nhật trạng thái: ${errorData.message || "Lỗi không xác định"}`);
+          return; // Nếu có lỗi, dừng lại
+        }
       }
+
+      // Nếu tất cả đều thành công, thông báo cho người dùng
+      setSuccessMessage("Địa chỉ mặc định đã được cập nhật.");
     } catch (error) {
       console.error("Lỗi khi kết nối đến server:", error);
       setError("Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
     }
   };
-  
 
   return (
     <div className="address-container">
@@ -131,14 +136,12 @@ const AddressPage = () => {
               <p>{address.city}, {address.district}, {address.ward}</p>
               <p>SĐT: {address.phoneNumber}</p>
               <p>Ghi chú: {address.note}</p>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={address.status === "ACTIVE"}
-                  onChange={() => handleCheckboxChange(address._id || address.id)}
-                />
-                Địa chỉ đang sử dụng
-              </label>
+              <button
+                onClick={() => handleSetActiveAddress(address._id || address.id)}
+                className={`set-active-btn ${address.status === "ACTIVE" ? "active" : ""}`}
+              >
+                {address.status === "ACTIVE" ? "Địa chỉ mặc định" : "Chọn làm địa chỉ mặc định"}
+              </button>
             </div>
             <div className="actions">
               <button
