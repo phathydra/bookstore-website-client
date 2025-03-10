@@ -24,6 +24,12 @@
     gap: 20px;
 }
 
+.cart-item-checkbox {
+    margin-right: 15px;
+    transform: scale(1.5);
+    cursor: pointer;
+}
+
 .payment-products {
     border-bottom: 1px solid #ddd;
     padding-bottom: 10px;
