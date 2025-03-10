@@ -66,6 +66,11 @@ const Header = () => {
     navigate("/"); // Navigate to home page
   };
 
+  const handleCartClick = () => {
+    navigate("/cart"); // Điều hướng đến trang giỏ hàng
+  };
+  
+
   return (
     <header className="header">
       {/* Thay LOGO bằng ảnh và thêm sự kiện click */}
@@ -98,7 +103,9 @@ const Header = () => {
             <button className="menu-button" onClick={handleProfileClick}>
               Trang cá nhân
             </button>
-            <button className="menu-button" onClick={() => navigate('/cart')}>Giỏ hàng</button>
+            <button className="menu-button" onClick={handleCartClick}>
+            Giỏ hàng
+          </button>
             <button className="menu-button">Lịch sử mua hàng</button>
             <button className="menu-button" onClick={handleLogout}>
               Đăng xuất
