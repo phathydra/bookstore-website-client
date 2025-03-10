@@ -80,8 +80,8 @@ const Header = () => {
 
 
       <nav className="nav-buttons">
-        <button className="nav-button">Home</button>
-        <button className="nav-button">Products</button>
+        <button className="nav-button" onClick={() => navigate("/")}>Home</button>
+        <button className="nav-button" onClick={() => navigate(`/products?searchParam=`)}>Products</button>
         <button className="nav-button">About</button>
       </nav>
 
@@ -106,7 +106,6 @@ const Header = () => {
             <button className="menu-button" onClick={handleCartClick}>
             Giỏ hàng
           </button>
-
             <button className="menu-button">Lịch sử mua hàng</button>
             <button className="menu-button" onClick={handleLogout}>
               Đăng xuất
