@@ -1,76 +1,77 @@
-import React, { useState } from 'react';
-import SideNav from '../../components/SideNav/SideNav';
-import Header from '../../components/Header/Header';
-import SideNavProfile from '../../components/SideNav/SideNavProfile';
+import React, { useState } from "react";
+import SideNav from "../../components/SideNav/SideNav";
+import Header from "../../components/Header/Header";
 
 const Password = () => {
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handlePasswordChange = () => {
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match!');
+      setError("Mật khẩu mới không trùng khớp!");
       return;
     }
-    // Perform password validation logic here
-    console.log('Password changed successfully!');
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setError('');
+    console.log("Mật khẩu đã được thay đổi thành công!");
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setError("");
   };
 
   return (
-    <div className="flex h-screen">
-      <div className="w-1/5 bg-white shadow-md z-50 border-r-2 border-gray-300">
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="fixed top-0 left-0 w-1/6 h-full bg-white shadow-md border-r border-gray-300 z-50">
         <SideNav />
       </div>
 
-      <main className="flex-1 bg-gray-100 relative flex">
-        <Header title="Change Password" />
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col ml-[20%]">
+        <Header title="Đổi Mật Khẩu" />
 
-        <div className="p-2 pt-20 flex w-full">
-          <div className="w-1/4">
-            <SideNavProfile />
-          </div>
+        {/* Form Section */}
+        <div className="flex justify-center items-center h-full p-10">
+          <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg border border-gray-300">
+            <h2 className="text-2xl font-semibold text-center mb-6">
+              Đổi Mật Khẩu
+            </h2>
+            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl border-2 border-gray-300 ml-4 h-80 overflow-hidden rounded-lg">
-            <h2 className="text-xl font-semibold mb-6">Change Password</h2>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-            <div className="space-y-4">
+            <div className="space-y-5">
               <input
                 type="password"
-                placeholder="Old Password"
+                placeholder="Mật khẩu cũ"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-blue-500"
               />
               <input
                 type="password"
-                placeholder="New Password"
+                placeholder="Mật khẩu mới"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-blue-500"
               />
               <input
                 type="password"
-                placeholder="Confirm New Password"
+                placeholder="Xác nhận mật khẩu mới"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-blue-500"
               />
+
               <button
                 onClick={handlePasswordChange}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md w-full"
+                className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
               >
-                Confirm Change
+                Xác nhận thay đổi
               </button>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

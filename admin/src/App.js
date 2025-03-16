@@ -9,9 +9,7 @@ import OrderManagement from "./pages/InvoiceManagement/InvoiceManagement";
 import InformationManagement from "./pages/InformationManagement/InformationManagement";
 import SupplierManagement from "./pages/SupplierManagement/SupplierManagement";
 import Profile from "./pages/Profile/Profile";
-import Address from "./pages/Profile/Address";
 import Password from "./pages/Profile/Password";
-import Order from "./pages/Profile/Order";
 
 
 function App() {
@@ -19,6 +17,7 @@ function App() {
     <Router>
       <div className="h-screen w-screen">
         <Routes>
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -28,9 +27,7 @@ function App() {
           <Route path="/invoice-management" element={<OrderManagement />} />
           <Route path="/supplier-management" element={<SupplierManagement />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/address" element={<Address />} />
           <Route path="/change-password" element={<Password />} />
-          <Route path="/purchase-order" element={<Order />} />
         </Routes>
       </div>
     </Router>
