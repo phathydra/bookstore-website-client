@@ -1,123 +1,111 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody, Select, MenuItem, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import React from "react";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Divider,
+} from "@mui/material";
+import axios from "axios";
 
-const InvoiceDetail = ({ invoice, onClose, onUpdatePaymentStatus, onUpdateDeliveryStatus }) => {
-    const [paymentStatus, setPaymentStatus] = useState(invoice?.paymentStatus || '');
-    const [deliveryStatus, setDeliveryStatus] = useState(invoice?.deliveryStatus || '');
-    const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
-    const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
-
-    if (!invoice) return null;
-
-    const handleSavePaymentStatus = () => {
-        onUpdatePaymentStatus(invoice.id, paymentStatus);
-        setIsUpdatingPayment(false);
-    };
-
-    const handleSaveDeliveryStatus = () => {
-        onUpdateDeliveryStatus(invoice.id, deliveryStatus);
-        setIsUpdatingDelivery(false);
-    };
-
+const InvoiceDetail = ({ selectedInvoice, onUpdateStatus }) => {
+  if (!selectedInvoice) {
     return (
-        <Dialog open={true} onClose={onClose} fullWidth>
-            <DialogTitle>
-                Chi tiết hóa đơn
-                <IconButton
-                    edge="end"
-                    color="inherit"
-                    onClick={onClose}
-                    aria-label="close"
-                    sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: 8,
-                    }}
-                >
-                    <CloseIcon />
-                </IconButton>
-            </DialogTitle>
-            <DialogContent>
-                <Typography>ID: {invoice.id}</Typography>
-                <Typography>Tên khách hàng: {invoice.customerName}</Typography>
-                <Typography>Tổng giá: {invoice.totalPrice} đ</Typography>
-                <Typography>Ngày đặt hàng: {invoice.orderDate}</Typography>
-                <Typography>Phương thức thanh toán: {invoice.paymentMethod}</Typography>
-
-                {/* Chi tiết đơn hàng */}
-                <Typography variant="h6" sx={{ mt: 2 }}>Chi tiết đơn hàng</Typography>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Book ID</TableCell>
-                            <TableCell>Số lượng</TableCell>
-                            <TableCell>Đơn giá</TableCell>
-                            <TableCell>Tổng giá</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {invoice.orderDetail.map((item, index) => (
-                            <TableRow key={index}>
-                                <TableCell>{item.bookId}</TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>{item.unitPrice} đ</TableCell>
-                                <TableCell>{item.totalPrice} đ</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-
-                {/* Dialog cập nhật trạng thái thanh toán */}
-                <Dialog open={isUpdatingPayment} onClose={() => setIsUpdatingPayment(false)} fullWidth>
-                    <DialogTitle>Cập nhật trạng thái thanh toán</DialogTitle>
-                    <DialogContent>
-                        <Select
-                            value={paymentStatus}
-                            onChange={(e) => setPaymentStatus(e.target.value)}
-                            fullWidth
-                        >
-                            <MenuItem value="Chờ thanh toán">Chờ thanh toán</MenuItem>
-                            <MenuItem value="Đã thanh toán">Đã thanh toán</MenuItem>
-                        </Select>
-                        <Button variant="contained" color="primary" onClick={handleSavePaymentStatus} sx={{ mt: 2 }}>
-                            Lưu trạng thái thanh toán
-                        </Button>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog cập nhật trạng thái giao hàng */}
-                <Dialog open={isUpdatingDelivery} onClose={() => setIsUpdatingDelivery(false)} fullWidth>
-                    <DialogTitle>Cập nhật trạng thái giao hàng</DialogTitle>
-                    <DialogContent>
-                        <Select
-                            value={deliveryStatus}
-                            onChange={(e) => setDeliveryStatus(e.target.value)}
-                            fullWidth
-                        >
-                            <MenuItem value="Chờ xác nhận">Chờ xác nhận</MenuItem>
-                            <MenuItem value="Đang xử lý">Đang xử lý</MenuItem>
-                            <MenuItem value="Đang vận chuyển">Đang vận chuyển</MenuItem>
-                            <MenuItem value="Đã vận chuyển">Đã vận chuyển</MenuItem>
-                            <MenuItem value="Đã hủy">Đã hủy</MenuItem>
-                        </Select>
-                        <Button variant="contained" color="secondary" onClick={handleSaveDeliveryStatus} sx={{ mt: 2 }}>
-                            Lưu trạng thái giao hàng
-                        </Button>
-                    </DialogContent>
-                </Dialog>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-                    <Button variant="contained" color="primary" onClick={() => setIsUpdatingPayment(true)} sx={{ mr: 2 }}>
-                        Cập nhật trạng thái thanh toán
-                    </Button>
-                    <Button variant="contained" color="secondary" onClick={() => setIsUpdatingDelivery(true)}>
-                        Cập nhật trạng thái giao hàng
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
+      <Box p={3}>
+        <Typography variant="h6" color="textSecondary">
+          Chọn một hóa đơn để xem chi tiết
+        </Typography>
+      </Box>
     );
+  }
+
+  const handleUpdateStatus = async (status) => {
+    try {
+      const orderId = selectedInvoice.orderId;
+      const apiUrl = `http://localhost:8082/api/orders/update-shipping-status/${orderId}?shippingStatus=${status}`;
+      
+      await axios.put(apiUrl);
+      alert("Cập nhật trạng thái thành công!");
+      onUpdateStatus(null, status);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      alert("Cập nhật trạng thái thất bại!");
+    }
+  };
+
+  return (
+    <Paper elevation={4} sx={{ p: 4, maxWidth: 600, margin: "auto", borderRadius: 3 }}>
+      <Typography variant="h5" fontWeight="bold" align="center" mb={2}>
+        HÓA ĐƠN THANH TOÁN
+      </Typography>
+      
+      <Divider sx={{ mb: 2 }} />
+
+      <Typography variant="subtitle1"><strong>Mã hóa đơn:</strong> #{selectedInvoice.orderId}</Typography>
+      <Typography variant="subtitle1"><strong>Người nhận:</strong> {selectedInvoice.recipientName}</Typography>
+      <Typography variant="subtitle1"><strong>Số điện thoại:</strong> {selectedInvoice.phoneNumber}</Typography>
+      <Typography variant="subtitle1"><strong>Địa chỉ:</strong> {selectedInvoice.ward}, {selectedInvoice.district}, {selectedInvoice.city}, {selectedInvoice.country}</Typography>
+      <Typography variant="subtitle1"><strong>Tổng tiền:</strong> {selectedInvoice.totalPrice} VND</Typography>
+      <Typography variant="subtitle1"><strong>Thanh toán:</strong> {selectedInvoice.paymentMethod}</Typography>
+      <Typography variant="subtitle1"><strong>Ngày đặt hàng:</strong> {new Date(selectedInvoice.dateOrder).toLocaleString()}</Typography>
+      <Typography variant="subtitle1"><strong>Trạng thái:</strong> {selectedInvoice.shippingStatus}</Typography>
+
+      <Divider sx={{ my: 2 }} />
+
+      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell align="center"><strong>Hình ảnh</strong></TableCell>
+              <TableCell><strong>Sản phẩm</strong></TableCell>
+              <TableCell align="center"><strong>SL</strong></TableCell>
+              <TableCell align="right"><strong>Giá</strong></TableCell>
+              <TableCell align="right"><strong>Thành tiền</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {selectedInvoice.orderItems.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell align="center">
+                  <img src={item.bookImage} alt={item.bookName} width={50} height={50} style={{ objectFit: 'cover', borderRadius: 5 }} />
+                </TableCell>
+                <TableCell>{item.bookName}</TableCell>
+                <TableCell align="center">{item.quantity}</TableCell>
+                <TableCell align="right">{item.price} VND</TableCell>
+                <TableCell align="right">{item.quantity * item.price} VND</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Box display="flex" justifyContent="center" gap={2}>
+        {selectedInvoice.shippingStatus === "Chờ xử lý" && (
+          <Button variant="contained" color="primary" onClick={() => handleUpdateStatus("Đã nhận đơn")}>
+            Xác nhận đơn hàng
+          </Button>
+        )}
+        {selectedInvoice.shippingStatus === "Đã nhận đơn" && (
+          <Button variant="contained" color="secondary" onClick={() => handleUpdateStatus("Đang giao")}>
+            Giao hàng
+          </Button>
+        )}
+        {selectedInvoice.shippingStatus === "Đang giao" && (
+          <Button variant="contained" color="success" onClick={() => handleUpdateStatus("Đã giao")}>
+            Đã giao
+          </Button>
+        )}
+      </Box>
+    </Paper>
+  );
 };
 
 export default InvoiceDetail;

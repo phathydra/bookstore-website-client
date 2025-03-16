@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SideNav from "../../components/SideNav/SideNav";
 import Header from "../../components/Header/Header";
-import SideNavProfile from "../../components/SideNav/SideNavProfile";
 
 const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -94,79 +93,78 @@ const Profile = () => {
     
     return (
         <div className="flex h-screen">
-            <SideNav />
-            <div className="flex-1 flex flex-col">
-                <Header />
-                <SideNavProfile />
-                <div className="flex justify-end p-6 pr-10">
-                    <div className=" mt-20 bg-white shadow-lg rounded-lg p-6 w-3/5">
-                        <h2 className="text-xl font-semibold text-center mb-4">User Profile</h2>
-                        {notification.message && (
-                            <div className={`p-2 text-white rounded mb-3 ${notification.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
-                                {notification.message}
-                            </div>
-                        )}
-                          <div className="flex flex-col items-center mb-4">
-                              <img src={user.avatar} alt="Avatar" className="w-40 h-40 rounded-full border-4 border-gray-300 mb-2" />
-                              {isEditing && <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2" />}
-                          </div>
-                        <div className="space-y-3">
-                            <label className="block">
-                                Name:
-                                <input 
-                                    type="text" 
-                                    name="name" 
-                                    value={user.name} 
-                                    onChange={handleInputChange} 
-                                    disabled={!isEditing} 
-                                    className="w-full p-2 border border-gray-300 rounded"
-                                />
-                            </label>
-                            <label className="block">
-                                Email:
-                                <input 
-                                    type="email" 
-                                    name="email" 
-                                    value={user.email} 
-                                    onChange={handleInputChange} 
-                                    disabled={!isEditing} 
-                                    className="w-full p-2 border border-gray-300 rounded"
-                                />
-                            </label>
-                            <label className="block">
-                                Phone:
-                                <input 
-                                    type="text" 
-                                    name="phone" 
-                                    value={user.phone} 
-                                    onChange={handleInputChange} 
-                                    disabled={!isEditing} 
-                                    className="w-full p-2 border border-gray-300 rounded"
-                                />
-                            </label>
-                            <label className="block">
-                                Address:
-                                <input 
-                                    type="text" 
-                                    name="address" 
-                                    value={user.address} 
-                                    onChange={handleInputChange} 
-                                    disabled={!isEditing} 
-                                    className="w-full p-2 border border-gray-300 rounded"
-                                />
-                            </label>
-                        </div>
-                        <button 
-                            onClick={toggleEdit} 
-                            className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-700 transition"
-                        >
-                            {isEditing ? "Save" : "Edit"}
-                        </button>
-                    </div>
+          <SideNav />
+          <div className="flex-1 flex flex-col"> {/* Đẩy nội dung qua bên phải */}
+            <Header />
+            <div className="flex justify-end p-6 pr-10">
+              <div className="mt-20 bg-white shadow-lg rounded-lg p-6 w-4/5">
+                <h2 className="text-xl font-semibold text-center mb-4">User Profile</h2>
+                {notification.message && (
+                  <div className={`p-2 text-white rounded mb-3 ${notification.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+                    {notification.message}
+                  </div>
+                )}
+                <div className="flex flex-col items-center mb-4">
+                  <img src={user.avatar} alt="Avatar" className="w-40 h-40 rounded-full border-4 border-gray-300 mb-2" />
+                  {isEditing && <input type="file" accept="image/*" onChange={handleImageChange} className="mt-2" />}
                 </div>
+                <div className="space-y-3">
+                  <label className="block">
+                    Name:
+                    <input 
+                      type="text" 
+                      name="name" 
+                      value={user.name} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    Email:
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={user.email} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    Phone:
+                    <input 
+                      type="text" 
+                      name="phone" 
+                      value={user.phone} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    Address:
+                    <input 
+                      type="text" 
+                      name="address" 
+                      value={user.address} 
+                      onChange={handleInputChange} 
+                      disabled={!isEditing} 
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
+                  </label>
+                </div>
+                <button 
+                  onClick={toggleEdit} 
+                  className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-700 transition"
+                >
+                  {isEditing ? "Save" : "Edit"}
+                </button>
+              </div>
             </div>
+          </div>
         </div>
-    );
+      );
 };
 
 export default Profile;

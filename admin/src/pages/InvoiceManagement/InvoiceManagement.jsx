@@ -1,127 +1,185 @@
-import React, { useState } from 'react';
-import SideNav from '../../components/SideNav/SideNav';
-import Header from '../../components/Header/Header';
-import InvoiceDetail from './InvoiceDetail';
-import { 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Button, TextField, Box
-} from '@mui/material';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import SideNav from "../../components/SideNav/SideNav";
+import Header from "../../components/Header/Header";
+import InvoiceDetail from "./InvoiceDetail";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Box,
+  Drawer,
+  TablePagination,
+  TextField,
+} from "@mui/material";
 
 const InvoiceManagement = () => {
-  const [invoices, setInvoices] = useState([
-    {
-      id: '1',
-      customerName: 'John Doe',
-      totalPrice: 200000,
-      orderDate: '2024-11-05',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Chờ thanh toán',
-      deliveryStatus: 'Chờ xác nhận',
-      phone: '123456789',
-      address: '123 Main St',
-      orderDetail: [
-        { bookId: 'B001', quantity: 2, unitPrice: 50000, totalPrice: 100000 },
-        { bookId: 'B002', quantity: 1, unitPrice: 100000, totalPrice: 100000 }
-      ]
-    }
-  ]);
-
-  const [filterStatus, setFilterStatus] = useState('Tất cả');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [invoices, setInvoices] = useState([]);
+  const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage] = useState(0);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [filterStatus, setFilterStatus] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleFilterChange = (status) => {
+  useEffect(() => {
+    fetchInvoices();
+  }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    filterInvoices();
+  }, [invoices, filterStatus, searchQuery]);
+
+  const fetchInvoices = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8082/api/orders?page=${page}&size=${rowsPerPage}`
+      );
+      setInvoices(response.data.content || []);
+      setTotalInvoices(response.data.totalElements || 0);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách hóa đơn:", error);
+    }
+  };
+
+  const filterInvoices = () => {
+    let filtered = invoices;
+    if (filterStatus) {
+      filtered = filtered.filter((invoice) => invoice.shippingStatus === filterStatus);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.recipientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          invoice.orderId.toString().includes(searchQuery)
+      );
+    }
+    setFilteredInvoices(filtered);
+  };
+
+  const handleSelectInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setIsDrawerOpen(true);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleFilterClick = (status) => {
     setFilterStatus(status);
   };
 
-  const handleViewDetails = (invoice) => {
-    setSelectedInvoice(invoice);
-  };
-
-  const handleCloseDetails = () => {
-    setSelectedInvoice(null);
-  };
-
-  const filteredInvoices = invoices.filter((invoice) => {
-    return (filterStatus === 'Tất cả' || invoice.deliveryStatus === filterStatus) &&
-           (invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            invoice.id.includes(searchTerm));
-  });
-
   return (
-    <div className="flex h-screen">
-      <div className="w-1/5 bg-white shadow-md z-50">
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-1/6 bg-white shadow-lg fixed h-full">
         <SideNav />
       </div>
 
-      <main className="flex-1 bg-gray-100 relative flex">
+      <main className="flex-1 flex flex-col pl-[16%] bg-gray-100 h-screen" >
         <Header title="Invoice Management" />
 
-        <div className="p-10 pt-20 flex w-full flex-col" style={{ gap: '1rem' }}>
-          <Box sx={{ mb: 2 }}>
-            {['Tất cả', 'Chờ xác nhận', 'Đang xử lý', 'Đang vận chuyển', 'Đã giao hàng', 'Đã hủy'].map((status) => (
-              <Button key={status} variant={filterStatus === status ? 'contained' : 'outlined'} 
-                onClick={() => handleFilterChange(status)}
-                sx={{ m: 1 }}
+        <div className="flex flex-col flex-1 p-4">
+          {/* 🔥 Thanh filter + tìm kiếm */}
+          <div className="flex flex-wrap justify-center items-center gap-4 mt-14 mb-4 bg-white p-4 rounded-lg shadow-md">
+            {["", "Chờ xử lý", "Đã nhận đơn", "Đang giao", "Đã giao"].map((status, index) => (
+              <Button
+                key={index}
+                variant={filterStatus === status ? "contained" : "outlined"}
+                color={filterStatus === status ? "primary" : "default"}
+                sx={{
+                  fontSize: "1rem",  // Cỡ chữ lớn hơn
+                  padding: "10px 24px", // Padding chuẩn
+                  minWidth: "178px", // Độ rộng tối thiểu
+                  height: "46px", 
+                }}
+                onClick={() => handleFilterClick(status)}
               >
-                {status}
+                {status === "" ? "Tất cả" : status}
               </Button>
             ))}
-          </Box>
 
-          <TextField 
-            label="Tìm kiếm đơn hàng"
-            variant="outlined"
-            fullWidth
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+            {/* Ô tìm kiếm */}
+            <TextField
+              label="Tìm kiếm hóa đơn"
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="!min-w-[250px] h-12"
+            />
+          </div>
 
-          <TableContainer component={Paper}>
-            <Table>
+          {/* 🔥 Bảng hóa đơn - Có thanh cuộn riêng */}
+          <TableContainer component={Paper} className="max-h-[70vh] overflow-y-auto rounded-lg bg-white shadow-md">
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Tên khách hàng</TableCell>
-                  <TableCell>Tổng giá</TableCell>
-                  <TableCell>Ngày đặt hàng</TableCell>
+                  <TableCell>Mã hóa đơn</TableCell>
+                  <TableCell>Tên người nhận</TableCell>
+                  <TableCell>Số điện thoại</TableCell>
+                  <TableCell>Địa chỉ</TableCell>
+                  <TableCell>Tổng tiền</TableCell>
                   <TableCell>Phương thức thanh toán</TableCell>
-                  <TableCell>Trạng thái thanh toán</TableCell>
+                  <TableCell>Ngày đặt hàng</TableCell>
+                  <TableCell>Trạng thái đơn hàng</TableCell>
                   <TableCell>Trạng thái giao hàng</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Địa chỉ giao hàng</TableCell>
-                  <TableCell>Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>{invoice.id}</TableCell>
-                    <TableCell>{invoice.customerName}</TableCell>
-                    <TableCell>{invoice.totalPrice} đ</TableCell>
-                    <TableCell>{invoice.orderDate}</TableCell>
+                  <TableRow key={invoice.orderId} onClick={() => handleSelectInvoice(invoice)} hover>
+                    <TableCell>{invoice.orderId}</TableCell>
+                    <TableCell>{invoice.recipientName}</TableCell>
+                    <TableCell>{invoice.phoneNumber}</TableCell>
+                    <TableCell>{`${invoice.ward}, ${invoice.district}, ${invoice.city}, ${invoice.country}`}</TableCell>
+                    <TableCell>{invoice.totalPrice} VND</TableCell>
                     <TableCell>{invoice.paymentMethod}</TableCell>
-                    <TableCell>{invoice.paymentStatus}</TableCell>
-                    <TableCell>{invoice.deliveryStatus}</TableCell>
-                    <TableCell>{invoice.phone}</TableCell>
-                    <TableCell>{invoice.address}</TableCell>
-                    <TableCell>
-                      <Button variant="contained" onClick={() => handleViewDetails(invoice)}>Xem chi tiết</Button>
-                    </TableCell>
+                    <TableCell>{new Date(invoice.dateOrder).toLocaleString()}</TableCell>
+                    <TableCell>{invoice.orderStatus}</TableCell>
+                    <TableCell>{invoice.shippingStatus}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
 
-          {selectedInvoice && (
-            <InvoiceDetail 
-              invoice={selectedInvoice} 
-              onClose={handleCloseDetails} 
+          {/* Pagination */}
+          <div className="mt-auto flex justify-end pr-6 pb-4">
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalInvoices}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
             />
-          )}
-
+          </div>
         </div>
+
+        {/* 🔥 Drawer hiển thị chi tiết hóa đơn */}
+        <Drawer
+          anchor="right"
+          open={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          sx={{ width: 400, "& .MuiDrawer-paper": { width: 600, boxSizing: "border-box" } }}
+        >
+          <InvoiceDetail selectedInvoice={selectedInvoice} />
+        </Drawer>
       </main>
     </div>
   );
