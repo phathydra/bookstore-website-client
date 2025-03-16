@@ -12,7 +12,7 @@ import Login from "../pages/Account/Login";
 import Signup from "../pages/Account/Signup";
 import ForgotPassword from "../pages/Account/ForgotPassword";
 import AddressPage from "../pages/address/AddressPage";
-
+import CategoryPage from "../pages/CategoryPage/CategoryPage";
 
 const Layout = ({ children }) => (
   <>
@@ -38,6 +38,7 @@ const App = () => {
           <Route path="/orderhistory" element={<OrderHistory />} />
           <Route path="/orderdetail" element={<OrderDetail />} />
           <Route path="/address" element={<AddressPage />} />
+          <Route path="/category/:categoryName" element={<CategoryPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

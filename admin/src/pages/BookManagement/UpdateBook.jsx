@@ -3,6 +3,19 @@ import { TextField, Button, Typography, Box, FormControl, InputLabel, Select, Me
 import axios from 'axios';
 import './style.css';
 
+const mainCategories = {
+  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
+  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
+  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
+  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
+  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
+  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
+  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Sách giáo dục trẻ em"],
+  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
+  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"]
+};
+
+
 const UpdateBook = ({ book, onUpdate, onClose }) => {
   const [formData, setFormData] = useState({
     bookId: '',
@@ -16,7 +29,8 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
     bookSupplier: '',
     bookDescription: '',
     bookImage: null,
-    bookCategory: '',
+    mainCategory: '',
+    bookCategory: ''
   });
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
@@ -31,55 +45,27 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
   }, [book]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'bookImage' && files && files[0]) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-    setFormData({
-      ...formData,
-      [name]: files ? files[0] : value,
-    });
-  };
+    const { name, value } = e.target;
 
-  const handleImageUpload = async (file) => {
-    if (!file) return null;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'Upload_image');
-    formData.append('cloud_name', 'dfsxqmwkz');
-
-    try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/dfsxqmwkz/image/upload', {
-        method: 'POST',
-        body: formData,
+    if (name === 'mainCategory') {
+      setFormData({
+        ...formData,
+        mainCategory: value,
+        bookCategory: '' // Reset bookCategory khi chọn mainCategory mới
       });
-      const data = await response.json();
-      return data.secure_url || null;
-    } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error);
-      return null;
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
 
-    let imageUrl = formData.bookImage;
-    if (formData.bookImage instanceof File) {
-      imageUrl = await handleImageUpload(formData.bookImage);
-      if (!imageUrl) return;
-    }
-
-    const bookData = { ...formData, bookImage: imageUrl || '' };
-
     try {
-      const response = await axios.put(`http://localhost:8081/api/book/${book.bookId}`, bookData, {
+      const response = await axios.put(`http://localhost:8081/api/book/${book.bookId}`, formData, {
         headers: { 'Content-Type': 'application/json' },
       });
       onUpdate(response.data);
@@ -93,20 +79,15 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
   return (
     <Box className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 overflow-auto">
       <Box className="bg-white p-6 rounded-lg w-full max-w-2xl border-2 border-gray-300 shadow-lg">
-        <Box className="flex justify-center items-center mb-4">
-          <Typography variant="h6" component="h3" className="text-center text-gradient" style={{ marginRight: '10px' }}>
-            Cập nhật thông tin sách
-          </Typography>
-          <Typography variant="body1" className="text-left" style={{ marginLeft: '10px', fontSize: '14px' }}>
-            Id sách: {formData.bookId}
-          </Typography>
-        </Box>
+        <Typography variant="h6" className="text-center text-gradient mb-4">
+          Cập nhật thông tin sách
+        </Typography>
         <form onSubmit={handleUpdate}>
           <Grid container spacing={2}>
             <Grid item xs={8}>
               <Grid container spacing={2}>
                 {Object.keys(formData).map((key, index) => (
-                  key !== 'bookImage' && key !== 'bookId' && key !== 'bookCategory' && (
+                  key !== 'bookImage' && key !== 'bookId' && key !== 'mainCategory' && key !== 'bookCategory' && (
                     <Grid item xs={6} key={index}>
                       <TextField
                         label={key}
@@ -117,87 +98,68 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
                         value={formData[key]}
                         onChange={handleChange}
                         className="input-field"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          style: { fontSize: '14px' },
-                          sx: key === 'bookPrice' || key === 'bookStockQuantity' ? { height: '46px' } : {},
-                        }}
-                        sx={{
-                          width: key === 'bookPrice' || key === 'bookStockQuantity' ? '180px' : '100%',
-                        }}
                         required
                       />
                     </Grid>
                   )
                 ))}
+                {/* Main Category */}
                 <Grid item xs={6}>
-                  <FormControl fullWidth variant="outlined" className="input-field" style={{ width: '100%', height: '58px' }}>
-                    <InputLabel shrink>Book Category</InputLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Main Category</InputLabel>
+                    <Select
+                      name="mainCategory"
+                      value={formData.mainCategory}
+                      onChange={handleChange}
+                      required
+                    >
+                      <MenuItem value=""><em>None</em></MenuItem>
+                      {Object.keys(mainCategories).map((category, index) => (
+                        <MenuItem key={index} value={category}>{category}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Book Category (phụ thuộc vào Main Category) */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined" disabled={!formData.mainCategory}>
+                    <InputLabel>Book Category</InputLabel>
                     <Select
                       name="bookCategory"
                       value={formData.bookCategory}
                       onChange={handleChange}
-                      displayEmpty
                       required
-                      style={{ fontSize: '14px', height: '45px', display: 'flex', alignItems: 'center' }}
                     >
-                      <MenuItem value="">
-                        <em>None</em>
-                      </MenuItem>
-                      <MenuItem value="Tiểu thuyết">Tiểu thuyết</MenuItem>
-                      <MenuItem value="Phi hư cấu">Phi hư cấu</MenuItem>
-                      <MenuItem value="Khoa học">Khoa học</MenuItem>
-                      <MenuItem value="Lịch sử">Lịch sử</MenuItem>
-                      <MenuItem value="Tâm lý">Tâm lý</MenuItem>
-                      <MenuItem value="Kinh doanh">Kinh doanh</MenuItem>
-                      <MenuItem value="Giáo dục">Giáo dục</MenuItem>
-                      <MenuItem value="Thiếu nhi">Thiếu nhi</MenuItem>
-                      <MenuItem value="Nghệ thuật">Nghệ thuật</MenuItem>
-                      <MenuItem value="Trinh thám">Trinh thám</MenuItem>
-                      <MenuItem value="Kinh dị">Kinh dị</MenuItem>
-                      <MenuItem value="Khoa học viễn tưởng">Khoa học viễn tưởng</MenuItem>
-                      <MenuItem value="Thể thao">Thể thao</MenuItem>
-                      <MenuItem value="Ẩm thực">Ẩm thực</MenuItem>
+                      <MenuItem value=""><em>None</em></MenuItem>
+                      {formData.mainCategory && mainCategories[formData.mainCategory].map((subcategory, index) => (
+                        <MenuItem key={index} value={subcategory}>{subcategory}</MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xs={4} className="image-preview-container" style={{ textAlign: 'center' }}>
-              <Box 
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  border: '1px solid #ccc',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: '10px'
-                }}
-              >
+
+            {/* Image Upload */}
+            <Grid item xs={4} style={{ textAlign: 'center' }}>
+              <Box style={{ width: '100%', height: '200px', border: '1px solid #ccc', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' }}>
                 {imagePreviewUrl ? (
-                  <img
-                    src={imagePreviewUrl}
-                    alt="Book preview"
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                  />
+                  <img src={imagePreviewUrl} alt="Book preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 ) : (
                   <Typography variant="body2" color="textSecondary">No image selected</Typography>
                 )}
               </Box>
-              <Button variant="contained" component="label" fullWidth className="input-field" style={{ backgroundColor: '#3f51b5', color: '#fff' }}>
+              <Button variant="contained" component="label" fullWidth style={{ backgroundColor: '#3f51b5', color: '#fff' }}>
                 Chọn hình ảnh
                 <input type="file" name="bookImage" hidden onChange={handleChange} />
               </Button>
             </Grid>
           </Grid>
+
           <Box className="flex justify-end space-x-4 mt-4">
-            <Button variant="text" onClick={onClose} className="cancel-button">
-              Hủy
-            </Button>
-            <Button variant="contained" color="primary" type="submit" className="submit-button">
-              Cập nhật
-            </Button>
+            <Button variant="text" onClick={onClose} className="cancel-button">Hủy</Button>
+            <Button variant="contained" color="primary" type="submit" className="submit-button">Cập nhật</Button>
           </Box>
         </form>
       </Box>
