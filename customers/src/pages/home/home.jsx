@@ -57,7 +57,7 @@ const Home = () => {
                 <Slider />
                 {Object.entries(books).map(([category, items]) => (
                     <div className="flex-1 p-4">
-                        <div className="bg-red-500 text-white w-full p-4 rounded-md">
+                        <div className="text-white w-full p-4 rounded-md" style={{ backgroundColor: "#003333" }}>
                             <h3 className="text-2xl font-bold">{category}</h3>
                         </div>
                         <div className="flex items-center mt-4">
