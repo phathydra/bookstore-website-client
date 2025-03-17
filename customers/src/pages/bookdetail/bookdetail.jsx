@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom"; // Thêm useNavigate
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./bookdetail.css";
 
 const BookDetail = () => {
     const { id } = useParams();
-    const navigate = useNavigate(); // Hook để chuyển trang
-
+    const navigate = useNavigate();
     const [book, setBook] = useState(null);
     const [recommendedBooks, setRecommendedBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [quantity, setQuantity] = useState(1);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState("");
 
     useEffect(() => {
         if (!id) {
@@ -25,6 +26,7 @@ const BookDetail = () => {
                 setBook(response.data);
             } catch (err) {
                 setError("Không thể tải dữ liệu sách.");
+                openModal("Không thể tải dữ liệu sách.");
             } finally {
                 setLoading(false);
             }
@@ -43,37 +45,44 @@ const BookDetail = () => {
         fetchRecommendedBooks();
     }, [id]);
 
+    const handleIncrease = () => {
+        if (book && quantity < book.bookStockQuantity) {
+            setQuantity((prev) => prev + 1);
+        }
+    };
+
+    const handleDecrease = () => {
+        if (quantity > 1) setQuantity((prev) => prev - 1);
+    };
+
     const addToCart = async () => {
         if (!book) return;
-    
+
         const accountId = localStorage.getItem("accountId");
         if (!accountId) {
             alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
             navigate("/login");
             return;
         }
-    
+
         if (book.bookStockQuantity <= 0) {
             alert("Sách này đã hết hàng!");
             return;
         }
-    
+
         const cartData = {
             accountId: accountId,
-            cartItems: [
-                {
-                    bookId: book.bookId,
-                    bookName: book.bookName,  // Thêm tên sách
-                    price: parseFloat(book.bookPrice),  // Thêm giá sách
-                    quantity: 1,
-                    bookImage: book.bookImage // Thêm ảnh sách
-                }
-            ]
+            cartItems: [{
+                bookId: book.bookId,
+                bookName: book.bookName,
+                price: parseFloat(book.bookPrice),
+                quantity: quantity,
+                bookImage: book.bookImage
+            }]
         };
-    
+
         try {
             const response = await axios.post("http://localhost:8082/cart/add", cartData);
-            
             if (response.status === 200) {
                 alert("Sách đã được thêm vào giỏ hàng!");
                 navigate("/cart");
@@ -85,60 +94,128 @@ const BookDetail = () => {
             alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
         }
     };
-    
-    
-    
-    if (loading) return <div className="book-details-container">Đang tải...</div>;
-    if (error) return <div className="book-details-container">{error}</div>;
-    if (!book) return <div className="book-details-container">Sách không tồn tại.</div>;
+
+    // Modal control functions
+    const openModal = (content) => {
+        setModalContent(content);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handlePolicyClick = (policy) => {
+        switch (policy) {
+            case "Thời gian giao hàng":
+                openModal("Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, Fahasa.com cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng. Nếu các sản phẩm đều có sẵn hàng, Fahasa.com sẽ nhanh chóng bàn giao cho đối tác vận chuyển. Nếu đơn hàng có sản phẩm sắp phát hành, Fahasa.com sẽ ưu tiên giao những sản phẩm có hàng trước cho Quý khách hàng.");
+                break;
+            case "Chính sách đổi trả":
+                openModal("Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất.");
+                break;
+            case "Chính sách khách sỉ":
+                openModal("Ưu đãi khi mua số lượng lớn\n\nFahasa.com cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn.");
+                break;
+            default:
+                break;
+        }
+    };
+
+    if (loading) return <div className="text-center py-10 text-lg">Đang tải...</div>;
+    if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+    if (!book) return <div className="text-center py-10 text-gray-600">Sách không tồn tại.</div>;
 
     return (
-        <div className="book-details-container">
-            <div className="book-card">
-                <div className="book-content">
-                    <div className="book-image">
-                        <img src={book.bookImage} alt={book.bookName} />
+        <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden border p-5">
+                <div className="md:w-1/3 flex flex-col items-center">
+                    <img src={book.bookImage} alt={book.bookName} className="w-72 h-auto rounded-lg shadow-md" />
+
+                    <div className="flex items-center !space-x-2 mt-4">
+                        <div className="flex items-center bg-gray-300 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
+                            <button onClick={handleDecrease} className="px-2 py-1">-</button>
+                            <span className="px-4">{quantity}</span>
+                            <button onClick={handleIncrease} className="px-2 py-1">+</button>
+                        </div>
+
+                        <button className="px-6 py-3 bg-blue-600 text-white text-lg font-semibold !rounded-xl hover:bg-blue-700 transition" onClick={addToCart}>
+                            🛒 Thêm vào giỏ hàng
+                        </button>
                     </div>
-                    <div className="book-info">
-                        <h2>{book.bookName}</h2>
-                        <p><strong>Tác giả:</strong> {book.bookAuthor}</p>
-                        <p><strong>Nhà xuất bản:</strong> {book.bookPublisher}</p>
-                        <p><strong>Năm xuất bản:</strong> {book.bookYearOfProduction}</p>
-                        <p><strong>Ngôn ngữ:</strong> {book.bookLanguage}</p>
-                        <p><strong>Thể loại:</strong> {book.bookCategory}</p>
-                        <p><strong>Giá:</strong> {book.bookPrice.toLocaleString()} VNĐ</p>
-                        <p><strong>Số lượng tồn kho:</strong> {book.bookStockQuantity}</p>
-                        <p><strong>Nhà cung cấp:</strong> {book.bookSupplier}</p>
+
+                    <div className="mt-4 p-4 bg-gray-100 rounded-lg text-gray-700 text-sm">
+                        <h3 className="font-semibold text-base">Chính sách mua hàng</h3>
+                        <div className="space-y-2">
+                            <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="text-blue-600">Thời gian giao hàng: Giao nhanh và uy tín</button>
+                            <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="text-blue-600">Chính sách đổi trả: Đổi trả miễn phí toàn quốc</button>
+                            <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="text-blue-600">Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn</button>
+                        </div>
                     </div>
-                </div>
-                
-                <div className="book-description">
-                    <h3>Mô tả sách</h3>
-                    <p>{book.bookDescription}</p>
                 </div>
 
-                <div className="book-action">
-                    <button className="add-to-cart-btn" onClick={addToCart}>
-                        <span className="cart-icon">🛒</span> Thêm vào giỏ hàng
-                    </button>
+                <div className="hidden md:block border-l-2 border-gray-300 mx-4"></div>
+
+                <div className="md:w-2/3 p-5">
+                    <div className="w-full">
+                        <h2 className="!text-2xl font-bold text-gray-800 mb-2 w-full !text-left">{book.bookName}</h2>
+                        <h2 className="!text-lg font-bold !text-red-600 mb-4 w-full !text-left">{book.bookPrice.toLocaleString()} VNĐ</h2>
+
+                        <p className="!text-lg mb-2 flex items-center">
+                            <span className="px-2 py-1 bg-blue-400 text-white rounded-lg font-semibold text-lg min-w-[720px] text-center">
+                                {`${book.bookStockQuantity} sản phẩm còn`}
+                            </span>
+                        </p>
+
+                        <hr className="my-4 border-gray-300" />
+
+                        <p className="text-lg text-gray-800 mb-2"><strong>THÔNG TIN CHI TIẾT</strong></p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Tác giả:</strong> {book.bookAuthor}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Nhà xuất bản:</strong> {book.bookPublisher}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Năm xuất bản:</strong> {book.bookYearOfProduction}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Ngôn ngữ:</strong> {book.bookLanguage}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Thể loại:</strong> {book.bookCategory}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Nhà cung cấp:</strong> {book.bookSupplier}</p>
+
+                        <hr className="my-4 border-gray-300" />
+                        <div className="mt-5">
+                            <h3 className="text-xl font-semibold border-b pb-2">MÔ TẢ SÁCH</h3>
+                            <p className="text-base text-gray-600 mt-4">{book.bookDescription}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="recommended-books">
-                <h3>DÀNH CHO BẠN</h3>
-                <div className="recommended-list">
+            <div className="mt-8">
+                <h3 className="text-xl font-semibold border-b pb-2">GIỚI THIỆU CHO BẠN</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {recommendedBooks.length > 0 ? (
                         recommendedBooks.map((recBook) => (
-                            <Link key={recBook.bookId} to={`/productdetail/${recBook.bookId}`} className="recommended-card">
-                                <img src={recBook.bookImage} alt={recBook.bookName} />
-                                <p>{recBook.bookName}</p>
+                            <Link key={recBook.bookId} to={`/productdetail/${recBook.bookId}`} className="block bg-white shadow-lg rounded-lg overflow-hidden p-4 border">
+                                <img src={recBook.bookImage} alt={recBook.bookName} className="w-full h-52 object-cover rounded-lg" />
+                                <p className="mt-2 text-center text-base font-semibold text-gray-700">{recBook.bookName}</p>
                             </Link>
                         ))
                     ) : (
-                        <p>Không có sách đề xuất.</p>
+                        <p className="text-gray-500">Không có sách đề xuất.</p>
                     )}
                 </div>
             </div>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto z-10 relative">
+                        <button 
+                            onClick={closeModal} 
+                            className="absolute top-2 right-2 px-4 py-2 bg-red-600 text-white rounded-full"
+                        >
+                            Đóng
+                        </button>
+                        <h2 className="text-xl font-semibold mb-4">{modalContent}</h2>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
