@@ -59,7 +59,7 @@ const Header = () => {
       <div className="cursor-pointer" onClick={() => navigate("/")}> 
         <img src={logo} alt="Logo" className="w-24" />
       </div>
-      <nav className="flex space-x-4">  {/* Changed from gap:20px */}
+      <nav className="flex" style={{ gap: "20px" }}>
         <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/")}> Home </button>
         <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/products?searchParam=")}> Products </button>
         <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/category/someCategory")}> Category </button>
