@@ -60,9 +60,9 @@ const Header = () => {
         <img src={logo} alt="Logo" className="w-24" />
       </div>
       <nav className="flex space-x-4">  {/* Changed from gap:20px */}
-        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/")}>Home</button>
-        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/products")}>Products</button>
-        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/category/someCategory")}>Category</button>
+        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/")}> Home </button>
+        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/products?searchParam=")}> Products </button>
+        <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/category/someCategory")}> Category </button>
       </nav>
     </div>
 
@@ -127,7 +127,7 @@ const Header = () => {
               className="block w-full px-4 py-2 text-left bg-red-500 text-white hover:bg-red-600 focus:outline-none"
               onClick={handleLogout}
             >
-              Đăng xuất
+              {isLogin ? 'Đăng xuất' : 'Đăng nhập'}
             </button>
           </div>
         )}
