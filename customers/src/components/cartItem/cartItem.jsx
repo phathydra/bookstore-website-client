@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./CartItem.css";
 
 const CartItem = ({ item, accountId, onUpdate, onRemove }) => {
     const [quantity, setQuantity] = useState(item.quantity || 299);
@@ -28,16 +27,31 @@ const CartItem = ({ item, accountId, onUpdate, onRemove }) => {
     };
 
     return (
-        <div className="cart-item">
-            <img src={item.bookImage} alt={item.bookName} className="cart-item-image" />
-            <div className="cart-item-details">
-                <p className="cart-item-name">{item.bookName}</p>
-                <p className="cart-item-price">{Number(item.price || 1).toLocaleString("vi-VN")} VND</p>
-                <div className="cart-item-actions">
-                    <button onClick={() => updateQuantity(quantity - 1)} className="quantity-button">-</button>
-                    <span>{quantity}</span>
-                    <button onClick={() => updateQuantity(quantity + 1)} className="quantity-button">+</button>
-                    <button className="remove-button" onClick={removeItem}>Xóa</button>
+        <div className="flex items-center p-4 border-b border-gray-200 bg-gray-50 transition-colors duration-300 w-full">
+            <img src={item.bookImage} alt={item.bookName} className="w-20 h-28 object-cover mr-5" />
+            <div className="flex-1">
+                <p className="text-lg font-bold my-1">{item.bookName}</p>
+                <p className="text-base text-blue-600 my-1">{Number(item.price || 1).toLocaleString("vi-VN")} VND</p>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => updateQuantity(quantity - 1)}
+                        className="px-2 py-1 border border-gray-300 bg-white cursor-pointer text-base rounded-md hover:bg-gray-100 mx-2"
+                    >
+                        -
+                    </button>
+                    <span className="text-base">{quantity}</span>
+                    <button
+                        onClick={() => updateQuantity(quantity + 1)}
+                        className="px-2 py-1 border border-gray-300 bg-white cursor-pointer text-base rounded-md hover:bg-gray-100 mx-2"
+                    >
+                        +
+                    </button>
+                    <button
+                        className="px-4 py-1 bg-red-500 text-white text-base rounded-full cursor-pointer hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-200"
+                        onClick={removeItem}
+                    >
+                        Xóa
+                    </button>
                 </div>
             </div>
         </div>
