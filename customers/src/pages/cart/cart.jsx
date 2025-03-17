@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CartItem from "../../components/cartItem/cartItem";
-import "./cart.css";
+import "./cart.css"
 
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedItems, setSelectedItems] = useState({});
-    const [address, setAddress] = useState(null);  // Lưu thông tin địa chỉ
+    const [address, setAddress] = useState(null);
     const navigate = useNavigate();
 
     const accountId = localStorage.getItem("accountId");
@@ -36,18 +36,17 @@ const Cart = () => {
         };
 
         const fetchAddress = async () => {
-            const accountId = localStorage.getItem("accountId");  // Lấy accountId từ localStorage
-        
+            const accountId = localStorage.getItem("accountId");
             if (!accountId) {
                 console.error("Account not logged in!");
                 setError("Vui lòng đăng nhập trước khi đặt hàng.");
                 return;
             }
-        
+
             try {
                 const addressResponse = await axios.get(`http://localhost:8080/api/address?accountId=${accountId}`);
                 const activeAddress = addressResponse.data.find(address => address.status === "ACTIVE");
-        
+
                 if (activeAddress) {
                     setAddress(prevAddress => ({
                         ...prevAddress,
@@ -67,7 +66,7 @@ const Cart = () => {
                 setError("Không thể tải địa chỉ, vui lòng thử lại sau.");
             }
         };
-        
+
         fetchCart();
         fetchAddress();
     }, [accountId]);
@@ -94,7 +93,7 @@ const Cart = () => {
         }));
     };
 
-    const totalAmount = cartItems.reduce((sum, item) => 
+    const totalAmount = cartItems.reduce((sum, item) =>
         selectedItems[item.bookId] ? sum + item.price * item.quantity : sum, 0
     );
 
@@ -104,13 +103,12 @@ const Cart = () => {
             alert("Vui lòng chọn ít nhất một sản phẩm để đặt hàng.");
             return;
         }
-    
+
         if (!address) {
             alert("Vui lòng cập nhật địa chỉ giao hàng.");
             return;
         }
-    
-        // Navigate to order detail page with selected items and address
+
         navigate("/orderdetail", {
             state: {
                 selectedBooks,
@@ -121,35 +119,39 @@ const Cart = () => {
     };
 
     return (
-        <div className="cart">
+        <div className="flex flex-col items-center p-5 max-w-2xl mx-auto">
             {loading ? (
-                <p>Đang tải giỏ hàng...</p>
+                <p className="text-gray-500">Đang tải giỏ hàng...</p>
             ) : error ? (
-                <p className="error">{error}</p>
+                <p className="text-red-500">{error}</p>
             ) : cartItems.length === 0 ? (
-                <p>Giỏ hàng của bạn đang trống.</p>
+                <p className="text-gray-500">Giỏ hàng của bạn đang trống.</p>
             ) : (
                 cartItems.map((item) => (
-                    <div key={item.bookId} className="cart-item">
+                    <div key={item.bookId} className="flex items-center gap-4 p-4 border-b w-full">
                         <input
                             type="checkbox"
                             checked={selectedItems[item.bookId] || false}
                             onChange={() => toggleSelect(item.bookId)}
                         />
-                        <CartItem 
-                            item={item} 
+                        <CartItem
+                            item={item}
                             accountId={accountId}
-                            onUpdate={updateQuantity} 
+                            onUpdate={updateQuantity}
                             onRemove={removeItem}
                         />
                     </div>
                 ))
             )}
 
-            <div className="total-section">
-                <h3>Total: {totalAmount.toLocaleString("vi-VN")} VND</h3>
-                <button className="confirm-button" disabled={totalAmount === 0} onClick={handleConfirmOrder}>
-                    {totalAmount === 0 ? "Chọn sản phẩm để thanh toán" : "Xác nhận đơn hàng"}
+            <div className="cart-total sticky bottom-0 w-full bg-green-100 p-4 rounded-t-lg flex flex-col items-center z-10">
+                <h3 className="text-lg font-semibold">Total: {totalAmount.toLocaleString("en-US")} VND</h3>
+                <button
+                    className="mt-2 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={totalAmount === 0}
+                    onClick={handleConfirmOrder}
+                    >
+                    {totalAmount === 0 ? "Select products to checkout" : "Confirm Order"}
                 </button>
             </div>
         </div>
