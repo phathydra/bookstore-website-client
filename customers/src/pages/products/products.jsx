@@ -56,7 +56,7 @@ const Products = () => {
     <div className="grid grid-cols-[20%_1fr] w-full p-4 bg-white">
       {/* Sidebar Categories */}
       <div className="p-5 bg-gray-100 border-r border-gray-300">
-        <h2 style={{ color: "red" }} className="text-xl font-bold mb-3">BỘ LỌC</h2>
+        <h2 style={{ color: "red" }} className="text-xl mb-3">BỘ LỌC</h2>
         <div className="border-b border-gray-300 pb-3 mb-4"></div>
 
         {/* Thể loại */}
