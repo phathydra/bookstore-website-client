@@ -184,14 +184,14 @@ const Cart = () => {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
-                                                    className="px-3 py-2 border border-gray-300 bg-red-300 cursor-pointer text-lg rounded-md hover:bg-red-500"
+                                                    className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-red-500"
                                                 >
                                                     -
                                                 </button>
-                                                <span className="text-lg w-6 text-center">{item.quantity}</span>
+                                                <span className="w-10 h-10 text-lg w-6 text-center">{item.quantity}</span>
                                                 <button
                                                     onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
-                                                    className="px-3 py-2 border border-gray-300 bg-green-300 cursor-pointer text-lg rounded-md hover:bg-green-500"
+                                                    className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-green-500"
                                                 >
                                                     +
                                                 </button>
