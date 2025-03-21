@@ -62,19 +62,32 @@ const Cart = () => {
         fetchAddress();
     }, [accountId]);
 
-    const updateQuantity = useCallback((bookId, newQuantity) => {
-        setCartItems(prevCart =>
-            prevCart.map(item => item.bookId === bookId ? { ...item, quantity: newQuantity } : item)
-        );
+    const updateQuantity = useCallback( async (bookId, newQuantity) => {
+        if (newQuantity <= 0) return;
+        try {
+            await axios.put(`http://localhost:8082/cart/update/${accountId}/${bookId}`, null, {
+                params: { quantity: newQuantity }
+            });
+            setCartItems(prevCart =>
+                prevCart.map(item => item.bookId === bookId ? { ...item, quantity: newQuantity } : item)
+            );
+        } catch (error) {
+            console.error("Lỗi khi cập nhật số lượng", error);
+        }
     }, []);
 
-    const removeItem = useCallback((bookId) => {
-        setCartItems(prevCart => prevCart.filter(item => item.bookId !== bookId));
-        setSelectedItems(prevSelected => {
-            const updatedSelection = { ...prevSelected };
-            delete updatedSelection[bookId];
-            return updatedSelection;
-        });
+    const removeItem = useCallback(async (bookId) => {
+        try {
+            await axios.delete(`http://localhost:8082/cart/remove/${accountId}/${bookId}`);
+            setCartItems(prevCart => prevCart.filter(item => item.bookId !== bookId));
+            setSelectedItems(prevSelected => {
+                const updatedSelection = { ...prevSelected };
+                delete updatedSelection[bookId];
+                return updatedSelection;
+            });
+        } catch (error) {
+            console.error("Lỗi khi xóa sản phẩm", error);
+        }
     }, []);
 
     const toggleSelect = (bookId) => {
@@ -125,7 +138,7 @@ const Cart = () => {
     };
 
     return (
-        <div className="flex flex-col items-center p-5 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center p-5 w-[90%] mx-auto">
             {loading ? (
                 <p className="text-gray-500">Đang tải giỏ hàng...</p>
             ) : error ? (
@@ -135,35 +148,71 @@ const Cart = () => {
             ) : (
                 <div className="w-full">
                     <div className="space-y-6">
-                        {/* "Select All" Checkbox */}
-                        <div className="flex items-center gap-4 p-4 w-full">
-                            <input
-                                type="checkbox"
-                                ref={selectAllRef}
-                                checked={allSelected}
-                                onChange={handleSelectAll}
-                                className="w-5 h-5"
-                            />
-                            <label className="text-lg font-semibold">Select All</label>
-                        </div>
-                        
                         {/* Cart Items List */}
-                        {cartItems.map((item) => (
-                            <div key={item.bookId} className="flex items-center gap-4 p-6 border-b w-full bg-white shadow-md rounded-lg">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedItems[item.bookId] || false}
-                                    onChange={() => toggleSelect(item.bookId)}
-                                    className="w-5 h-5"
-                                />
-                                <CartItem
-                                    item={item}
-                                    accountId={accountId}
-                                    onUpdate={updateQuantity}
-                                    onRemove={removeItem}
-                                />
-                            </div>
-                        ))}
+                        <table className="w-full bg-white shadow-md rounded-lg">
+                            <thead>
+                                <tr className="border-b">
+                                    <th className="p-4 text-left">
+                                            <input
+                                                type="checkbox"
+                                                ref={selectAllRef}
+                                                checked={allSelected}
+                                                onChange={handleSelectAll}
+                                                className="w-5 h-5"
+                                            />
+                                    </th>
+                                    <th className="p-4 text-left">Book</th>
+                                    <th className="p-4 text-left">Quantity</th>
+                                    <th className="p-4 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {cartItems.map((item) => (
+                                    <tr key={item.bookId} className="border-b">
+                                        <td className="p-4">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItems[item.bookId] || false}
+                                                onChange={() => toggleSelect(item.bookId)}
+                                                className="w-5 h-5"
+                                            />
+                                        </td>
+                                        <td className="p-4">
+                                            <CartItem item={item} accountId={accountId} />
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
+                                                    className="px-3 py-2 border border-gray-300 bg-red-300 cursor-pointer text-lg rounded-md hover:bg-red-500"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="text-lg w-6 text-center">{item.quantity}</span>
+                                                <button
+                                                    onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
+                                                    className="px-3 py-2 border border-gray-300 bg-green-300 cursor-pointer text-lg rounded-md hover:bg-green-500"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <button
+                                                className="px-4 py-2 flex items-center gap-2 bg-red-500 text-white text-lg font-semibold rounded-lg shadow-md 
+                                                        hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-300"
+                                                onClick={() => removeItem(item.bookId)}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m5 4v6m4-6v6M10 2h4a1 1 0 0 1 1 1v1H9V3a1 1 0 0 1 1-1z"></path>
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
