@@ -28,7 +28,7 @@ const Book = ({ book }) => {
 
             {/* Giữ khoảng cách hợp lý cho tên sách */}
             <div className="flex flex-col items-start flex-grow w-full text-left">
-                <div className="text-lg font-bold text-gray-800 max-h-12 overflow-hidden overflow-ellipsis line-clamp-2">
+                <div className="text-lg text-gray-800 max-h-12 overflow-hidden overflow-ellipsis line-clamp-2">
                     {book.bookName}
                 </div>
             </div>
