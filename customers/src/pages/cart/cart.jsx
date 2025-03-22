@@ -163,53 +163,62 @@ const Cart = () => {
                                     </th>
                                     <th className="p-4 text-left">Book</th>
                                     <th className="p-4 text-left">Quantity</th>
+                                    <th className="p-4 text-left ">Total Price</th>
                                     <th className="p-4 text-left">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {cartItems.map((item) => (
-                                    <tr key={item.bookId} className="border-b">
-                                        <td className="p-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedItems[item.bookId] || false}
-                                                onChange={() => toggleSelect(item.bookId)}
-                                                className="w-5 h-5"
-                                            />
-                                        </td>
-                                        <td className="p-4">
-                                            <CartItem item={item} accountId={accountId} />
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2">
+                                {cartItems.map((item, index) => (
+                                    <React.Fragment key={item.bookId}>
+                                        <tr className="border-b">
+                                            <td className="p-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedItems[item.bookId] || false}
+                                                    onChange={() => toggleSelect(item.bookId)}
+                                                    className="w-5 h-5"
+                                                />
+                                            </td>
+                                            <td className="p-4">
+                                                <CartItem item={item} accountId={accountId} />
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
+                                                        className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-red-500"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="w-10 h-10 text-lg w-6 text-center">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
+                                                        className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-green-500"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-lg font-semibold text-red-500">
+                                                {(item.price * item.quantity).toLocaleString("en-US")} VND
+                                            </td>
+                                            <td className="p-4">
                                                 <button
-                                                    onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
-                                                    className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-red-500"
+                                                    className="px-4 py-2 flex items-center gap-2 bg-red-500 text-white text-lg font-semibold rounded-lg shadow-md 
+                                                            hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-300"
+                                                    onClick={() => removeItem(item.bookId)}
                                                 >
-                                                    -
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m5 4v6m4-6v6M10 2h4a1 1 0 0 1 1 1v1H9V3a1 1 0 0 1 1-1z"></path>
+                                                    </svg>
                                                 </button>
-                                                <span className="w-10 h-10 text-lg w-6 text-center">{item.quantity}</span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
-                                                    className="w-10 h-10 border border-gray-300 cursor-pointer text-lg rounded-md hover:bg-green-500"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <button
-                                                className="px-4 py-2 flex items-center gap-2 bg-red-500 text-white text-lg font-semibold rounded-lg shadow-md 
-                                                        hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-300"
-                                                onClick={() => removeItem(item.bookId)}
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m5 4v6m4-6v6M10 2h4a1 1 0 0 1 1 1v1H9V3a1 1 0 0 1 1-1z"></path>
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+
+                                        {/* Thêm đường phân cách giữa các sách, trừ sách cuối cùng */}
+                                        {index < cartItems.length - 1 && <tr><td colSpan="5"><div className="border-t border-gray-300 my-2"></div></td></tr>}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
@@ -221,9 +230,9 @@ const Cart = () => {
             <div className="cart-total sticky bottom-0 w-full bg-green-100 p-4 rounded-t-lg flex flex-col items-center z-10">
                 <h3 className="text-xl font-bold">Total: {totalAmount.toLocaleString("en-US")} VND</h3>
                 <button
-                    className="mt-4 bg-green-600 text-white py-3 px-6 rounded-full shadow-lg 
+                    className="mt-4 !bg-green-600 text-white py-3 px-6 !rounded-lg !shadow-lg 
                             hover:scale-105 hover:bg-green-700 transition-all duration-300 
-                            disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold w-65 text-center"
+                            disabled:opacity-50 !disabled:cursor-not-allowed !text-lg !font-semibold w-80 !text-center"
                     disabled={totalAmount === 0}
                     onClick={handleConfirmOrder}
                 >

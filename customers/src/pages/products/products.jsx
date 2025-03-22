@@ -3,6 +3,7 @@ import Categories from "../../components/categories/categories";
 import Book from "../../components/book/book";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import { Range } from 'react-range'; // Import react-range
 
 const Products = () => {
   const [books, setBooks] = useState({});
@@ -16,10 +17,11 @@ const Products = () => {
   const location = useLocation();
   const searchParam = new URLSearchParams(location.search);
   const searchInput = searchParam.get("searchParam");
+  const [authorFilter, setAuthorFilter] = useState("");
 
   useEffect(() => {
     fetchBooks();
-  }, [page, size, searchInput, selectedCategories, selectedPublishers, priceRange]);
+  }, [page, size, searchInput, selectedCategories, selectedPublishers, priceRange, authorFilter]);
 
   const fetchBooks = async () => {
     try {
@@ -32,6 +34,7 @@ const Products = () => {
           minPrice: priceRange[0],
           maxPrice: priceRange[1],
           input: searchInput,
+          author: authorFilter,
         },
       });
 
@@ -53,96 +56,161 @@ const Products = () => {
   };
 
   return (
-    <div className="grid grid-cols-[20%_1fr] w-full p-4 bg-white">
+    <div className="grid grid-cols-[20%_1fr] w-full !p-4 bg-white">
       {/* Sidebar Categories */}
-      <div className="p-5 bg-gray-100 border-r border-gray-300">
-        <h2 style={{ color: "red" }} className="text-xl mb-3">BỘ LỌC</h2>
+      <div className="!p-5 bg-gray-100 !border-r !border-gray-300">
+        <h2 style={{ color: "red" }} className="!text-3xl mb-3">LỌC THEO</h2>
         <div className="border-b border-gray-300 pb-3 mb-4"></div>
-
+        {/* Lọc theo tác giả */}
+        <div className="mb-4 text-left">
+          <h3 className="font-semibold !text-xl mb-2">TÁC GIẢ</h3>
+          <input
+            type="text"
+            value={authorFilter}
+            onChange={(e) => setAuthorFilter(e.target.value)}
+            placeholder="Nhập tên tác giả"
+            className="border p-2 w-full"
+          />
+        </div>
         {/* Thể loại */}
         <div className="mb-4 text-left">
-          <h3 className="font-semibold mb-2 !text-xl">THỂ LOẠI</h3>
-          {["Văn Học", "Giáo dục và học thuật"].map((category) => (
-            <label key={category} className="flex items-start gap-2 mb-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(category)}
-                onChange={() => toggleSelection(category, setSelectedCategories, selectedCategories)}
-                className="cursor-pointer"
-              />
-              <span className="leading-6">{category}</span>
-            </label>
-          ))}
+          <h3 className="font-semibold mb-2 !text-xl ">DANH MỤC CHÍNH</h3>
+          <div className="flex !flex-col ">
+            {["Văn Học", "Giáo Dục & Học Thuật", "Kinh Doanh & Phát Triển Bản Thân",
+              "Khoa Học & Công Nghệ", "Lịch Sử & Địa Lý", "Tôn Giáo & Triết Học", "Sách Thiếu Nhi", "Văn Hóa & Xã Hội", "Sức Khỏe & Ẩm Thực"].map((category) => (
+                <div key={category} className="flex items-start mb-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => toggleSelection(category, setSelectedCategories, selectedCategories)}
+                    className="cursor-pointer mt-1 !mr-2"
+                  />
+                  <span className="leading-6">{category}</span>
+                </div>
+              ))}
+          </div>
         </div>
 
         {/* Giá */}
         <div className="mb-4 text-left">
           <h3 className="font-semibold !text-xl mb-2">GIÁ</h3>
-          {[
-            [0, 50000],
-            [50000, 150000],
-            [150000, 300000],
-          ].map(([min, max]) => (
-            <label key={min} className="flex items-start gap-2 mb-2 text-sm">
-              <input
-                type="checkbox"
-                checked={priceRange[0] === min && priceRange[1] === max}
-                onChange={() => setPriceRange([min, max])}
-                className="cursor-pointer mt-1"
-              />
-              <span className="leading-6">
-                {min.toLocaleString()}đ - {max.toLocaleString()}đ
-              </span>
-            </label>
-          ))}
+          <div className="flex flex-col space-y-2">
+            {[
+              [0, 150000],
+              [150000, 300000],
+              [300000, 500000],
+              [500000, 700000],
+              [700000, 1000000],
+            ].map(([min, max]) => (
+              <div key={`<span class="math-inline">\{min\}\-</span>{max}`} className="flex items-start">
+                <input
+                  type="checkbox"
+                  checked={priceRange[0] === min && priceRange[1] === max}
+                  onChange={() => setPriceRange([min, max])}
+                  className="cursor-pointer mt-1 !mr-2"
+                />
+                <span className="leading-6">
+                  {min.toLocaleString()}đ - {max.toLocaleString()}đ
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4">Hoặc chọn mức giá phù hợp</p>
           <div className="mt-2">
-            <input
-              type="range"
-              min="0"
-              max="500000"
-              value={priceRange[0]}
-              onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-              className="w-full"
+            <Range
+              step={1000}
+              min={0}
+              max={1000000}
+              values={priceRange}
+              onChange={(values) => setPriceRange(values)}
+              renderTrack={({ props, children }) => (
+                <div
+                  {...(props && { ...props })}
+                  style={{
+                    ...props.style,
+                    height: '6px',
+                    width: '100%',
+                    backgroundColor: '#ccc',
+                  }}
+                >
+                  {children}
+                </div>
+              )}
+              renderThumb={({ props, isDragged }) => (
+                <div
+                  {...(props && { ...props })}
+                  style={{
+                    ...props.style,
+                    height: '20px',
+                    width: '20px',
+                    backgroundColor: '#999',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      height: '10px',
+                      width: '10px',
+                      backgroundColor: '#fff',
+                      borderRadius: '50%',
+                    }}
+                  />
+                </div>
+              )}
             />
-            <input
-              type="range"
-              min="0"
-              max="500000"
-              value={priceRange[1]}
-              onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-              className="w-full"
-            />
-            <div className="text-center text-sm">
+            <div className="text-center text-sm mt-2">
               {priceRange[0].toLocaleString()}đ - {priceRange[1].toLocaleString()}đ
             </div>
           </div>
         </div>
 
-
         {/* Nhà xuất bản */}
         <div className="mb-4 text-left">
           <h3 className="font-semibold !text-xl mb-2">NHÀ XUẤT BẢN</h3>
-          {["Nhà xuất bản Kim Đồng", "Nhà xuất bản Dân Trí"].map((publisher) => (
-            <label key={publisher} className="flex items-start gap-2 mb-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedPublishers.includes(publisher)}
-                onChange={() => toggleSelection(publisher, setSelectedPublishers, selectedPublishers)}
-                className="cursor-pointer mt-1"
-              />
-              <span className="leading-6">{publisher}</span>
-            </label>
-          ))}
+          <div className="flex flex-col !space-y-2">
+            {["NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật", "NXB Tổng hợp Thành phố Hồ Chí Minh",
+              "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động", "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB Đại học Quốc gia Hà Nội"].map((publisher) => (
+                <div key={publisher} className="flex items-start">
+                  <input
+                    type="checkbox"
+                    checked={selectedPublishers.includes(publisher)}
+                    onChange={() => toggleSelection(publisher, setSelectedPublishers, selectedPublishers)}
+                    className="cursor-pointer mt-1 !mr-2"
+                  />
+                  <span className="leading-6">{publisher}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+        {/* Nhà xuất bản */}
+        <div className="mb-4 text-left">
+          <h3 className="font-semibold !text-xl mb-2">NHÀ CUNG CẤP</h3>
+          <div className="flex flex-col !space-y-2">
+            {["Nhà Nam","Alpha Books","Megabooks","Kim Đồng","Kinokuniya Book Stores","NXB Trẻ","Đinh Tị","AZ Việt Nam","Tân Việt"].map((publisher) => (
+                <div key={publisher} className="flex items-start">
+                  <input
+                    type="checkbox"
+                    checked={selectedPublishers.includes(publisher)}
+                    onChange={() => toggleSelection(publisher, setSelectedPublishers, selectedPublishers)}
+                    className="cursor-pointer mt-1 !mr-2"
+                  />
+                  <span className="leading-6">{publisher}</span>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="p-5 w-full bg-green-50">
         {/* Dropdown số lượng sản phẩm mỗi trang */}
         <div className="flex justify-end items-center mb-4">
           <label htmlFor="size-select" className="mr-2 text-gray-700">
             Số lượng mỗi trang:
-          </label>
+            </label>
           <select
             id="size-select"
             value={size}
@@ -186,9 +254,8 @@ const Products = () => {
               {pagesArr.map((number) => (
                 <button
                   key={number}
-                  className={`py-2 px-4 rounded ${
-                    number === books.number ? "bg-gray-300" : "bg-blue-500 text-white hover:bg-blue-700"
-                  }`}
+                  className={`py-2 px-4 rounded ${number === books.number ? "bg-gray-300" : "bg-blue-500 text-white hover:bg-blue-700"
+                    }`}
                   onClick={() => setPage(number)}
                   disabled={number === books.number}
                 >

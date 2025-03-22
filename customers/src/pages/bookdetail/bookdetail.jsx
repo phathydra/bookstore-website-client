@@ -126,29 +126,34 @@ const BookDetail = () => {
     if (!book) return <div className="text-center py-10 text-gray-600">Sách không tồn tại.</div>;
 
     return (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto !px-4 !py-6">
             <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden border p-5">
                 <div className="md:w-1/3 flex flex-col items-center">
                     <img src={book.bookImage} alt={book.bookName} className="w-72 h-auto rounded-lg shadow-md" />
 
                     <div className="flex items-center !space-x-2 mt-4">
-                        <div className="flex items-center bg-gray-300 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
-                            <button onClick={handleDecrease} className="px-2 py-1">-</button>
-                            <span className="px-4">{quantity}</span>
-                            <button onClick={handleIncrease} className="px-2 py-1">+</button>
-                        </div>
-
-                        <button className="px-6 py-3 bg-blue-600 text-white text-lg font-semibold !rounded-xl hover:bg-blue-700 transition" onClick={addToCart}>
-                            🛒 Thêm vào giỏ hàng
-                        </button>
+                    <div className="flex items-center bg-white border-2 !border-gray-500 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
+                        <button onClick={handleDecrease} className="px-2 py-1 text-black">-</button>
+                        <span className="px-4">{quantity}</span>
+                        <button onClick={handleIncrease} className="px-2 py-1 text-black">+</button>
                     </div>
 
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg text-gray-700 text-sm">
+
+                        <button 
+                            className="px-6 py-3 bg-green-700 text-white text-lg !font-semibold !rounded-xl hover:scale-105 hover:bg-green-800 transition shadow-md hover:shadow-lg !pl-4 !pr-4"
+                            onClick={addToCart}
+                        >
+                            Thêm vào 🛒
+                        </button>
+
+                    </div>
+
+                    <div className="!mt-4 !p-4 bg-gray-100 !rounded-lg text-gray-700 text-sm">
                         <h3 className="font-semibold text-base">Chính sách mua hàng</h3>
                         <div className="space-y-2">
-                            <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="text-blue-600">Thời gian giao hàng: Giao nhanh và uy tín</button>
-                            <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="text-blue-600">Chính sách đổi trả: Đổi trả miễn phí toàn quốc</button>
-                            <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="text-blue-600">Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn</button>
+                            <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="text-blue-600 !text-start">Thời gian giao hàng: Giao nhanh và uy tín</button>
+                            <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="text-blue-600 !text-start">Chính sách đổi trả: Đổi trả miễn phí toàn quốc</button>
+                            <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="text-blue-600 !text-start">Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn</button>
                         </div>
                     </div>
                 </div>
@@ -179,7 +184,9 @@ const BookDetail = () => {
                         <hr className="my-4 border-gray-300" />
                         <div className="mt-5">
                             <h3 className="text-xl font-semibold border-b pb-2">MÔ TẢ SÁCH</h3>
-                            <p className="text-base text-gray-600 mt-4">{book.bookDescription}</p>
+                            <p className="text-base text-gray-600 mt-4" style={{ textAlign: "justify" }}>
+                                {book.bookDescription}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -200,22 +207,28 @@ const BookDetail = () => {
                     )}
                 </div>
             </div>
-
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto z-10 relative">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-96 h-96 overflow-hidden relative">
+                        {/* Nút đóng lớn hơn */}
                         <button 
                             onClick={closeModal} 
-                            className="absolute top-2 right-2 px-4 py-2 bg-red-600 text-white rounded-full"
+                            className="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-3xl font-bold"
                         >
-                            Đóng
+                            &times;
                         </button>
-                        <h2 className="text-xl font-semibold mb-4">{modalContent}</h2>
+
+                        {/* Tiêu đề */}
+                        <h2 className="text-2xl font-bold text-center mb-4">Thời gian giao hàng</h2>
+
+                        {/* Nội dung có khoảng cách lề trái phải, thanh cuộn, và căn đều 2 lề */}
+                        <div className="overflow-y-auto h-[80%] !pr-4 !pl-4 text-justify">
+                            <p>{modalContent}</p>
+                        </div>
                     </div>
                 </div>
             )}
-
         </div>
     );
 };
