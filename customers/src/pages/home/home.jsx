@@ -70,7 +70,7 @@ const Home = () => {
 
                             {/* Navigation Button - placed next to last book */}
                             <button
-                                className={`ml-4 flex items-center justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold  aspect-square rounded-full shadow-lg transition-all duration-300 ease-in-out 
+                                className={`ml-4 flex items-center justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold  aspect-square !rounded-full shadow-lg transition-all duration-300 ease-in-out 
                                     ${isHovered ? "w-18" : "w-12"}`}
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
