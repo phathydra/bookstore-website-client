@@ -10,11 +10,13 @@ const mainCategories = {
   "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
   "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
   "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
-  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Sách giáo dục trẻ em"],
+  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh","Truyện chữ", "Sách giáo dục trẻ em"],
   "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
   "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"]
 };
 
+const publishers = ["NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật", "NXB Tổng hợp Thành phố Hồ Chí Minh", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động", "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB Đại học Quốc gia Hà Nội","NXB Thế Giới"];
+const suppliers = ["Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya Book Stores", "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt"];
 
 const AddBook = ({ onAdd, onClose }) => {
   const [formData, setFormData] = useState({
@@ -40,7 +42,7 @@ const AddBook = ({ onAdd, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    
+
     if (name === 'bookImage' && files && files[0]) {
       const file = files[0];
       const reader = new FileReader();
@@ -170,7 +172,7 @@ const AddBook = ({ onAdd, onClose }) => {
 
                 {/* Các input khác */}
                 {Object.keys(formData).map((key, index) => (
-                  key !== 'bookImage' && key !== 'bookCategory' && key !== 'mainCategory' && (
+                  key !== 'bookImage' && key !== 'bookCategory' && key !== 'mainCategory' && key !== 'bookPublisher' && key !== 'bookSupplier' && (
                     <Grid item xs={6} key={index}>
                       <TextField
                         label={key}
@@ -185,35 +187,75 @@ const AddBook = ({ onAdd, onClose }) => {
                     </Grid>
                   )
                 ))}
+
+                {/* Chọn Publisher */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Publisher</InputLabel>
+                    <Select
+                      name="bookPublisher"
+                      value={formData.bookPublisher}
+                      onChange={handleChange}
+                      required
+                    >
+                      <MenuItem value=""><em>Chọn nhà xuất bản</em></MenuItem>
+                      {
+                        publishers.map((publisher) => (
+                          <MenuItem key={publisher} value={publisher}>{publisher}</MenuItem>
+                        ))
+                      }
+                      </Select>
+                    </FormControl>
+                  </Grid>
+  
+                  {/* Chọn Supplier */}
+                  <Grid item xs={6}>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Supplier</InputLabel>
+                      <Select
+                        name="bookSupplier"
+                        value={formData.bookSupplier}
+                        onChange={handleChange}
+                        required
+                      >
+                        <MenuItem value=""><em>Chọn nhà cung cấp</em></MenuItem>
+                        {
+                          suppliers.map((supplier) => (
+                            <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                          ))
+                        }
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Grid>
+  
+              {/* Upload Hình Ảnh */}
+              <Grid item xs={4} style={{ textAlign: 'center' }}>
+                <Box style={{ width: '100%', height: '200px', border: '1px solid #ccc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  {imagePreviewUrl ? (
+                    <img src={imagePreviewUrl} alt="Book preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <Typography variant="body2" color="textSecondary">No image selected</Typography>
+                  )}
+                </Box>
+                <Button variant="contained" component="label" fullWidth>
+                  Chọn hình ảnh
+                  <input type="file" name="bookImage" hidden onChange={handleChange} />
+                </Button>
               </Grid>
             </Grid>
-
-            {/* Upload Hình Ảnh */}
-            <Grid item xs={4} style={{ textAlign: 'center' }}>
-              <Box style={{ width: '100%', height: '200px', border: '1px solid #ccc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {imagePreviewUrl ? (
-                  <img src={imagePreviewUrl} alt="Book preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <Typography variant="body2" color="textSecondary">No image selected</Typography>
-                )}
-              </Box>
-              <Button variant="contained" component="label" fullWidth>
-                Chọn hình ảnh
-                <input type="file" name="bookImage" hidden onChange={handleChange} />
+  
+            <Box className="flex justify-end space-x-4 mt-4">
+              <Button onClick={onClose}>Hủy</Button>
+              <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
+                {isLoading ? 'Đang thêm...' : 'Lưu'}
               </Button>
-            </Grid>
-          </Grid>
-
-          <Box className="flex justify-end space-x-4 mt-4">
-            <Button onClick={onClose}>Hủy</Button>
-            <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-              {isLoading ? 'Đang thêm...' : 'Lưu'}
-            </Button>
-          </Box>
-        </form>
+            </Box>
+          </form>
+        </Box>
       </Box>
-    </Box>
-  );
-};
-
-export default AddBook;
+    );
+  };
+  
+  export default AddBook;
