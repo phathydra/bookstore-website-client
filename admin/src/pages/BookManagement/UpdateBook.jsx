@@ -6,6 +6,21 @@ import './style.css';
 const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dfsxqmwkz/image/upload';
 const UPLOAD_PRESET = 'Upload_image';
 
+const mainCategories = {
+  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
+  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
+  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
+  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
+  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
+  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
+  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Truyện chữ", "Sách giáo dục trẻ em"],
+  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
+  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"]
+};
+
+const publishers = ["NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật", "NXB Tổng hợp Thành phố Hồ Chí Minh", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động", "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB Đại học Quốc gia Hà Nội","NXB Thế Giới"];
+const suppliers = ["Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya Book Stores", "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt"];
+
 const UpdateBook = ({ book, onUpdate, onClose }) => {
   const [formData, setFormData] = useState({
     bookId: '',
@@ -25,7 +40,7 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  
+
   useEffect(() => {
     if (book) {
       setFormData(book);
@@ -43,6 +58,10 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
       setImagePreviewUrl(URL.createObjectURL(files[0]));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
+    if (name === 'mainCategory') {
+      setFormData((prev) => ({ ...prev, [name]: value, bookCategory: '' }));
     }
   };
 
@@ -73,7 +92,7 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
     e.preventDefault();
     setIsUploading(true);
     let imageUrl = formData.bookImage;
-  
+
     if (formData.bookImage instanceof File) {
       imageUrl = await uploadImageToCloudinary(formData.bookImage);
       if (!imageUrl) {
@@ -81,9 +100,9 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
         return;
       }
     }
-  
+
     const updatedBook = { ...formData, bookImage: imageUrl };
-  
+
     try {
       const response = await axios.put(`http://localhost:8081/api/book/${book.bookId}`, updatedBook, {
         headers: { 'Content-Type': 'application/json' },
@@ -97,7 +116,6 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
       setIsUploading(false);
     }
   };
-  
 
   return (
     <Box className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 overflow-auto">
@@ -109,8 +127,46 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
           <Grid container spacing={2}>
             <Grid item xs={8}>
               <Grid container spacing={2}>
+                {/* Chọn Main Category */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Main Category</InputLabel>
+                    <Select
+                      name="mainCategory"
+                      value={formData.mainCategory}
+                      onChange={handleChange}
+                      required
+                    >
+                      <MenuItem value=""><em>Chọn danh mục chính</em></MenuItem>
+                      {Object.keys(mainCategories).map((category) => (
+                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Chọn Book Category */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Book Category</InputLabel>
+                    <Select
+                      name="bookCategory"
+                      value={formData.bookCategory}
+                      onChange={handleChange}
+                      required
+                      disabled={!formData.mainCategory} // Chỉ cho chọn nếu đã chọn mainCategory
+                    >
+                      <MenuItem value=""><em>Chọn thể loại sách</em></MenuItem>
+                      {formData.mainCategory && mainCategories[formData.mainCategory].map((subCategory) => (
+                        <MenuItem key={subCategory} value={subCategory}>{subCategory}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Các input khác */}
                 {Object.keys(formData).map((key) => (
-                  key !== 'bookImage' && key !== 'bookId' && (
+                  key !== 'bookImage' && key !== 'bookId' && key !== 'bookCategory' && key !== 'mainCategory' && key !== 'bookPublisher' && key !== 'bookSupplier' &&(
                     <Grid item xs={6} key={key}>
                       <TextField
                         label={key}
@@ -125,6 +181,45 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
                     </Grid>
                   )
                 ))}
+                {/* Chọn Publisher */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Publisher</InputLabel>
+                    <Select
+                      name="bookPublisher"
+                      value={formData.bookPublisher}
+                      onChange={handleChange}
+                      required
+                    >
+                      <MenuItem value=""><em>Chọn nhà xuất bản</em></MenuItem>
+                      {
+                        publishers.map((publisher) => (
+                          <MenuItem key={publisher} value={publisher}>{publisher}</MenuItem>
+                        ))
+                      }
+                      </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Chọn Supplier */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Supplier</InputLabel>
+                    <Select
+                      name="bookSupplier"
+                      value={formData.bookSupplier}
+                      onChange={handleChange}
+                      required
+                    >
+                      <MenuItem value=""><em>Chọn nhà cung cấp</em></MenuItem>
+                      {
+                        suppliers.map((supplier) => (
+                          <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
             </Grid>
             <Grid item xs={4} style={{ textAlign: 'center' }}>
