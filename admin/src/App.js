@@ -10,6 +10,7 @@ import InformationManagement from "./pages/InformationManagement/InformationMana
 import SupplierManagement from "./pages/SupplierManagement/SupplierManagement";
 import Profile from "./pages/Profile/Profile";
 import Password from "./pages/Profile/Password";
+import DiscountManagement from "./pages/DiscountManagement/DiscountManagement";
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/supplier-management" element={<SupplierManagement />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/change-password" element={<Password />} />
+          <Route path="/discount-management" element={<DiscountManagement/>}/>
         </Routes>
       </div>
     </Router>
