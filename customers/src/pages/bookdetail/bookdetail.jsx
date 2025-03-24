@@ -95,7 +95,6 @@ const BookDetail = () => {
         }
     };
 
-    // Modal control functions
     const openModal = (content) => {
         setModalContent(content);
         setIsModalOpen(true);
@@ -132,18 +131,18 @@ const BookDetail = () => {
                     <img src={book.bookImage} alt={book.bookName} className="w-72 h-auto rounded-lg shadow-md" />
 
                     <div className="flex items-center !space-x-2 mt-4">
-                    <div className="flex items-center bg-white border-2 !border-gray-500 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
-                        <button onClick={handleDecrease} className="px-2 py-1 text-black">-</button>
-                        <span className="px-4">{quantity}</span>
-                        <button onClick={handleIncrease} className="px-2 py-1 text-black">+</button>
-                    </div>
+                        <div className="flex items-center bg-white border-2 !border-gray-500 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
+                            <button onClick={handleDecrease} className="px-2 py-1 text-black">-</button>
+                            <span className="px-4">{quantity}</span>
+                            <button onClick={handleIncrease} className="px-2 py-1 text-black">+</button>
+                        </div>
 
 
-                        <button 
+                        <button
                             className="px-6 py-3 bg-green-700 text-white text-lg !font-semibold !rounded-xl hover:scale-105 hover:bg-green-800 transition shadow-md hover:shadow-lg !pl-4 !pr-4"
                             onClick={addToCart}
                         >
-                            Thêm vào 🛒
+                            Thêm vào 
                         </button>
 
                     </div>
@@ -190,12 +189,12 @@ const BookDetail = () => {
                         <hr className="my-4 border-gray-300" />
 
                         <p className="text-lg text-gray-800 mb-2"><strong>THÔNG TIN CHI TIẾT</strong></p>
-                        <p className="text-base text-gray-600 mb-2"><strong>Tác giả:</strong> {book.bookAuthor}</p>
-                        <p className="text-base text-gray-600 mb-2"><strong>Nhà xuất bản:</strong> {book.bookPublisher}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Tác giả:</strong> <Link to={`/products?bookAuthor=${book.bookAuthor}`} className="text-blue-600 underline">{book.bookAuthor}</Link></p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Nhà xuất bản:</strong> <Link to={`/products?bookPublisher=${book.bookPublisher}`} className="text-blue-600 underline">{book.bookPublisher}</Link></p>
                         <p className="text-base text-gray-600 mb-2"><strong>Năm xuất bản:</strong> {book.bookYearOfProduction}</p>
                         <p className="text-base text-gray-600 mb-2"><strong>Ngôn ngữ:</strong> {book.bookLanguage}</p>
                         <p className="text-base text-gray-600 mb-2"><strong>Thể loại:</strong> {book.bookCategory}</p>
-                        <p className="text-base text-gray-600 mb-2"><strong>Nhà cung cấp:</strong> {book.bookSupplier}</p>
+                        <p className="text-base text-gray-600 mb-2"><strong>Nhà cung cấp:</strong> <Link to={`/products?bookSupplier=${book.bookSupplier}`} className="text-blue-600 underline">{book.bookSupplier}</Link></p>
 
                         <hr className="my-4 border-gray-300" />
                         <div className="mt-5">
@@ -228,8 +227,8 @@ const BookDetail = () => {
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
                     <div className="bg-white p-6 rounded-lg shadow-lg w-96 h-96 overflow-hidden relative">
                         {/* Nút đóng lớn hơn */}
-                        <button 
-                            onClick={closeModal} 
+                        <button
+                            onClick={closeModal}
                             className="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-3xl font-bold"
                         >
                             &times;
