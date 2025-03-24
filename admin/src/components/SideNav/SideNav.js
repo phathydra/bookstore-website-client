@@ -19,8 +19,8 @@ const SideNav = () => {
           <a href="/information-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaUsers /> <span>Quản lý Khách Hàng</span>
           </a>
-          <a href="/import-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
-            <FaFileImport /> <span>Quản lý Nhập Hàng</span>
+          <a href="/discount-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaFileImport /> <span>Quản lý Giảm Giá</span>
           </a>
           <a href="/supplier-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaFileImport /> <span>Quản lý Nhà cung cấp</span>
