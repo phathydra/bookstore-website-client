@@ -1,89 +1,140 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination, 
-  Button, Box, Drawer, MenuItem, Select, FormControl, InputLabel 
+  Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer 
 } from '@mui/material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 import AddDiscount from './AddDiscount';
 import UpdateDiscount from './UpdateDiscount';
+import CloseIcon from '@mui/icons-material/Close';
 
 const DiscountManagement = () => {
   const [discounts, setDiscounts] = useState({});
   const [selectedDiscount, setSelectedDiscount] = useState(null);
-  const [bookList, setBookList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [selectedBooks, setSelectedBooks] = useState([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isBookSelectOpen, setIsBookSelectOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [error, setError] = useState('');
+
+  const addButtonRef = useRef(null);
 
   useEffect(() => {
     const fetchDiscounts = async () => {
       try {
         const response = await axios.get(`http://localhost:8081/api/discounts?page=${page}&size=${rowsPerPage}`);
         setDiscounts(response.data);
+        setError('');
       } catch (error) {
         console.error('Error fetching discounts:', error);
+        setError('Failed to fetch discounts. Please try again.');
       }
     };
     fetchDiscounts();
   }, [page, rowsPerPage]);
 
-  const fetchBooks = async (discountId) => {
-    try {
-      // Lấy danh sách tất cả sách
-      const bookResponse = await axios.get(`http://localhost:8081/api/book?page=0&size=50`);
-      const allBooks = bookResponse.data.content;
-
-      // Lấy danh sách sách đã áp dụng giảm giá
-      const discountBooksResponse = await axios.get(`http://localhost:8081/api/discounts/book-discounts`);
-      const discountedBookIds = discountBooksResponse.data.map(book => book.bookId);
-
-      // Lọc danh sách sách chưa được áp dụng
-      const availableBooks = allBooks.filter(book => !discountedBookIds.includes(book.bookId));
-
-      setBookList(availableBooks);
-      setIsBookSelectOpen(true);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách sách:", error);
+  const fetchRecommendedBooks = async (query) => {
+    if (!query) {
+      setRecommendedBooks([]);
+      return;
     }
+    try {
+      const response = await axios.get(`http://localhost:8081/api/book/search_recommended?bookName=${query}`);
+      setRecommendedBooks(response.data);
+    } catch (error) {
+      console.error('Error fetching recommended books:', error);
+      setRecommendedBooks([]);
+    }
+  };
+
+  const fetchDiscountedBooks = async (discountId) => {
+    try {
+      console.log(discountId);
+      const response = await axios.get(`http://localhost:8081/api/book/discounted_books?discountId=${discountId}`);
+      setSelectedBooks(response.data);
+    } catch (error) {
+      console.error('Error fetching discounted books:', error);
+      setSelectedBooks([]);
+      setError('Failed to fetch discounted books. Please try again.');
+    }
+  };
+
+  const handleSearchChange = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    fetchRecommendedBooks(query);
+  };
+
+  const handleBookSelect = (book) => {
+    if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
+      setSelectedBooks((prev) => [...prev, book]);
+    }
+    setSearchQuery('');
+    setRecommendedBooks([]);
+  };
+
+  const handleRemoveBook = (bookId) => {
+    setSelectedBooks((prev) => prev.filter((book) => book.bookId !== bookId));
   };
 
   const handleApplyDiscount = (discount) => {
     setSelectedDiscount(discount);
-    fetchBooks(discount.id);
-  };
-
-  const handleBookSelection = (event) => {
-    setSelectedBooks(event.target.value);
+    fetchDiscountedBooks(discount.id);
+    setIsDrawerOpen(true);
   };
 
   const handleConfirmApplyDiscount = async () => {
     if (!selectedDiscount || selectedBooks.length === 0) {
-      alert("Vui lòng chọn giảm giá và ít nhất một sách!");
+      alert("Please select a discount and at least one book!");
       return;
     }
-  
+
     try {
       await Promise.all(
-        selectedBooks.map(async (bookId) => {
+        selectedBooks.map(async (book) => {
           await axios.post("http://localhost:8081/api/discounts/createBookDiscount", {
-            bookId: bookId,
+            bookId: book.bookId,
             discountId: selectedDiscount.id,
           });
         })
       );
-  
-      alert(`Đã áp dụng giảm giá ${selectedDiscount?.percentage}% cho sách: ${selectedBooks.join(', ')}`);
-      setIsBookSelectOpen(false);
+
+      alert(`Applied ${selectedDiscount?.percentage}% discount to ${selectedBooks.length} books.`);
       setSelectedBooks([]);
+      setIsDrawerOpen(false);
+      if (addButtonRef.current) {
+        addButtonRef.current.focus();
+      }
     } catch (error) {
-      console.error("Lỗi khi áp dụng giảm giá:", error);
-      alert("Có lỗi xảy ra khi áp dụng giảm giá!");
+      console.error("Error applying discount:", error);
+      setError("An error occurred while applying the discount!");
     }
+  };
+
+  const handleCloseDrawer = () => {
+    if (addButtonRef.current) {
+      addButtonRef.current.focus();
+    }
+    setIsDrawerOpen(false);
+    setSelectedDiscount(null);
+    setSelectedBooks([]);
+    setSearchQuery('');
+    setRecommendedBooks([]);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
@@ -96,9 +147,23 @@ const DiscountManagement = () => {
         <div className="p-10 pt-20 flex w-full overflow-x-auto" style={{ gap: '1rem' }}>
           <Box className="flex-1 overflow-auto">
             <Box className="flex justify-between mb-2">
-              <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>Discount List</Typography>
-              <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={() => setIsAddModalOpen(true)}>Add</Button>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+                Discount List
+              </Typography>
+              <Button
+                variant="contained"
+                style={{ backgroundColor: 'green' }}
+                onClick={() => setIsAddModalOpen(true)}
+                ref={addButtonRef}
+              >
+                Add
+              </Button>
             </Box>
+            {error && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
             <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
               <Table stickyHeader>
                 <TableHead>
@@ -112,7 +177,15 @@ const DiscountManagement = () => {
                 </TableHead>
                 <TableBody>
                   {discounts.content?.map((discount) => (
-                    <TableRow key={discount.id} hover>
+                    <TableRow 
+                      key={discount.id} 
+                      hover
+                      onClick={() => {
+                        setSelectedDiscount(discount);
+                        setIsUpdateModalOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{discount.id}</TableCell>
                       <TableCell>{discount.percentage}%</TableCell>
                       <TableCell>{new Date(discount.startDate).toLocaleDateString()}</TableCell>
@@ -122,7 +195,10 @@ const DiscountManagement = () => {
                           variant="contained" 
                           color="primary" 
                           size="small" 
-                          onClick={() => handleApplyDiscount(discount)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApplyDiscount(discount);
+                          }}
                         >
                           Áp dụng
                         </Button>
@@ -138,42 +214,69 @@ const DiscountManagement = () => {
               count={discounts.totalElements || 0}
               rowsPerPage={rowsPerPage}
               page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(event) => { setRowsPerPage(parseInt(event.target.value, 10)); setPage(0); }}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
             />
           </Box>
         </div>
 
-        {/* Drawer hiển thị danh sách sách */}
+        {/* Drawer for applying discount */}
         <Drawer
           anchor="right"
-          open={isBookSelectOpen}
-          onClose={() => setIsBookSelectOpen(false)}
+          open={isDrawerOpen}
+          onClose={handleCloseDrawer}
           sx={{ width: 400, flexShrink: 0, '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' } }}
         >
-          <Typography variant="h6" sx={{ marginBottom: 2 }}>Chọn sách để áp dụng</Typography>
-          <FormControl fullWidth>
-            <InputLabel>Chọn sách</InputLabel>
-            <Select
-              multiple
-              value={selectedBooks}
-              onChange={handleBookSelection}
-              renderValue={(selected) => selected.join(', ')}
-            >
-              {bookList.map((book) => (
-                <MenuItem key={book.bookId} value={book.bookId}>
-                  {book.bookName} - {book.bookPrice}đ
-                </MenuItem>
+          <Typography variant="h6" sx={{ marginBottom: 2 }}>
+            Apply {selectedDiscount?.percentage}% Discount
+          </Typography>
+          <TextField
+            fullWidth
+            label="Search Books"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            sx={{ marginBottom: 2 }}
+          />
+          {recommendedBooks.length > 0 && (
+            <List sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ddd', borderRadius: 2 }}>
+              {recommendedBooks.map((book) => (
+                <ListItem
+                  key={book.bookId}
+                  button
+                  onClick={() => handleBookSelect(book)}
+                >
+                  <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
+                </ListItem>
               ))}
-            </Select>
-          </FormControl>
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            sx={{ marginTop: 2 }} 
+            </List>
+          )}
+          <Box sx={{ marginTop: 2 }}>
+            {selectedBooks.length > 0 && (
+              <>
+                <Typography variant="subtitle1">Selected Books:</Typography>
+                <List>
+                  {selectedBooks.map((book) => (
+                    <ListItem
+                      key={book.bookId}
+                      sx={{ border: '1px solid #ddd', borderRadius: 1, marginBottom: 1 }}
+                    >
+                      <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
+                      <IconButton onClick={() => handleRemoveBook(book.bookId)}>
+                        <CloseIcon />
+                      </IconButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </>
+            )}
+          </Box>
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{ marginTop: 2 }}
             onClick={handleConfirmApplyDiscount}
           >
-            Xác nhận
+            Confirm
           </Button>
         </Drawer>
 
