@@ -35,7 +35,27 @@ const Book = ({ book }) => {
 
             {/* Phần giá và số lượng */}
             <div className="flex flex-col items-start w-full pt-2 space-y-1">
-                <div className="text-lg font-semibold text-red-600">{book.bookPrice} VND</div>
+                {book.percentage > 0 ? (
+                    <div className="flex flex-col items-start">
+                        {/* Discounted Price */}
+                        <div className="text-lg font-semibold text-red-600">
+                            {book.discountedPrice.toLocaleString()} VND
+                        </div>
+                        {/* Original Price (Crossed Out) */}
+                        <div className="text-sm text-gray-500 line-through">
+                            {book.bookPrice.toLocaleString()} VND
+                        </div>
+                        {/* Discount Percentage */}
+                        <div className="text-sm font-semibold text-green-600">
+                            -{book.percentage}%
+                        </div>
+                    </div>
+                ) : (
+                    // Normal Price (if no discount)
+                    <div className="text-lg font-semibold text-gray-800">
+                        {book.bookPrice.toLocaleString()} VND
+                    </div>
+                )}
                 <div className="text-sm font-light text-gray-500">Còn: {book.bookStockQuantity} quyển</div>
             </div>
         </div>
