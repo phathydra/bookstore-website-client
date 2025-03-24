@@ -29,7 +29,14 @@ const Header = () => {
   }, []);
 
   const handleChange = (e) => setInput(e.target.value);
-  const handleSearch = () => navigate(`/products?searchParam=${input}`);
+  // Header.js
+  const handleSearch = () => {
+    if (input.trim() !== "") {
+        navigate(`/products?searchParam=${encodeURIComponent(input)}`);
+    } else {
+        navigate(`/products`); // Điều hướng đến trang product mà không có search param nếu input rỗng
+    }
+  };
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   const handleClickOutside = (event) => {
