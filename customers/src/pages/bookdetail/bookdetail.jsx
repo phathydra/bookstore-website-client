@@ -163,7 +163,23 @@ const BookDetail = () => {
                 <div className="md:w-2/3 p-5">
                     <div className="w-full">
                         <h2 className="!text-2xl font-bold text-gray-800 mb-2 w-full !text-left">{book.bookName}</h2>
-                        <h2 className="!text-lg font-bold !text-red-600 mb-4 w-full !text-left">{book.bookPrice.toLocaleString()} VNĐ</h2>
+                        {book.percentage > 0 ? (
+                            <div className="flex flex-col items-start">
+                                <div className="text-2xl font-bold text-red-600">
+                                    {book.discountedPrice.toLocaleString()} VNĐ
+                                </div>
+                                <div className="text-lg text-gray-500 line-through">
+                                    {book.bookPrice.toLocaleString()} VNĐ
+                                </div>
+                                <div className="text-lg font-semibold text-green-600">
+                                    -{book.percentage}%
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-2xl font-bold text-gray-800">
+                                {book.bookPrice.toLocaleString()} VNĐ
+                            </div>
+                        )}
 
                         <p className="!text-lg mb-2 flex items-center">
                             <span className="px-2 py-1 bg-blue-400 text-white rounded-lg font-semibold text-lg min-w-[720px] text-center">
