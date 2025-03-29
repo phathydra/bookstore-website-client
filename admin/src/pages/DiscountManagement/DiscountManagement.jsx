@@ -45,7 +45,7 @@ const DiscountManagement = () => {
       return;
     }
     try {
-      const response = await axios.get(`http://localhost:8081/api/book/search_recommended?bookName=${query}`);
+      const response = await axios.post(`http://localhost:8081/api/book/search_recommended?bookName=${query}`, selectedBooks.map(book => book.bookId));
       setRecommendedBooks(response.data);
     } catch (error) {
       console.error('Error fetching recommended books:', error);
