@@ -31,7 +31,7 @@ const UpdateDiscount = ({ selectedDiscount, onClose }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await axios.post(`http://localhost:8081/api/discounts/${selectedDiscount.id}`, formData);
+      await axios.put(`http://localhost:8081/api/discounts/${selectedDiscount.id}`, formData);
       onClose();
       window.location.reload(); // Reload to refresh the list
     } catch (error) {

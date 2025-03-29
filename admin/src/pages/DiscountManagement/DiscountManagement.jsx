@@ -96,14 +96,15 @@ const DiscountManagement = () => {
     }
 
     try {
-      await Promise.all(
-        selectedBooks.map(async (book) => {
-          await axios.post("http://localhost:8081/api/discounts/createBookDiscount", {
-            bookId: book.bookId,
-            discountId: selectedDiscount.id,
-          });
-        })
+      await axios.put(`http://localhost:8081/api/discounts/addDiscountToBooks?discountId=${selectedDiscount.id}`,
+        selectedBooks.map(book => book.bookId),
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
       );
+      
 
       alert(`Applied ${selectedDiscount?.percentage}% discount to ${selectedBooks.length} books.`);
       setSelectedBooks([]);
