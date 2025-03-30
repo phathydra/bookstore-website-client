@@ -62,7 +62,7 @@ const Cart = () => {
         fetchAddress();
     }, [accountId]);
 
-    const updateQuantity = useCallback( async (bookId, newQuantity) => {
+    const updateQuantity = useCallback(async (bookId, newQuantity) => {
         if (newQuantity <= 0) return;
         try {
             await axios.put(`http://localhost:8082/cart/update/${accountId}/${bookId}`, null, {
@@ -120,9 +120,15 @@ const Cart = () => {
         }
     }, [someSelected, allSelected]);
 
-    const totalAmount = cartItems.reduce((sum, item) =>
-        selectedItems[item.bookId] ? sum + item.price * item.quantity : sum, 0
-    );
+    const totalAmount = useMemo(() => {
+        return cartItems.reduce((sum, item) => {
+            if (selectedItems[item.bookId]) {
+                const priceToUse = item.percentage > 0 ? item.discountedPrice : item.price;
+                return sum + priceToUse * item.quantity;
+            }
+            return sum;
+        }, 0);
+    }, [cartItems, selectedItems]);
 
     const handleConfirmOrder = async () => {
         const selectedBooks = cartItems.filter(item => selectedItems[item.bookId]);
@@ -153,13 +159,13 @@ const Cart = () => {
                             <thead>
                                 <tr className="border-b">
                                     <th className="p-4 text-left">
-                                            <input
-                                                type="checkbox"
-                                                ref={selectAllRef}
-                                                checked={allSelected}
-                                                onChange={handleSelectAll}
-                                                className="w-5 h-5"
-                                            />
+                                        <input
+                                            type="checkbox"
+                                            ref={selectAllRef}
+                                            checked={allSelected}
+                                            onChange={handleSelectAll}
+                                            className="w-5 h-5"
+                                        />
                                     </th>
                                     <th className="p-4 text-left">Book</th>
                                     <th className="p-4 text-left">Quantity</th>
@@ -200,12 +206,11 @@ const Cart = () => {
                                                 </div>
                                             </td>
                                             <td className="p-4 text-lg font-semibold text-red-500">
-                                                {(item.price * item.quantity).toLocaleString("en-US")} VND
+                                                {(item.percentage > 0 ? item.discountedPrice * item.quantity : item.price * item.quantity).toLocaleString("en-US")} VND
                                             </td>
                                             <td className="p-4">
                                                 <button
-                                                    className="px-4 py-2 flex items-center gap-2 bg-red-500 text-white text-lg font-semibold rounded-lg shadow-md 
-                                                            hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-300"
+                                                    className="px-4 py-2 flex items-center gap-2 bg-red-500 text-white text-lg font-semibold rounded-lg shadow-md hover:bg-red-600 hover:scale-105 active:bg-red-700 active:scale-95 transition-all duration-300"
                                                     onClick={() => removeItem(item.bookId)}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -215,8 +220,6 @@ const Cart = () => {
                                                 </button>
                                             </td>
                                         </tr>
-
-                                        {/* Thêm đường phân cách giữa các sách, trừ sách cuối cùng */}
                                         {index < cartItems.length - 1 && <tr><td colSpan="5"><div className="border-t border-gray-300 my-2"></div></td></tr>}
                                     </React.Fragment>
                                 ))}
@@ -230,9 +233,7 @@ const Cart = () => {
             <div className="cart-total sticky bottom-0 w-full bg-green-100 p-4 rounded-t-lg flex flex-col items-center z-10">
                 <h3 className="text-xl font-bold">Total: {totalAmount.toLocaleString("en-US")} VND</h3>
                 <button
-                    className="mt-4 !bg-green-600 text-white py-3 px-6 !rounded-lg !shadow-lg 
-                            hover:scale-105 hover:bg-green-700 transition-all duration-300 
-                            disabled:opacity-50 !disabled:cursor-not-allowed !text-lg !font-semibold w-80 !text-center"
+                    className="mt-4 !bg-green-600 text-white py-3 px-6 !rounded-lg !shadow-lg hover:scale-105 hover:bg-green-700 transition-all duration-300 disabled:opacity-50 !disabled:cursor-not-allowed !text-lg !font-semibold w-80 !text-center"
                     disabled={totalAmount === 0}
                     onClick={handleConfirmOrder}
                 >

@@ -3,170 +3,199 @@ import axios from 'axios';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, TablePagination, Button, Box, Drawer
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    Paper, Typography, TablePagination, Button, Box, Drawer, TextField, InputAdornment, IconButton,
+    Snackbar, Alert, CircularProgress
 } from '@mui/material';
+import { Search } from '@mui/icons-material';
+import { debounce } from 'lodash';
 import AddInformation from './AddInformation';
 import UpdateInformation from './UpdateInformation';
 import InformationDetail from './InformationDetail';
 
 const InformationManagement = () => {
-  const [information, setInformation] = useState([]);
-  const [selectedInformation, setSelectedInformation] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [page, setPage] = useState(0);
+    const [information, setInformation] = useState({ content: [], totalElements: 0 });
+    const [selectedInformation, setSelectedInformation] = useState(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [page, setPage] = useState(0);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchInformation();
-  }, []);
+    useEffect(() => {
+        fetchInformation();
+    }, [page, rowsPerPage, searchTerm]);
 
-  const fetchInformation = async () => {
-    try {
-      const response = await axios.get('http://localhost:8080/api/account/allInformation');
-      setInformation(response.data);
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách thông tin:', error);
-    }
-  };
+    const fetchInformation = async () => {
+        setLoading(true);
+        try {
+            let response;
+            if (searchTerm) {
+                response = await axios.post(
+                    `http://localhost:8080/api/account/information_search?page=${page}&size=${rowsPerPage}&input=${searchTerm}`
+                );
+            } else {
+                response = await axios.get(
+                    `http://localhost:8080/api/account/allInformation?page=${page}&size=${rowsPerPage}`
+                );
+            }
+            setInformation(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error('Lỗi khi lấy danh sách thông tin:', error);
+            setSnackbar({ open: true, message: 'Lỗi khi lấy danh sách thông tin.', severity: 'error' });
+            setLoading(false);
+        }
+    };
 
-  const handleSelectInformation = (info) => {
-    setSelectedInformation(info);
-    setIsDrawerOpen(true);
-  };
+    const debouncedSearch = debounce((term) => {
+        setSearchTerm(term);
+        setPage(0);
+    }, 500);
 
-  const handleOpenAddModal = () => {
-    setIsAddModalOpen(true);
-  };
+    const handleSearchChange = (event) => {
+        debouncedSearch(event.target.value);
+    };
 
-  const handleCloseAddModal = () => {
-    setIsAddModalOpen(false);
-  };
+    const handleSelectInformation = (info) => {
+        setSelectedInformation(info);
+        setIsDrawerOpen(true);
+    };
 
-  const handleOpenUpdateModal = () => {
-    setIsUpdateModalOpen(true);
-    setIsDrawerOpen(false);
-  };
+    const handleToggleMenu = (collapsed) => {
+        setIsCollapsed(collapsed);
+    };
 
-  const handleCloseUpdateModal = () => {
-    setIsUpdateModalOpen(false);
-    setIsDrawerOpen(true);
-  };
+    const handleUpdateInformation = (updatedInfo) => {
+        setInformation({
+            ...information,
+            content: information.content.map((info) =>
+                info.id === updatedInfo.id ? updatedInfo : info
+            ),
+        });
+        setIsUpdateModalOpen(false);
+        setSnackbar({ open: true, message: 'Cập nhật thông tin thành công.', severity: 'success' });
+    };
 
-  const handleAddInformation = (newInformation) => {
-    setInformation([...information, { ...newInformation, id: `${information.length + 1}` }]);
-  };
-
-  const handleUpdateInformation = (updatedInformation) => {
-    setInformation(information.map(info => info.id === selectedInformation.id ? { ...updatedInformation, id: selectedInformation.id } : info));
-    setSelectedInformation(null);
-    setIsUpdateModalOpen(false);
-  };
-
-  const handleDeleteInformation = () => {
-    setInformation(information.filter(info => info.id !== selectedInformation.id));
-    setSelectedInformation(null);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const displayedInformation = information.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  return (
-    <div className="flex h-screen">
-      <div className="w-1/6 bg-white shadow-md z-50 fixed h-full">
-        <SideNav />
-      </div>
-
-      <main className="flex-1 bg-gray-100 relative flex flex-col" style={{ paddingLeft: '14.5%' }}>
-        <Header title="Information Management" />
-
-        <div className="p-10 pt-20 flex w-full overflow-x-auto" style={{ gap: '1rem' }}>
-          <Box className="flex-1 overflow-auto">
-            <Box className="flex justify-between mb-2">
-              <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                Danh sách thông tin
-              </Typography>
-              <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>
-                Thêm
-              </Button>
-            </Box>
-
-            <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Account ID</TableCell>
-                    <TableCell>Tên</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Địa chỉ</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {displayedInformation.map((info) => (
-                    <TableRow key={info.id} onClick={() => handleSelectInformation(info)} hover>
-                      <TableCell>{info.id}</TableCell>
-                      <TableCell>{info.accountId}</TableCell>
-                      <TableCell>{info.name}</TableCell>
-                      <TableCell>{info.email}</TableCell>
-                      <TableCell>{info.phone}</TableCell>
-                      <TableCell>{info.address}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={information.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </Box>
+    return (
+        <div className="flex h-screen">
+            <SideNav onToggleCollapse={handleToggleMenu} />
+            <main
+                className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
+                style={{ paddingLeft: isCollapsed ? '5%' : '16.5%' }}
+            >
+                <Header
+                    title="Information Management"
+                    isCollapsed={isCollapsed}
+                    className="sticky top-0 z-50 bg-white shadow-md"
+                />
+                <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
+                    <Box className="flex-1 flex justify-center">
+                        <TextField
+                            label="Search"
+                            variant="outlined"
+                            size="small"
+                            onChange={handleSearchChange}
+                            className="w-[50%]"
+                            sx={{ borderRadius: '8px', backgroundColor: 'white' }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton>
+                                            <Search />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                                style: { borderRadius: '8px' },
+                            }}
+                        />
+                    </Box>
+                    <Button
+                        variant="contained"
+                        style={{ backgroundColor: 'green' }}
+                        onClick={() => setIsAddModalOpen(true)}
+                        disabled={loading}
+                    >
+                        {loading ? <CircularProgress size={24} /> : "Add"}
+                    </Button>
+                </Box>
+                <div className="flex-1 overflow-auto pt-[72px] px-2">
+                    <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
+                        <Table stickyHeader>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell>Account ID</TableCell>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Email</TableCell>
+                                    <TableCell>Phone</TableCell>
+                                    <TableCell>Address</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {information?.content?.map((info) => (
+                                    <TableRow key={info.id} onClick={() => handleSelectInformation(info)} hover>
+                                        <TableCell>{info.id}</TableCell>
+                                        <TableCell>{info.accountId}</TableCell>
+                                        <TableCell>{info.name}</TableCell>
+                                        <TableCell>{info.email}</TableCell>
+                                        <TableCell>{info.phone}</TableCell>
+                                        <TableCell>{info.address}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    <Box className="sticky bottom-0 bg-white shadow-md">
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={information?.totalElements || 0}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={(event, newPage) => setPage(newPage)}
+                            onRowsPerPageChange={(event) => {
+                                setRowsPerPage(parseInt(event.target.value, 10));
+                                setPage(0);
+                            }}
+                        />
+                    </Box>
+                </div>
+                <Drawer
+                    anchor="right"
+                    open={isDrawerOpen}
+                    onClose={() => setIsDrawerOpen(false)}
+                    sx={{
+                        width: 400,
+                        flexShrink: 0,
+                        '& .MuiDrawer-paper': {
+                            width: 500,
+                            boxSizing: 'border-box',
+                        },
+                    }}
+                >
+                    <InformationDetail selectedInformation={selectedInformation} />
+                </Drawer>
+                {isAddModalOpen && <AddInformation onClose={() => setIsAddModalOpen(false)} onAdd={fetchInformation} />}
+                {isUpdateModalOpen && (
+                    <UpdateInformation
+                        selectedInformation={selectedInformation}
+                        onUpdate={handleUpdateInformation}
+                        onClose={() => setIsUpdateModalOpen(false)}
+                    />
+                )}
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                    <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </main>
         </div>
-
-        <Drawer
-          anchor="right"
-          open={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          sx={{
-            width: 400,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: 500,
-              boxSizing: 'border-box',
-            },
-          }}
-        >
-          <InformationDetail
-            selectedInformation={selectedInformation}
-            handleOpenUpdateModal={handleOpenUpdateModal}
-          />
-        </Drawer>
-
-        {isAddModalOpen && <AddInformation onClose={handleCloseAddModal} />}
-        {isUpdateModalOpen && <UpdateInformation
-          selectedInformation={selectedInformation}
-          onUpdate={handleUpdateInformation}
-          onClose={handleCloseUpdateModal}
-        />}
-      </main>
-    </div>
-  );
+    );
 };
 
 export default InformationManagement;

@@ -21,13 +21,15 @@ const OrderDetail = () => {
             ward: address.ward,
             note: address.note,
             totalPrice: totalAmount,
-            paymentMethod: paymentMethod, // Adding the payment method to the order
+            paymentMethod: paymentMethod,
             orderItems: selectedBooks.map(item => ({
                 bookId: item.bookId,
                 bookName: item.bookName,
                 bookImage: item.bookImage,
                 quantity: item.quantity,
-                price: item.price
+                price: item.discountedPrice !== undefined && item.discountedPrice !== null
+                    ? item.discountedPrice
+                    : item.price
             })),
             orderStatus: "Chưa thanh toán",
             shippingStatus: "Chờ xử lý"
@@ -37,7 +39,7 @@ const OrderDetail = () => {
             const response = await axios.post("http://localhost:8082/api/orders/create", order);
             if (response.status === 200) {
                 alert("Đặt hàng thành công!");
-                navigate("/orderhistory");  // Navigate to success page
+                navigate("/orderhistory");
             } else {
                 alert("Có lỗi xảy ra khi đặt hàng.");
             }
@@ -86,14 +88,18 @@ const OrderDetail = () => {
                                 </div>
                                 <div className="order-item-price">
                                     <label>Giá: </label>
-                                    <span>{item.price.toLocaleString("vi-VN")} VND</span>
+                                    <span>
+                                        {(item.discountedPrice !== undefined && item.discountedPrice !== null
+                                            ? item.discountedPrice
+                                            : item.price
+                                        ).toLocaleString("vi-VN")} VND
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Payment method section */}
                 <div className="payment-method">
                     <h3>Phương thức thanh toán</h3>
                     <div className="payment-options">
@@ -122,7 +128,6 @@ const OrderDetail = () => {
                     </div>
                 </div>
 
-                {/* Total price section */}
                 <div className="order-total">
                     <h3>Tổng tiền: {totalAmount.toLocaleString("vi-VN")} VND</h3>
                 </div>

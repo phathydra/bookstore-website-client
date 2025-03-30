@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Divider, Button } from '@mui/material';
-import UpdateBook from './UpdateBook'; // import component UpdateBook
+import UpdateBook from './UpdateBook';
 
 const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) => {
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
@@ -14,11 +14,10 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
   };
 
   return (
-    <Box width="800px" p={3} role="presentation" display="flex" flexDirection="column" sx={{ paddingTop: 1 }}>
+    <Box width="800px" p={3} role="presentation" display="flex" flexDirection="column" sx={{ paddingTop: 1 }} tabIndex="-1"> {/* Thêm tabIndex="-1" */}
       {selectedBook && (
         <>
           <Box display="flex" mb={3} p={2} sx={{ border: '1px solid #ddd', borderRadius: '8px' }}>
-            {/* Left side - Book image and title */}
             <Box sx={{ width: '35%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <img
                 src={selectedBook.bookImage}
@@ -34,11 +33,10 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
                 </Typography>
               </Box>
             </Box>
-            {/* Right side - Book details */}
             <Box sx={{ width: '65%', p: 2 }}>
               <Divider sx={{ width: '100%', mb: 2 }} />
               <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-                {[ 
+                {[
                   { label: "Loại sách", value: selectedBook.bookCategory },
                   { label: "Năm sản xuất", value: selectedBook.bookYearOfProduction },
                   { label: "Giá", value: `$${selectedBook.bookPrice}` },
@@ -55,6 +53,7 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
                     <textarea
                       value={item.value}
                       readOnly
+                      tabIndex="-1" // Thêm tabIndex="-1"
                       style={{
                         width: '100%',
                         minHeight: '30px',
@@ -72,14 +71,14 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
             </Box>
           </Box>
 
-          {/* Description at the bottom */}
-          <Box sx={{ width: '100%', p: 2, mb: 1, border: '1px solid #ddd', borderRadius: '8px' }}> {/* Reduced margin-bottom */}
+          <Box sx={{ width: '100%', p: 2, mb: 1, border: '1px solid #ddd', borderRadius: '8px' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
               Mô tả:
             </Typography>
             <textarea
               value={selectedBook.bookDescription}
               readOnly
+              tabIndex="-1" // Thêm tabIndex="-1"
               style={{
                 width: '100%',
                 minHeight: '120px',
@@ -93,7 +92,6 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
             />
           </Box>
 
-          {/* Edit and Delete buttons */}
           <Box className="flex justify-between" width="100%" display="flex" gap={2} p={2}>
             <Button variant="contained" color="primary" onClick={handleOpenUpdateModalClick} fullWidth>
               Sửa
@@ -103,7 +101,6 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
             </Button>
           </Box>
 
-          {/* UpdateBook Modal */}
           {openUpdateModal && (
             <UpdateBook
               book={selectedBook}
