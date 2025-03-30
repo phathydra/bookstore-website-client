@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const Header = ({ title }) => {
+const Header = ({ title, isCollapsed }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState({ name: "", avatar: "" });
   const menuRef = useRef(null);
@@ -33,17 +33,15 @@ const Header = ({ title }) => {
   };
 
   return (
-      <header className="fixed top-0 left-[16.5%] w-[83.5%] flex justify-between items-center bg-white shadow-md py-4 px-10 z-40">
+    <header
+  className={`fixed top-0 right-0 flex justify-between items-center bg-white shadow-md py-4 px-10 z-40 transition-all duration-300`}
+  style={{ left: isCollapsed ? "5rem" : "16.5%" }}
+>
+
       <h2 className="text-2xl font-bold text-center">{title}</h2>
       <div className="flex items-center space-x-3 relative" ref={menuRef}>
-      <img
-          className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-lg ml-2"
-          src={user.avatar}
-          alt="Profile"
-        />
-        <span className="text-sm font-semibold text-gray-700 pl-2">
-          {user.name}
-        </span>
+        <img className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-lg ml-2" src={user.avatar} alt="Profile" />
+        <span className="text-sm font-semibold text-gray-700 pl-2">{user.name}</span>
         <button onClick={toggleMenu} className="flex flex-col items-center space-y-1 ml-4">
           <span className="w-5 h-1 bg-gray-700"></span>
           <span className="w-5 h-1 bg-gray-700"></span>
@@ -59,10 +57,7 @@ const Header = ({ title }) => {
               <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                 <Link to="/change-password">Đổi mật khẩu</Link>
               </li>
-              <li
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
+              <li onClick={handleLogout} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                 Log Out
               </li>
             </ul>

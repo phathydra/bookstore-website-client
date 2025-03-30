@@ -7,7 +7,7 @@ const AddAccount = ({ onAdd, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: '',
+    role: 'User', // Đặt giá trị mặc định là "User"
   });
 
   const handleChange = (e) => {
@@ -78,7 +78,7 @@ const AddAccount = ({ onAdd, onClose }) => {
               <Select
                 label="Quyền"
                 name="role"
-                value={formData.role}
+                value={formData.role} // Giá trị mặc định là "User"
                 onChange={handleChange}
                 required
               >

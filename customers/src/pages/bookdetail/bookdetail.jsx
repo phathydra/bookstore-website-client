@@ -57,32 +57,33 @@ const BookDetail = () => {
 
     const addToCart = async () => {
         if (!book) return;
-
+    
         const accountId = localStorage.getItem("accountId");
         if (!accountId) {
             alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
             navigate("/login");
             return;
         }
-
+    
         if (book.bookStockQuantity <= 0) {
             alert("Sách này đã hết hàng!");
             return;
         }
-
-        const cartData = {
-            accountId: accountId,
-            cartItems: [{
-                bookId: book.bookId,
-                bookName: book.bookName,
-                price: parseFloat(book.bookPrice),
-                quantity: quantity,
-                bookImage: book.bookImage
-            }]
-        };
-
+    
         try {
-            const response = await axios.post("http://localhost:8082/cart/add", cartData);
+            const response = await axios.post("http://localhost:8082/cart/add", {
+                accountId: accountId,
+                cartItems: [{
+                    bookId: book.bookId,
+                    bookName: book.bookName,
+                    price: parseFloat(book.bookPrice),
+                    discountedPrice: book.discountedPrice ? parseFloat(book.discountedPrice) : null,
+                    percentage: book.percentage,
+                    quantity: quantity,
+                    bookImage: book.bookImage
+                }]
+            });
+    
             if (response.status === 200) {
                 alert("Sách đã được thêm vào giỏ hàng!");
                 navigate("/cart");
@@ -94,7 +95,6 @@ const BookDetail = () => {
             alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
         }
     };
-
     const openModal = (content) => {
         setModalContent(content);
         setIsModalOpen(true);
@@ -124,6 +124,15 @@ const BookDetail = () => {
     if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
     if (!book) return <div className="text-center py-10 text-gray-600">Sách không tồn tại.</div>;
 
+    // Tính toán giá tổng cộng cho sản phẩm
+    const calculateTotalPrice = () => {
+        if (book.discountedPrice && book.percentage > 0) {
+            return book.discountedPrice * quantity;
+        } else {
+            return book.bookPrice * quantity;
+        }
+    };
+
     return (
         <div className="container mx-auto !px-4 !py-6">
             <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden border p-5">
@@ -137,14 +146,12 @@ const BookDetail = () => {
                             <button onClick={handleIncrease} className="px-2 py-1 text-black">+</button>
                         </div>
 
-
                         <button
                             className="px-6 py-3 bg-green-700 text-white text-lg !font-semibold !rounded-xl hover:scale-105 hover:bg-green-800 transition shadow-md hover:shadow-lg !pl-4 !pr-4"
                             onClick={addToCart}
                         >
-                            Thêm vào 
+                            Thêm vào
                         </button>
-
                     </div>
 
                     <div className="!mt-4 !p-4 bg-gray-100 !rounded-lg text-gray-700 text-sm">
@@ -165,10 +172,10 @@ const BookDetail = () => {
                         {book.percentage > 0 ? (
                             <div className="flex flex-col items-start">
                                 <div className="text-2xl font-bold text-red-600">
-                                    {book.discountedPrice.toLocaleString()} VNĐ
+                                    {calculateTotalPrice().toLocaleString()} VNĐ
                                 </div>
                                 <div className="text-lg text-gray-500 line-through">
-                                    {book.bookPrice.toLocaleString()} VNĐ
+                                    {(book.bookPrice * quantity).toLocaleString()} VNĐ
                                 </div>
                                 <div className="text-lg font-semibold text-green-600">
                                     -{book.percentage}%
@@ -176,7 +183,7 @@ const BookDetail = () => {
                             </div>
                         ) : (
                             <div className="text-2xl font-bold text-gray-800">
-                                {book.bookPrice.toLocaleString()} VNĐ
+                                {calculateTotalPrice().toLocaleString()} VNĐ
                             </div>
                         )}
 

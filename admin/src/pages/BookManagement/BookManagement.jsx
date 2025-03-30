@@ -1,38 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SideNav from '../../components/SideNav/SideNav';
-import Header from '../../components/Header/Header';
-import { 
+import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, TablePagination, Button, Box, Drawer
+  Paper, Typography, TablePagination, Button, Box, Drawer, TextField, InputAdornment, IconButton,
 } from '@mui/material';
-import { Resizable } from 'react-resizable';
+import { Search } from '@mui/icons-material';
 import AddBook from './AddBook';
 import UpdateBook from './UpdateBook';
-import BookDetail from './BookDetail'; // Import the new BookDetail component
+import BookDetail from './BookDetail';
+import SideNav from '../../components/SideNav/SideNav';
+import Header from '../../components/Header/Header';
 
 const BookManagement = () => {
-  const [books, setBooks] = useState([]);
-  const [selectedBook, setSelectedBook] = useState(null); 
+  const [books, setBooks] = useState({ content: [], totalElements: 0 }); // Khởi tạo state với cấu trúc phân trang
+  const [selectedBook, setSelectedBook] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
-  const [displayedBooks, setDisplayedBooks] = useState([])
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const apiUrl = 'http://localhost:8081/api/book';
 
   useEffect(() => {
     fetchBooks();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, searchTerm]);
 
   const fetchBooks = async () => {
     try {
-      const response = await axios.get(`http://localhost:8081/api/book?page=${page}&size=${rowsPerPage}`);
-      console.log("fetching with " + page + " " + rowsPerPage);
+      let url = `${apiUrl}?page=${page}&size=${rowsPerPage}`;
+      let response;
+      if (searchTerm) {
+        response = await axios.post(
+          `${apiUrl}/search?page=0&size=${rowsPerPage}&input=${searchTerm}`
+        );
+      } else {
+        response = await axios.get(url);
+      }
       setBooks(response.data);
-      setDisplayedBooks(response.data?.content || [])
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách sách:', error);
+      console.error('Error fetching books:', error);
     }
   };
 
@@ -41,140 +50,141 @@ const BookManagement = () => {
     setIsDrawerOpen(true);
   };
 
-  const handleOpenAddModal = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const handleCloseAddModal = () => {
-    setIsAddModalOpen(false);
-  };
-
-  const handleOpenUpdateModal = () => {
-    setIsUpdateModalOpen(true);
-    setIsDrawerOpen(false); 
-  };
-
-  const handleCloseUpdateModal = () => {
-    setIsUpdateModalOpen(false);
-    setIsDrawerOpen(true); 
-  };
+  const handleOpenAddModal = () => setIsAddModalOpen(true);
+  const handleCloseAddModal = () => setIsAddModalOpen(false);
+  const handleOpenUpdateModal = () => { setIsUpdateModalOpen(true); setIsDrawerOpen(false); };
+  const handleCloseUpdateModal = () => { setIsUpdateModalOpen(false); setIsDrawerOpen(true); };
 
   const handleAddBook = async (newBook) => {
     try {
-      const response = await axios.post('http://localhost:8081/api/book', newBook);
-      setBooks([...books, response.data]);
+      await axios.post(apiUrl, newBook);
+      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
+      setIsAddModalOpen(false);
     } catch (error) {
-      console.error('Lỗi khi thêm sách:', error);
+      console.error('Error adding book:', error);
     }
   };
 
   const handleUpdateBook = async (updatedBook) => {
     try {
-      await axios.put(`http://localhost:8081/api/book/${selectedBook.bookId}`, updatedBook);
-      setBooks(books.content.map(book => book.bookId === selectedBook.bookId ? updatedBook : book));
+      await axios.put(`${apiUrl}/${selectedBook.bookId}`, updatedBook);
+      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
       setSelectedBook(null);
-      setIsUpdateModalOpen(false); 
+      setIsUpdateModalOpen(false);
       setIsDrawerOpen(false);
-      window.location.reload();
     } catch (error) {
-      console.error('Lỗi khi cập nhật sách:', error);
+      console.error('Error updating book:', error);
     }
   };
 
   const handleDeleteBook = async () => {
     try {
-      await axios.delete(`http://localhost:8081/api/book/${selectedBook.bookId}`);
-      setBooks(books.filter(book => book.bookId !== selectedBook.bookId));
+      await axios.delete(`${apiUrl}/${selectedBook.bookId}`);
+      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
       setSelectedBook(null);
-      setIsDrawerOpen(false); 
+      setIsDrawerOpen(false);
     } catch (error) {
-      console.error('Lỗi khi xóa sách:', error);
+      console.error('Error deleting book:', error);
     }
   };
 
-  const ResizableCell = (props) => {
-    const { width, ...restProps } = props;
-
-    if (!width) {
-      return <TableCell {...restProps} />;
-    }
-
-    return (
-      <Resizable width={width} height={0} handle={<span className="react-resizable-handle" />}>
-        <TableCell {...restProps} />
-      </Resizable>
-    );
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // const displayedBooks = books.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
 
   return (
     <div className="flex h-screen">
-      <div className="w-1/6 bg-white shadow-md z-50 fixed h-full">
-        <SideNav />
+      {/* Sidebar */}
+      <div className={`bg-white shadow-md z-50 fixed h-full transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-1/6'}`}>
+        <SideNav onToggleCollapse={() => setIsCollapsed(!isCollapsed)} />
       </div>
 
-      <main className="flex-1 bg-gray-100 relative flex flex-col" style={{ paddingLeft: '14.5%' }}>
-        <Header title="Book Management" />
+      {/* Main Content */}
+      <main
+        className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
+        style={{ marginLeft: isCollapsed ? '5rem' : '16.5%' }}
+      >
+        {/* Fixed Header */}
+        <Header title="Book Management" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
 
-        <div className="p-10 pt-20 flex w-full overflow-x-auto" style={{ gap: '1rem' }}>
-          <Box className="flex-1 overflow-auto">
-            <Box className="flex justify-between mb-2">
-              <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                Bảng danh sách sách
-              </Typography>
-              <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>Thêm</Button>
-            </Box>
-
-            <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <ResizableCell width={80}>ID</ResizableCell>
-                    <ResizableCell width={150}>Tên</ResizableCell>
-                    <ResizableCell width={150}>Tác giả</ResizableCell>
-                    <ResizableCell width={80}>Giá</ResizableCell>
-                    <ResizableCell width={120}>Thể loại</ResizableCell>
-                    <ResizableCell width={80}>Năm SX</ResizableCell>
-                    <ResizableCell width={120}>Nhà XB</ResizableCell>
-                    <ResizableCell width={120}>Ngôn ngữ</ResizableCell>
-                    <ResizableCell width={120}>Số lượng tồn kho</ResizableCell>
-                    <ResizableCell width={120}>Nhà cung cấp</ResizableCell>
-                    <ResizableCell width={200}>Mô tả</ResizableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {displayedBooks.map((book) => (
-                    <TableRow key={book.bookId} onClick={() => handleSelectBook(book)} hover>
-                      <TableCell>{book.bookId}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{book.bookName}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' }}>{book.bookAuthor}</TableCell>
-                      <TableCell>{book.bookPrice}</TableCell>
-                      <TableCell>{book.bookCategory}</TableCell>
-                      <TableCell>{book.bookYearOfProduction}</TableCell>
-                      <TableCell>{book.bookPublisher}</TableCell>
-                      <TableCell>{book.bookLanguage}</TableCell>
-                      <TableCell>{book.bookStockQuantity}</TableCell>
-                      <TableCell>{book.bookSupplier}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{book.bookDescription}</TableCell>
-                    </TableRow>
+        {/* Fixed Search & Add Box */}
+        <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
+          {/* Ô tìm kiếm căn giữa, kéo dài và bo tròn */}
+          <Box className="flex-1 flex justify-center">
+            <TextField
+              label="Search"
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-[50%]"
+              sx={{ borderRadius: '8px', backgroundColor: 'white' }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton>
+                      <Search />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+                style: { borderRadius: '8px' }
+              }}
+            />
+          </Box>
+          {/* Nút Add nằm bên trái */}
+          <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>
+            Add
+          </Button>
+        </Box>
+        {/* Table Section with Padding */}
+        <div className="flex-1 overflow-auto pt-[72px] px-2">
+          <TableContainer component={Paper} sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  {[
+                    'ID', 'Name', 'Author', 'Price', 'Main Category', 'Category',
+                    'Year', 'Publisher', 'Language', 'Stock', 'Supplier', 'Description'
+                  ].map((header) => (
+                    <TableCell key={header}>{header}</TableCell>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {books?.content?.map((book) => (
+                  <TableRow key={book.bookId} onClick={() => handleSelectBook(book)} hover>
+                    {[
+                      'bookId', 'bookName', 'bookAuthor', 'bookPrice', 'mainCategory',
+                      'bookCategory', 'bookYearOfProduction', 'bookPublisher',
+                      'bookLanguage', 'bookStockQuantity', 'bookSupplier', 'bookDescription'
+                    ].map((key) => (
+                      <TableCell key={key} sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: key === 'bookDescription' ? '150px' : '100px'
+                      }}>
+                        {book[key]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination cố định bên dưới */}
+          <Box className="sticky bottom-0 bg-white shadow-md">
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
-              count={books.totalElements}
+              count={books?.totalElements || 0}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
@@ -182,27 +192,17 @@ const BookManagement = () => {
             />
           </Box>
         </div>
-
+        {/* Drawer */}
         <Drawer
           anchor="right"
           open={isDrawerOpen}
           onClose={() => setIsDrawerOpen(false)}
-          sx={{
-            width: 400,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: 800,
-              boxSizing: 'border-box',
-            },
-          }}
+          sx={{ width: 400, flexShrink: 0, '& .MuiDrawer-paper': { width: 800, boxSizing: 'border-box' } }}
         >
-          <BookDetail 
-            selectedBook={selectedBook} 
-            handleOpenUpdateModal={handleOpenUpdateModal}
-            handleDeleteBook={handleDeleteBook}
-          />
+          <BookDetail selectedBook={selectedBook} handleOpenUpdateModal={handleOpenUpdateModal} handleDeleteBook={handleDeleteBook} />
         </Drawer>
 
+        {/* Modals */}
         {isAddModalOpen && <AddBook handleAddBook={handleAddBook} onClose={handleCloseAddModal} />}
         {isUpdateModalOpen && <UpdateBook selectedBook={selectedBook} handleUpdateBook={handleUpdateBook} onClose={handleCloseUpdateModal} />}
       </main>
