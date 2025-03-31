@@ -34,6 +34,9 @@ const SideNav = ({ onToggleCollapse }) => {
           <a href="/discount-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaFileImport /> {!isCollapsed && <span>Quản lý Giảm Giá</span>}
           </a>
+          <a href="/voucher-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaFileImport /> <span>Quản lý Voucher</span>
+          </a>
           <a href="/supplier-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaFileImport /> {!isCollapsed && <span>Quản lý Nhà cung cấp</span>}
           </a>
