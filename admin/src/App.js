@@ -11,6 +11,7 @@ import SupplierManagement from "./pages/SupplierManagement/SupplierManagement";
 import Profile from "./pages/Profile/Profile";
 import Password from "./pages/Profile/Password";
 import DiscountManagement from "./pages/DiscountManagement/DiscountManagement";
+import VoucherManagement from "./pages/VoucherManagement/VoucherManagement";
 
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/change-password" element={<Password />} />
           <Route path="/discount-management" element={<DiscountManagement/>}/>
+          <Route path="/voucher-management" element={<VoucherManagement/>}/>
         </Routes>
       </div>
     </Router>
