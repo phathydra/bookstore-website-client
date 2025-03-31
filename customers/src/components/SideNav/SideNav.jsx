@@ -18,8 +18,8 @@ const SideNav = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="w-64 bg-cyan-800 text-white h-screen relative z-50 ml-4"> {/* Thêm ml-4 để cách lề */}
-            <h2 className="text-xl font-bold p-4 border-b border-gray-300 bg-cyan-700 text-white !text-xl">
+        <div className="w-64 bg-cyan-800 text-white h-screen relative z-50">
+            <h2 className="font-bold p-4 border-b border-gray-300 bg-cyan-700 text-white !text-xl">
                 TẤT CẢ DANH MỤC
             </h2>
 
@@ -33,7 +33,7 @@ const SideNav = () => {
                     >
                         {/* Nhấn vào danh mục chính */}
                         <button
-                            className="w-full text-left px-4 py-3 hover:bg-cyan-600 transition-colors"
+                            className="w-full text-left px-1 py-3 hover:bg-cyan-600 transition-colors"
                             onClick={() => navigate(`/category/${encodeURIComponent(mainCategory)}`)}
                         >
                             {mainCategory}
