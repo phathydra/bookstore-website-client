@@ -24,6 +24,7 @@ const Home = () => {
   const [discountedTotalPages, setDiscountedTotalPages] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [onHovered, setOnHoverd] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -152,15 +153,15 @@ const Home = () => {
                     </div>
                     <button
                     className={`!ml-4 flex items-center justify-center aspect-square !rounded-full transition-all duration-300 ease-in-out ${
-                        isHovered
-                        ? "border-2 border-cyan-800 bg-cyan-800 text-white w-12"
-                        : "border-none bg-transparent text-gray-500 w-12"
+                        isHovered && onHovered == category
+                        ? "border-2 border-cyan-800 bg-cyan-800 text-white w-18"
+                        : "border border-gray-800 bg-transparent text-gray-500 w-12"
                     }`}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
+                    onMouseEnter={() => {setIsHovered(true); setOnHoverd(category)}}
+                    onMouseLeave={() => {setIsHovered(false)}}
                     onClick={() => navigate(`/category/${encodeURIComponent(category)}`)}
                     >
-                    {isHovered ? ">" : ">"}
+                    {isHovered && onHovered == category? "More..." : ">"}
                     </button>
                 </div>
             </div>
