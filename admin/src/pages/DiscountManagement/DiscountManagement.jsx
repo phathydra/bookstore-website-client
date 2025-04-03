@@ -69,8 +69,20 @@ const DiscountManagement = () => {
   const handleSearchChange = (event) => {
     const query = event.target.value;
     setSearchQuery(query);
-    fetchRecommendedBooks(query);
   };
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setRecommendedBooks([]);
+      return;
+    }
+  
+    const delayDebounce = setTimeout(() => {
+      fetchRecommendedBooks(searchQuery);
+    }, 500); // 300ms delay
+  
+    return () => clearTimeout(delayDebounce); // Cleanup function to cancel previous timeout
+  }, [searchQuery]);
 
   const handleBookSelect = (book) => {
     if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
