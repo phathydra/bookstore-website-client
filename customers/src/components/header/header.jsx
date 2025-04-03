@@ -29,6 +29,9 @@ const Header = () => {
   }, []);
 
   const handleChange = (e) => setInput(e.target.value);
+
+  
+
   // Header.js
   const handleSearch = () => {
     if (input.trim() !== "") {
@@ -56,6 +59,12 @@ const Header = () => {
     localStorage.removeItem("accountId");
     setIsLogin(false);
     navigate("/login");
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
   };
 
   return (
@@ -86,6 +95,7 @@ const Header = () => {
             type="text"
             placeholder="Search..."
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
             className="px-6 py-3 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-300 border-none bg-gray-100 w-500 h-12"
           />
           <button
