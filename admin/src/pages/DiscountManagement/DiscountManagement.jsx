@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination, 
-  Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer 
+  Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper, ClickAwayListener
 } from '@mui/material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
@@ -24,6 +24,7 @@ const DiscountManagement = () => {
   const [error, setError] = useState('');
 
   const addButtonRef = useRef(null);
+  const anchorRef = useRef(null);
 
   useEffect(() => {
     const fetchDiscounts = async () => {
@@ -226,31 +227,77 @@ const DiscountManagement = () => {
           anchor="right"
           open={isDrawerOpen}
           onClose={handleCloseDrawer}
-          sx={{ width: 400, flexShrink: 0, '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' } }}
+          sx={{
+            width: 400,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' },
+          }}
         >
           <Typography variant="h6" sx={{ marginBottom: 2 }}>
             Apply {selectedDiscount?.percentage}% Discount
           </Typography>
+
           <TextField
             fullWidth
             label="Search Books"
             value={searchQuery}
             onChange={handleSearchChange}
+            inputRef={anchorRef}
             sx={{ marginBottom: 2 }}
           />
-          {recommendedBooks.length > 0 && (
-            <List sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #ddd', borderRadius: 2 }}>
-              {recommendedBooks.map((book) => (
-                <ListItem
-                  key={book.bookId}
-                  button
-                  onClick={() => handleBookSelect(book)}
-                >
-                  <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
-                </ListItem>
-              ))}
-            </List>
-          )}
+
+          {/* Popper for Recommended Books */}
+          <Popper
+            open={recommendedBooks.length > 0}
+            anchorEl={anchorRef.current}
+            placement="bottom-start"
+            disablePortal={true}
+            modifiers={[
+              {
+                name: 'preventOverflow',
+                enabled: true,
+                options: {
+                  boundary: 'viewport',
+                },
+              },
+            ]}
+            sx={{ zIndex: 1300 }} // Ensure Popper is above other elements
+          >
+            <Paper
+              elevation={4} // Increased elevation for better shadow
+              sx={{
+                backgroundColor: '#fff', // White background for contrast
+                marginTop: 1, // Add some space between TextField and Popper
+                border: '1px solid #ccc', // Subtle border for definition
+                width: 360, // Slightly less than Drawer width for better fit
+              }}
+            >
+              <List
+                sx={{
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                  borderRadius: 2,
+                }}
+              >
+                {recommendedBooks.map((book) => (
+                  <ListItem
+                    key={book.bookId}
+                    button
+                    onClick={() => handleBookSelect(book)}
+                    sx={{
+                      transition: 'background-color 0.2s ease', // Smooth transition for hover
+                      '&:hover': {
+                        backgroundColor: '#f5f5f5', // Light gray on hover
+                      },
+                    }}
+                  >
+                    <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Popper>
+
           <Box sx={{ marginTop: 2 }}>
             {selectedBooks.length > 0 && (
               <>
@@ -271,6 +318,7 @@ const DiscountManagement = () => {
               </>
             )}
           </Box>
+
           <Button
             variant="contained"
             color="secondary"
