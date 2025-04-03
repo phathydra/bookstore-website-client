@@ -68,6 +68,7 @@ const OrderDetail = () => {
         let discount = 0;
         if (appliedVoucher.voucherType === "Percentage Discount") {
             discount = (appliedVoucher.percentageDiscount / 100) * totalAmount;
+            if(discount > appliedVoucher.highestDiscountValue) discount = appliedVoucher.highestDiscountValue;
         } else if (appliedVoucher.voucherType === "Value Discount") {
             discount = appliedVoucher.valueDiscount;
         }
@@ -86,7 +87,7 @@ const OrderDetail = () => {
             district: address.district,
             ward: address.ward,
             note: address.note,
-            totalPrice: calculateDiscountedTotal(),
+            totalPrice: totalAmount,
             paymentMethod: paymentMethod,
             orderItems: selectedBooks.map((item) => ({
                 bookId: item.bookId,
@@ -100,15 +101,28 @@ const OrderDetail = () => {
             })),
             orderStatus: "Chưa thanh toán",
             shippingStatus: "Chờ xử lý",
-            voucherId: appliedVoucher ? appliedVoucher.id : null,
         };
+
 
         try {
             const orderResponse = await axios.post("http://localhost:8082/api/orders/create", order);
-            //const voucherResponse = await axios.get(`http://localhost:8082/api/vouchers/apply-voucher`, );
             if (orderResponse.status === 200) {
-                alert("Đặt hàng thành công!");
-                navigate("/orderhistory");
+                if(appliedVoucher !== null){
+                    const orderVoucher = {
+                        orderId: orderResponse.id,
+                        voucherId: appliedVoucher.id,
+                        discountedPrice: calculateDiscountedTotal(),
+                    }
+                    console.log(orderVoucher);
+                    const voucherResponse = await axios.post(`http://localhost:8082/api/vouchers/apply-voucher`, orderVoucher);
+                    if(voucherResponse.status === 200) {
+                        alert("Đặt hàng thành công!");
+                        navigate("/orderhistory");
+                    }
+                    else {
+                        alert("Có lỗi xảy ra khi đặt hàng.");
+                    }
+                }
             } else {
                 alert("Có lỗi xảy ra khi đặt hàng.");
             }
@@ -186,7 +200,9 @@ const OrderDetail = () => {
                                 <strong>Mã Voucher:</strong> {voucher.code}
                             </Typography>
                             <Typography>
-                                <strong>Loại:</strong> {voucher.voucherType}
+                                <strong>Detail:</strong> {voucher.voucherType === "Percentage Discount" ?
+                                "Giảm " + voucher.percentageDiscount + "% cho hóa đơn từ " + voucher.minOrderValue.toLocaleString("vi-VN") + "VND, tối đa " + voucher.highestDiscountValue.toLocaleString("vi-VN") + "VND."
+                                :"Giảm " + voucher.valueDiscount.toLocaleString("vi-VN") + "VND cho hóa đơn từ " + voucher.minOrderValue.toLocaleString("vi-VN") + "VND."}
                             </Typography>
                             <Button variant="contained" color="primary" onClick={applyVoucher}>
                                 Áp dụng
