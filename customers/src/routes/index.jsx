@@ -13,6 +13,7 @@ import Signup from "../pages/Account/Signup";
 import ForgotPassword from "../pages/Account/ForgotPassword";
 import AddressPage from "../pages/address/AddressPage";
 import CategoryPage from "../pages/CategoryPage/CategoryPage";
+import AddressSelectionPage from "../components/AddressSelectionPage/AddressSelectionPage";
 
 const Layout = ({ children }) => (
   <>
@@ -39,6 +40,7 @@ const App = () => {
           <Route path="/orderdetail" element={<OrderDetail />} />
           <Route path="/address" element={<AddressPage />} />
           <Route path="/category/:categoryName" element={<CategoryPage />} />
+          <Route path="/addressselection" element={<AddressSelectionPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

@@ -1,43 +1,28 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./AddAddress.css";
 
 const API_HOST = "https://provinces.open-api.vn/api/";
+const ADDRESS_API = "http://localhost:8080/api/address/create";
 
 const AddAddress = ({ onClose, onAdd }) => {
   const [formData, setFormData] = useState({
-    phoneNumber: "",
-    recipientName: "", // Thêm tên người nhận
-    country: "Vietnam",
-    city: { code: "", name: "" },
-    district: { code: "", name: "" },
-    ward: { code: "", name: "" },
-    note: "",
+    phoneNumber: "", recipientName: "", country: "Vietnam",
+    city: { code: "", name: "" }, district: { code: "", name: "" },
+    ward: { code: "", name: "" }, note: "",
   });
-
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
 
   useEffect(() => {
-    axios.get(`${API_HOST}?depth=1`).then((res) => {
-      setProvinces(res.data);
-    });
+    axios.get(`${API_HOST}?depth=1`).then(res => setProvinces(res.data));
   }, []);
 
   const handleCityChange = async (e) => {
     const cityCode = e.target.value;
-    const city = provinces.find((p) => p.code === Number(cityCode));
-    setFormData({
-      ...formData,
-      city: { code: cityCode, name: city ? city.name : "" },
-      district: { code: "", name: "" },
-      ward: { code: "", name: "" },
-    });
-
-    setDistricts([]);
-    setWards([]);
-
+    const city = provinces.find(p => p.code === Number(cityCode));
+    setFormData({ ...formData, city: { code: cityCode, name: city?.name || "" }, district: { code: "", name: "" }, ward: { code: "", name: "" } });
+    setDistricts([]); setWards([]);
     if (cityCode) {
       const res = await axios.get(`${API_HOST}p/${cityCode}?depth=2`);
       setDistricts(res.data.districts);
@@ -46,15 +31,9 @@ const AddAddress = ({ onClose, onAdd }) => {
 
   const handleDistrictChange = async (e) => {
     const districtCode = e.target.value;
-    const district = districts.find((d) => d.code === Number(districtCode));
-    setFormData({
-      ...formData,
-      district: { code: districtCode, name: district ? district.name : "" },
-      ward: { code: "", name: "" },
-    });
-
+    const district = districts.find(d => d.code === Number(districtCode));
+    setFormData({ ...formData, district: { code: districtCode, name: district?.name || "" }, ward: { code: "", name: "" } });
     setWards([]);
-
     if (districtCode) {
       const res = await axios.get(`${API_HOST}d/${districtCode}?depth=2`);
       setWards(res.data.wards);
@@ -63,115 +42,53 @@ const AddAddress = ({ onClose, onAdd }) => {
 
   const handleWardChange = (e) => {
     const wardCode = e.target.value;
-    const ward = wards.find((w) => w.code === Number(wardCode));
-    setFormData({
-      ...formData,
-      ward: { code: wardCode, name: ward ? ward.name : "" },
-    });
+    const ward = wards.find(w => w.code === Number(wardCode));
+    setFormData({ ...formData, ward: { code: wardCode, name: ward?.name || "" } });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
     const accountId = localStorage.getItem("accountId");
-    if (!accountId) {
-      console.error("Lỗi: Không tìm thấy accountId, vui lòng đăng nhập lại!");
-      return;
-    }
-  
-    const addressData = {
-      accountId,
-      phoneNumber: formData.phoneNumber,
-      recipientName: formData.recipientName, // Gửi tên người nhận lên API
-      country: formData.country,
-      city: formData.city.name,
-      district: formData.district.name,
-      ward: formData.ward.name,
-      note: formData.note,
-      status: "INACTIVE", // Trạng thái mặc định là INACTIVE
-    };
-  
-    console.log("Dữ liệu gửi:", addressData);
-  
+    if (!accountId) { console.error("Lỗi: Không tìm thấy accountId, vui lòng đăng nhập lại!"); return; }
+    const addressData = { accountId, ...formData, city: formData.city.name, district: formData.district.name, ward: formData.ward.name, status: "INACTIVE" };
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/address/create",
-        addressData
-      );
-  
-      console.log("Đã thêm địa chỉ:", response.data);
-      onAdd(response.data);
-      onClose();
-    } catch (error) {
-      console.error("Lỗi khi thêm địa chỉ:", error);
-    }
+      const res = await axios.post(ADDRESS_API, addressData);
+      onAdd(res.data); onClose();
+    } catch (error) { console.error("Lỗi khi thêm địa chỉ:", error); }
   };
-  
 
   return (
-    <div className="add-address-container">
-      <h2>Thêm địa chỉ mới</h2>
-      <form onSubmit={handleSubmit}>
-        <label>Tên người nhận:</label>
-        <input
-          type="text"
-          value={formData.recipientName}
-          onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
-          required
-        />
-
-        <label>SĐT:</label>
-        <input
-          type="text"
-          value={formData.phoneNumber}
-          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-          required
-        />
-
-        <label>Tỉnh/Thành phố:</label>
-        <select value={formData.city.code} onChange={handleCityChange} required>
-          <option value="">Chọn tỉnh/thành phố</option>
-          {provinces.map((p) => (
-            <option key={p.code} value={p.code}>
-              {p.name}
-            </option>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <h2 className="text-xl font-semibold mb-4 text-center">Thêm địa chỉ mới</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+        {["recipientName", "phoneNumber", "note"].map(field => (
+            <div key={field} className="px-4"> {/* Thêm padding trái phải */}
+              <label className="block text-sm font-medium text-gray-700">{field === "recipientName" ? "Tên người nhận:" : field === "phoneNumber" ? "SĐT:" : "Ghi chú:"}</label>
+              <input type="text" value={formData[field]} onChange={e => setFormData({ ...formData, [field]: e.target.value })} required={field !== "note" && field !== "note"} className="mt-1 p-2 border rounded-md w-full" />
+            </div>
           ))}
-        </select>
-
-        <label>Quận/Huyện:</label>
-        <select value={formData.district.code} onChange={handleDistrictChange} required>
-          <option value="">Chọn quận/huyện</option>
-          {districts.map((d) => (
-            <option key={d.code} value={d.code}>
-              {d.name}
-            </option>
+          {[
+            { label: "Tỉnh/Thành phố:", options: provinces, value: formData.city.code, onChange: handleCityChange },
+            { label: "Quận/Huyện:", options: districts, value: formData.district.code, onChange: handleDistrictChange },
+            { label: "Phường/Xã:", options: wards, value: formData.ward.code, onChange: handleWardChange },
+          ].map(({ label, options, value, onChange }) => (
+            <div key={label} className="px-4"> {/* Thêm padding trái phải */}
+              <label className="block text-sm font-medium text-gray-700">{label}</label>
+              <select value={value} onChange={onChange} required className="mt-1 p-2 border rounded-md w-full">
+                <option value="">Chọn {label.toLowerCase().slice(0, -1)}</option>
+                {options.map(o => (<option key={o.code} value={o.code}>{o.name}</option>))}
+              </select>
+            </div>
           ))}
-        </select>
-
-        <label>Phường/Xã:</label>
-        <select value={formData.ward.code} onChange={handleWardChange} required>
-          <option value="">Chọn phường/xã</option>
-          {wards.map((w) => (
-            <option key={w.code} value={w.code}>
-              {w.name}
-            </option>
-          ))}
-        </select>
-
-        <label>Ghi chú:</label>
-        <input
-          type="text"
-          value={formData.note}
-          onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-        />
-
-        <div className="button-group">
-          <button type="submit">Thêm địa chỉ</button>
-          <button type="button" onClick={onClose}>
-            Hủy
-          </button>
-        </div>
-      </form>
+          <div className="flex justify-center mt-4 mb-2"> {/* Thêm mt-4 để tăng khoảng cách lề trên */}
+            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Thêm địa chỉ</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
