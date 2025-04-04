@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import AddAddress from "./AddAddress"; // Import form thêm địa chỉ mới
-import "./AddressPage.css";
+import AddAddress from "./AddAddress";
 import UpdateAddress from "./UpdateAddress";
 
 const AddressPage = () => {
@@ -49,13 +48,10 @@ const AddressPage = () => {
 
       setAddresses((prevAddresses) => prevAddresses.filter((address) => address._id !== id));
 
-      // Thông báo xóa thành công
       setSuccessMessage("Đã xóa địa chỉ thành công!");
 
-      // Tải lại danh sách địa chỉ từ API
       fetchAddresses();
 
-      // Tắt thông báo sau 3 giây
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
@@ -71,9 +67,7 @@ const AddressPage = () => {
     setIsUpdating(true);
   };
 
-  // Handle click to set ACTIVE address
   const handleSetActiveAddress = async (addressId) => {
-    // Kiểm tra ID không hợp lệ
     if (!addressId) {
       console.error("ID không hợp lệ:", addressId);
       setError("ID không hợp lệ");
@@ -81,36 +75,31 @@ const AddressPage = () => {
     }
 
     try {
-      // Lấy accountId của địa chỉ
       const accountId = localStorage.getItem("accountId");
-
-      // Cập nhật trạng thái của tất cả các địa chỉ có cùng accountId thành 'INACTIVE'
       const updatedAddresses = addresses.map((address) =>
         address.accountId === accountId
-          ? { ...address, status: address.id === addressId ? "ACTIVE" : "INACTIVE" } // Đặt ACTIVE cho địa chỉ được chọn, INACTIVE cho các địa chỉ còn lại
+          ? { ...address, status: address.id === addressId ? "ACTIVE" : "INACTIVE" }
           : address
       );
-      setAddresses(updatedAddresses); // Cập nhật danh sách địa chỉ trong state
+      setAddresses(updatedAddresses);
 
-      // Gửi yêu cầu PUT cho từng địa chỉ để cập nhật trạng thái
       for (const address of updatedAddresses) {
         const response = await fetch(`http://localhost:8080/api/address/updateStatus/${address.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ status: address.status }), // Gửi trạng thái của từng địa chỉ
+          body: JSON.stringify({ status: address.status }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Lỗi khi cập nhật trạng thái:", errorData);
           setError(`Không thể cập nhật trạng thái: ${errorData.message || "Lỗi không xác định"}`);
-          return; // Nếu có lỗi, dừng lại
+          return;
         }
       }
 
-      // Nếu tất cả đều thành công, thông báo cho người dùng
       setSuccessMessage("Địa chỉ mặc định đã được cập nhật.");
     } catch (error) {
       console.error("Lỗi khi kết nối đến server:", error);
@@ -119,31 +108,34 @@ const AddressPage = () => {
   };
 
   return (
-    <div className="address-container">
-      <h2>Danh sách địa chỉ nhận hàng</h2>
-      {error && <p className="error-message">Lỗi: {error}</p>}
-      {successMessage && <p className="success-message">{successMessage}</p>}
+    <div className="max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-md mt-10">
+      <h2 className="text-2xl font-semibold mb-4 text-center">Danh sách địa chỉ nhận hàng</h2>
+      {error && <p className="text-red-500 mb-2">Lỗi: {error}</p>}
+      {successMessage && <p className="text-green-500 mb-2">{successMessage}</p>}
 
-      <button onClick={() => setIsAddingAddress(true)} className="add-btn">
+      <button
+        onClick={() => setIsAddingAddress(true)}
+        className="block w-full bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+      >
         + Thêm địa chỉ mới
       </button>
 
-      <div className="address-list">
+      <div className="max-h-96 overflow-y-auto">
         {addresses.map((address) => (
-          <div key={address._id || address.id} className="address-card">
+          <div key={address._id || address.id} className="bg-gray-100 p-4 rounded mb-4 flex justify-between items-center">
             <div>
-              <strong>{address.recipientName}</strong> {/* Hiển thị tên người nhận */}
-              <p>{address.city}, {address.district}, {address.ward}</p>
-              <p>SĐT: {address.phoneNumber}</p>
-              <p>Ghi chú: {address.note}</p>
+              <strong className="block">{address.recipientName}</strong>
+              <p className="text-sm">{address.city}, {address.district}, {address.ward}</p>
+              <p className="text-sm">SĐT: {address.phoneNumber}</p>
+              <p className="text-sm">Ghi chú: {address.note}</p>
               <button
                 onClick={() => handleSetActiveAddress(address._id || address.id)}
-                className={`set-active-btn ${address.status === "ACTIVE" ? "active" : ""}`}
+                className={`mt-2 py-1 px-3 rounded text-sm ${address.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-gray-300 hover:bg-gray-400"}`}
               >
                 {address.status === "ACTIVE" ? "Địa chỉ mặc định" : "Chọn làm địa chỉ mặc định"}
               </button>
             </div>
-            <div className="actions">
+            <div className="flex space-x-2">
               <button
                 onClick={() => {
                   console.log("Xóa địa chỉ ID:", address._id || address.id);
@@ -153,7 +145,7 @@ const AddressPage = () => {
                     console.error("ID địa chỉ không tồn tại.");
                   }
                 }}
-                className="delete-btn"
+                className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
               >
                 Xóa
               </button>
@@ -163,8 +155,8 @@ const AddressPage = () => {
       </div>
 
       {isAddingAddress && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg w-96">
             <AddAddress onClose={() => setIsAddingAddress(false)} onAdd={fetchAddresses} />
           </div>
         </div>

@@ -1,82 +1,72 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { TextField, Button, Typography, Box } from "@mui/material";
-import "./orderDetail.css";
+import { FaMapMarkerAlt } from "react-icons/fa";
+import { MdKeyboardArrowRight } from "react-icons/md";
 
 const OrderDetail = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { selectedBooks, address, totalAmount } = location.state;
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const { selectedBooks, address, totalAmount } = state;
 
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [voucherCode, setVoucherCode] = useState("");
     const [voucher, setVoucher] = useState(null);
-    const [voucherError, setVoucherError] = useState("");
     const [appliedVoucher, setAppliedVoucher] = useState(null);
+    const [voucherError, setVoucherError] = useState("");
 
-    // Handle voucher code input and continuous search
     const handleVoucherChange = async (e) => {
         const code = e.target.value;
         setVoucherCode(code);
-        setVoucherError("");
         setVoucher(null);
-    
+        setVoucherError("");
+
         if (code) {
             try {
-                const response = await axios.get(`http://localhost:8082/api/vouchers/get-voucher?code=${code}`);
-                setVoucher(response.data);
-            } catch (error) {
+                const res = await axios.get(`http://localhost:8082/api/vouchers/get-voucher?code=${code}`);
+                setVoucher(res.data);
+            } catch {
                 setVoucherError("Voucher not found");
             }
         }
     };
-    
 
-    // Apply voucher and check conditions
     const applyVoucher = () => {
-        if (!voucher) {
-            setVoucherError("Please enter a valid voucher code");
-            return;
+        if (!voucher) return setVoucherError("Please enter a valid voucher code");
+
+        const now = new Date();
+        const start = new Date(voucher.startDate);
+        const end = new Date(voucher.endDate);
+
+        if (now < start || now > end || totalAmount < voucher.minOrderValue) {
+            return setVoucherError("Requirement not met. Can't use voucher");
         }
 
-        const currentDate = new Date();
-        const startDate = new Date(voucher.startDate);
-        const endDate = new Date(voucher.endDate);
-
-        // Check conditions
-        if (currentDate < startDate || currentDate > endDate) {
-            setVoucherError("Requirement not met. Can't use voucher");
-            return;
-        }
-
-        if (totalAmount < voucher.minOrderValue) {
-            setVoucherError("Requirement not met. Can't use voucher");
-            return;
-        }
-
-        // If conditions are met
         setAppliedVoucher(voucher);
         setVoucherError("");
         alert("Successfully added voucher");
     };
 
-    // Calculate total price with discount
     const calculateDiscountedTotal = () => {
         if (!appliedVoucher) return totalAmount;
+        const { voucherType, percentageDiscount, highestDiscountValue, valueDiscount } = appliedVoucher;
 
-        let discount = 0;
-        if (appliedVoucher.voucherType === "Percentage Discount") {
-            discount = (appliedVoucher.percentageDiscount / 100) * totalAmount;
-            if(discount > appliedVoucher.highestDiscountValue) discount = appliedVoucher.highestDiscountValue;
-        } else if (appliedVoucher.voucherType === "Value Discount") {
-            discount = appliedVoucher.valueDiscount;
-        }
+        let discount = voucherType === "Percentage Discount"
+            ? Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue)
+            : valueDiscount;
 
         return totalAmount - discount;
     };
 
-    // Handle order submission
+    const calculateDiscountAmount = () => {
+        if (!appliedVoucher) return 0;
+        const { voucherType, percentageDiscount, highestDiscountValue, valueDiscount } = appliedVoucher;
+
+        return voucherType === "Percentage Discount"
+            ? Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue)
+            : valueDiscount;
+    };
+
     const handlePlaceOrder = async () => {
         const order = {
             accountId: localStorage.getItem("accountId"),
@@ -86,167 +76,191 @@ const OrderDetail = () => {
             city: address.city,
             district: address.district,
             ward: address.ward,
-            note: address.note,
             totalPrice: totalAmount,
-            paymentMethod: paymentMethod,
-            orderItems: selectedBooks.map((item) => ({
-                bookId: item.bookId,
-                bookName: item.bookName,
-                bookImage: item.bookImage,
-                quantity: item.quantity,
-                price:
-                    item.discountedPrice !== undefined && item.discountedPrice !== null
-                        ? item.discountedPrice
-                        : item.price,
+            paymentMethod,
+            orderItems: selectedBooks.map(({ bookId, bookName, bookImage, quantity, price, discountedPrice }) => ({
+                bookId,
+                bookName,
+                bookImage,
+                quantity,
+                price: discountedPrice ?? price,
             })),
             orderStatus: "Chưa thanh toán",
             shippingStatus: "Chờ xử lý",
         };
 
-
         try {
-            const orderResponse = await axios.post("http://localhost:8082/api/orders/create", order);
-            if (orderResponse.status === 200) {
-                if(appliedVoucher !== null){
-                    const orderVoucher = {
-                        orderId: orderResponse.id,
+            const res = await axios.post("http://localhost:8082/api/orders/create", order);
+            if (res.status === 200) {
+                if (appliedVoucher) {
+                    await axios.post("http://localhost:8082/api/vouchers/apply-voucher", {
+                        orderId: res.id,
                         voucherId: appliedVoucher.id,
                         discountedPrice: calculateDiscountedTotal(),
-                    }
-                    console.log(orderVoucher);
-                    const voucherResponse = await axios.post(`http://localhost:8082/api/vouchers/apply-voucher`, orderVoucher);
-                    if(voucherResponse.status === 200) {
-                        alert("Đặt hàng thành công!");
-                        navigate("/orderhistory");
-                    }
-                    else {
-                        alert("Có lỗi xảy ra khi đặt hàng.");
-                    }
+                    });
                 }
+                alert("Đặt hàng thành công!");
+                navigate("/orderhistory");
             } else {
                 alert("Có lỗi xảy ra khi đặt hàng.");
             }
-        } catch (error) {
-            console.error("Lỗi khi gửi đơn hàng:", error);
+        } catch (err) {
+            console.error(err);
             alert("Đặt hàng không thành công, vui lòng thử lại sau.");
         }
     };
 
     return (
-        <div className="order-detail-wrapper">
-            <div className="order-detail">
-                <h2>Chi tiết đơn hàng</h2>
-                <div className="order-info">
-                    <h3>Thông tin người nhận</h3>
-                    <div className="info-item">
-                        <label>Tên người nhận: </label>
-                        <span>{address.recipientName}</span>
-                    </div>
-                    <div className="info-item">
-                        <label>Số điện thoại: </label>
-                        <span>{address.phoneNumber}</span>
-                    </div>
-                    <div className="info-item">
-                        <label>Địa chỉ: </label>
-                        <span>{address.city}, {address.district}, {address.ward}</span>
-                    </div>
-                    <div className="info-item">
-                        <label>Ghi chú: </label>
-                        <span>{address.note}</span>
-                    </div>
+        <div className="flex justify-center items-start min-h-screen bg-gray-100 p-5">
+          <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-md flex flex-col !space-y-2">
+            <h2 className="text-2xl font-bold text-center text-gray-800">Chi tiết đơn hàng</h2>
+            {/* 1. Địa chỉ */}
+            <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
+              <div className="flex justify-between items-center">
+                <div className="flex">
+                  <div className="w-10 flex justify-center items-start">
+                    <FaMapMarkerAlt className="text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p>
+                      {address.recipientName} ({address.phoneNumber})
+                    </p>
+                    {address.note && <p>{address.note}</p>}
+                    <p>{`${address.city}, ${address.district}, ${address.ward}`}</p>
+                  </div>
                 </div>
-                <div className="order-items">
-                    <h3>Sản phẩm đã chọn</h3>
+                <button
+                  onClick={() => navigate("/addressselection", { state: state })}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <MdKeyboardArrowRight size={24} />
+                </button>
+              </div>
+            </div>
+
+                {/* 2. Sản phẩm */}
+                <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
                     {selectedBooks.map((item) => (
-                        <div key={item.bookId} className="order-item">
-                            <img src={item.bookImage} alt={item.bookName} className="order-item-image" />
-                            <div className="order-item-info">
-                                <div className="order-item-name">
-                                    <label>Tên sản phẩm: </label>
-                                    <span>{item.bookName}</span>
-                                </div>
-                                <div className="order-item-quantity">
-                                    <label>Số lượng: </label>
-                                    <span>{item.quantity}</span>
-                                </div>
-                                <div className="order-item-price">
-                                    <label>Giá: </label>
-                                    <span>
-                                        {(item.discountedPrice !== undefined && item.discountedPrice !== null
-                                            ? item.discountedPrice
-                                            : item.price
-                                        ).toLocaleString("vi-VN")}{" "}
-                                        VND
-                                    </span>
+                        <div key={item.bookId} className="flex gap-4 mb-3">
+                            <img src={item.bookImage} alt={item.bookName} className="w-18 h-18 object-cover rounded-md" />
+                            <div className="flex flex-col w-full">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                        <span className="text-gray-600">{item.bookName}</span>
+                                        <div className="mt-4">
+                                            {item.discountedPrice && item.discountedPrice < item.price ? (
+                                                <div className="flex items-center">
+                                                    <span className="text-red-600">
+                                                        {item.discountedPrice.toLocaleString("vi-VN")} VND
+                                                    </span>
+                                                    <span className="text-gray-600 line-through ml-2">
+                                                        {item.price.toLocaleString("vi-VN")} VND
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-600">
+                                                    {item.price.toLocaleString("vi-VN")} VND
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className="text-gray-600 self-end">x{item.quantity}</span>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Voucher Section */}
-                <div className="voucher-section">
-                    <h3>Áp dụng Voucher</h3>
-                    <TextField
-                        label="Nhập mã voucher"
-                        value={voucherCode}
-                        onChange={handleVoucherChange}
-                        fullWidth
-                        margin="normal"
-                    />
-                    {voucher && (
-                        <Box mt={2}>
-                            <Typography>
-                                <strong>Mã Voucher:</strong> {voucher.code}
-                            </Typography>
-                            <Typography>
-                                <strong>Detail:</strong> {voucher.voucherType === "Percentage Discount" ?
-                                "Giảm " + voucher.percentageDiscount + "% cho hóa đơn từ " + voucher.minOrderValue.toLocaleString("vi-VN") + "VND, tối đa " + voucher.highestDiscountValue.toLocaleString("vi-VN") + "VND."
-                                :"Giảm " + voucher.valueDiscount.toLocaleString("vi-VN") + "VND cho hóa đơn từ " + voucher.minOrderValue.toLocaleString("vi-VN") + "VND."}
-                            </Typography>
-                            <Button variant="contained" color="primary" onClick={applyVoucher}>
-                                Áp dụng
-                            </Button>
-                        </Box>
-                    )}
-                    {voucherError && <Typography color="error">{voucherError}</Typography>}
+                {/* 3. Voucher */}
+                <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 space-y-4">
+                    <div>
+                        <h3 className="text-lg font-semibold mb-2">Áp dụng Voucher</h3>
+                        <input
+                            type="text"
+                            className="w-full border border-gray-300 p-2 rounded-md mb-2"
+                            placeholder="Nhập mã voucher"
+                            value={voucherCode}
+                            onChange={handleVoucherChange}
+                        />
+                        {voucher && (
+                            <div className="space-y-1 mb-2">
+                                <p><strong>Mã Voucher:</strong> {voucher.code}</p>
+                                <p className="text-sm">
+                                    {voucher.voucherType === "Percentage Discount"
+                                        ? `Giảm ${voucher.percentageDiscount}% cho hóa đơn từ ${voucher.minOrderValue.toLocaleString("vi-VN")}VND, tối đa ${voucher.highestDiscountValue.toLocaleString("vi-VN")}VND.`
+                                        : `Giảm ${voucher.valueDiscount.toLocaleString("vi-VN")}VND cho hóa đơn từ ${voucher.minOrderValue.toLocaleString("vi-VN")}VND.`}
+                                </p>
+                                <button onClick={applyVoucher} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                    Áp dụng
+                                </button>
+                            </div>
+                        )}
+                        {voucherError && <p className="text-red-500 text-sm">{voucherError}</p>}
+                    </div>
                 </div>
 
-                <div className="payment-method">
-                    <h3>Phương thức thanh toán</h3>
-                    <div className="payment-options">
-                        <div>
-                            <input
-                                type="radio"
-                                id="cod"
-                                name="paymentMethod"
-                                value="COD"
-                                checked={paymentMethod === "COD"}
-                                onChange={() => setPaymentMethod("COD")}
-                            />
-                            <label htmlFor="cod">Thanh toán khi nhận hàng (COD)</label>
+                {/* 4. Phương thức thanh toán */}
+                <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-semibold mb-2">Phương thức thanh toán</h3>
+                    <div className="flex">
+                        <div className="flex flex-col">
+                            {["COD", "Bank"].map((method, i) => (
+                                <div key={i} className="ml-4">
+                                    <input
+                                        type="radio"
+                                        id={method}
+                                        name="paymentMethod"
+                                        value={method}
+                                        checked={paymentMethod === method}
+                                        onChange={() => setPaymentMethod(method)}
+                                        className="!mr-2"
+                                    />
+                                </div>
+                            ))}
                         </div>
-                        <div>
-                            <input
-                                type="radio"
-                                id="bank"
-                                name="paymentMethod"
-                                value="Bank"
-                                checked={paymentMethod === "Bank"}
-                                onChange={() => setPaymentMethod("Bank")}
-                            />
-                            <label htmlFor="bank">Chuyển khoản ngân hàng</label>
+                        <div className="flex flex-col">
+                            {["COD", "Bank"].map((method, i) => (
+                                <div key={i}>
+                                    <label htmlFor={method}>
+                                        {method === "COD" ? "Thanh toán khi nhận hàng (COD)" : "Chuyển khoản ngân hàng"}
+                                    </label>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="order-total">
-                    <h3>Tổng tiền: {calculateDiscountedTotal().toLocaleString("vi-VN")} VND</h3>
+                {/* 5. Chi tiết thanh toán */}
+                <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-semibold mb-2">Chi tiết thanh toán</h3>
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                            <span>Tổng giá:</span>
+                            <span>{totalAmount.toLocaleString("vi-VN")} VND</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Tổng tiền giảm giá:</span>
+                            <span>{calculateDiscountAmount().toLocaleString("vi-VN")} VND</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Tổng thanh toán:</span>
+                            <span>{calculateDiscountedTotal().toLocaleString("vi-VN")} VND</span>
+                        </div>
+                    </div>
                 </div>
 
-                <button className="place-order-button" onClick={handlePlaceOrder}>
-                    Đặt hàng
-                </button>
+                {/* 6. Tổng tiền + nút đặt hàng */}
+                <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-bold mb-3">
+                        Tổng tiền: {calculateDiscountedTotal().toLocaleString("vi-VN")} VND
+                    </h3>
+                    <button
+                        className="w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
+                        onClick={handlePlaceOrder}
+                    >
+                        Đặt hàng
+                    </button>
+                </div>
             </div>
         </div>
     );
