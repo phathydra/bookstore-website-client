@@ -88,10 +88,17 @@ const OrderDetail = () => {
             orderStatus: "Chưa thanh toán",
             shippingStatus: "Chờ xử lý",
         };
-
+    
         try {
             const res = await axios.post("http://localhost:8082/api/orders/create", order);
             if (res.status === 200) {
+    
+                // Gọi API purchase cho từng bookId
+                await Promise.all(selectedBooks.map((book) =>
+                    axios.post(`http://localhost:8081/api/analytics/${book.bookId}/purchase`)
+                ));
+    
+                // Áp dụng voucher nếu có
                 if (appliedVoucher) {
                     await axios.post("http://localhost:8082/api/vouchers/apply-voucher", {
                         orderId: res.id,
@@ -99,6 +106,7 @@ const OrderDetail = () => {
                         discountedPrice: calculateDiscountedTotal(),
                     });
                 }
+    
                 alert("Đặt hàng thành công!");
                 navigate("/orderhistory");
             } else {
@@ -109,6 +117,7 @@ const OrderDetail = () => {
             alert("Đặt hàng không thành công, vui lòng thử lại sau.");
         }
     };
+    
 
     return (
         <div className="flex justify-center items-start min-h-screen bg-gray-100 p-5">

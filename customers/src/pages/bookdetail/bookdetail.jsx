@@ -16,6 +16,7 @@ const BookDetail = () => {
   const [quantity, setQuantity] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalContent, setModalContent] = useState("")
+  const [purchaseCount, setPurchaseCount] = useState(0) // State để lưu số lượng đã bán
 
   useEffect(() => {
     if (!id) {
@@ -59,9 +60,20 @@ const BookDetail = () => {
       }
     }
 
+    const fetchPurchaseCount = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8081/api/analytics/${id}`)
+        setPurchaseCount(response.data.purchaseCount || 0)
+      } catch (error) {
+        console.error("Lỗi khi lấy số lượng đã bán:", error)
+        // Xử lý lỗi nếu không lấy được purchaseCount
+      }
+    }
+
     fetchBook()
     fetchRecommendedBooks()
     fetchReviews()
+    fetchPurchaseCount()
   }, [id])
 
   // Hàm lấy thông tin người dùng cho mỗi đánh giá
@@ -352,6 +364,9 @@ const BookDetail = () => {
             </span>
           </p>
 
+          {/* Hiển thị số lượng đã bán */}
+          <p className="text-sm text-gray-600 italic">Đã bán: {purchaseCount} quyển</p>
+
           <hr className="my-4 border-gray-300" />
 
           <div>
@@ -414,9 +429,28 @@ const BookDetail = () => {
           ))}
         </div>
       </div>
+
+      {/* Modal thông báo */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white !rounded-md shadow-lg w-96 max-w-lg"> {/* Kích thước cố định và max-width */}
+            <div className="p-6"> {/* Thêm padding cho nội dung */}
+              <h2 className="text-lg font-semibold mb-2">Thông báo</h2>
+              <p className="text-gray-700 !text-justify !leading-relaxed">{modalContent}</p> {/* Căn đều 2 lề và thêm line-height */}
+              <div className="!mt-4 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default BookDetail
-
