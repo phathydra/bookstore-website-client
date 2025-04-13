@@ -16,6 +16,7 @@ import {
   Drawer,
   TablePagination,
   TextField,
+  Typography,
 } from "@mui/material";
 
 const InvoiceManagement = () => {
@@ -28,9 +29,13 @@ const InvoiceManagement = () => {
   const [totalInvoices, setTotalInvoices] = useState(0);
   const [filterStatus, setFilterStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cancelRequests, setCancelRequests] = useState([]);
+  const [isCancelRequestsOpen, setIsCancelRequestsOpen] = useState(false);
+  const [selectedCancelRequest, setSelectedCancelRequest] = useState(null);
 
   useEffect(() => {
     fetchInvoices();
+    fetchCancelRequests();
   }, [page, rowsPerPage]);
 
   useEffect(() => {
@@ -46,6 +51,15 @@ const InvoiceManagement = () => {
       setTotalInvoices(response.data.totalElements || 0);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách hóa đơn:", error);
+    }
+  };
+
+  const fetchCancelRequests = async () => {
+    try {
+      const response = await axios.get("http://localhost:8082/api/cancelled-orders");
+      setCancelRequests(response.data || []);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu hủy:", error);
     }
   };
 
@@ -69,6 +83,27 @@ const InvoiceManagement = () => {
     setIsDrawerOpen(true);
   };
 
+  const handleUpdateStatus = async (updatedInvoice, newStatus) => {
+    try {
+      await axios.put(`http://localhost:8082/api/orders/update-shipping-status/${updatedInvoice.orderId}?shippingStatus=${newStatus}`);
+      // Cập nhật trạng thái của hóa đơn trong danh sách invoices và filteredInvoices
+      const updatedInvoices = invoices.map((invoice) =>
+        invoice.orderId === updatedInvoice.orderId ? { ...invoice, shippingStatus: newStatus } : invoice
+      );
+      setInvoices(updatedInvoices);
+
+      const updatedFilteredInvoices = filteredInvoices.map((invoice) =>
+        invoice.orderId === updatedInvoice.orderId ? { ...invoice, shippingStatus: newStatus } : invoice
+      );
+      setFilteredInvoices(updatedFilteredInvoices);
+
+      setIsDrawerOpen(false); // Đóng drawer sau khi cập nhật
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
+      alert("Lỗi khi cập nhật trạng thái đơn hàng");
+    }
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -82,6 +117,54 @@ const InvoiceManagement = () => {
     setFilterStatus(status);
   };
 
+  const handleOpenCancelRequests = () => {
+    setIsCancelRequestsOpen(true);
+  };
+
+  const handleCloseCancelRequests = () => {
+    setIsCancelRequestsOpen(false);
+    setSelectedCancelRequest(null);
+    fetchCancelRequests(); // Refresh cancel requests after closing
+  };
+
+  const handleSelectCancelRequest = (request) => {
+    setSelectedCancelRequest(request);
+  };
+
+  const handleApproveCancellation = async (requestId, orderId) => {
+    try {
+      await axios.put(`http://localhost:8082/api/cancelled-orders/update-status/${requestId}?status=Đồng ý`);
+      // Optionally update the order status in the main invoices list
+      const updatedInvoices = invoices.map(invoice =>
+        invoice.orderId === orderId ? { ...invoice, shippingStatus: "Đã hủy" } : invoice
+      );
+      setInvoices(updatedInvoices);
+      filterInvoices(); // Re-filter to update the displayed list
+      fetchCancelRequests(); // Refresh cancel requests
+      setSelectedCancelRequest(null);
+    } catch (error) {
+      console.error("Lỗi khi duyệt yêu cầu hủy:", error);
+      alert("Lỗi khi duyệt yêu cầu hủy");
+    }
+  };
+
+  const handleRejectCancellation = async (requestId, orderId) => {
+    try {
+      await axios.put(`http://localhost:8082/api/cancelled-orders/update-status/${requestId}?status=Từ chối`);
+      // Optionally update the order status in the main invoices list
+      const updatedInvoices = invoices.map(invoice =>
+        invoice.orderId === orderId ? { ...invoice, shippingStatus: "Đã nhận đơn" } : invoice
+      );
+      setInvoices(updatedInvoices);
+      filterInvoices(); // Re-filter to update the displayed list
+      fetchCancelRequests(); // Refresh cancel requests
+      setSelectedCancelRequest(null);
+    } catch (error) {
+      console.error("Lỗi khi từ chối yêu cầu hủy:", error);
+      alert("Lỗi khi từ chối yêu cầu hủy");
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
@@ -89,22 +172,22 @@ const InvoiceManagement = () => {
         <SideNav />
       </div>
 
-      <main className="flex-1 flex flex-col pl-[16%] bg-gray-100 h-screen" >
+      <main className="flex-1 flex flex-col pl-[16%] bg-gray-100 h-screen">
         <Header title="Invoice Management" />
 
         <div className="flex flex-col flex-1 p-4">
           {/* 🔥 Thanh filter + tìm kiếm */}
           <div className="flex flex-wrap justify-center items-center gap-4 mt-14 mb-4 bg-white p-4 rounded-lg shadow-md">
-            {["", "Chờ xử lý", "Đã nhận đơn", "Đang giao", "Đã giao"].map((status, index) => (
+            {["", "Chờ xử lý", "Đã nhận đơn", "Đang giao", "Đã giao", "Đã hủy"].map((status, index) => (
               <Button
                 key={index}
                 variant={filterStatus === status ? "contained" : "outlined"}
                 color={filterStatus === status ? "primary" : "default"}
                 sx={{
-                  fontSize: "1rem",  // Cỡ chữ lớn hơn
-                  padding: "10px 24px", // Padding chuẩn
-                  minWidth: "178px", // Độ rộng tối thiểu
-                  height: "46px", 
+                  fontSize: "1rem",
+                  padding: "10px 24px",
+                  minWidth: "178px",
+                  height: "46px",
                 }}
                 onClick={() => handleFilterClick(status)}
               >
@@ -121,6 +204,20 @@ const InvoiceManagement = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="!min-w-[250px] h-12"
             />
+
+            {/* Nút xem yêu cầu hủy */}
+            <Button
+              variant="outlined"
+              onClick={handleOpenCancelRequests}
+              sx={{
+                fontSize: "1rem",
+                padding: "10px 24px",
+                minWidth: "178px",
+                height: "46px",
+              }}
+            >
+              Yêu cầu hủy ({cancelRequests.length})
+            </Button>
           </div>
 
           {/* 🔥 Bảng hóa đơn - Có thanh cuộn riêng */}
@@ -178,7 +275,78 @@ const InvoiceManagement = () => {
           onClose={() => setIsDrawerOpen(false)}
           sx={{ width: 400, "& .MuiDrawer-paper": { width: 600, boxSizing: "border-box" } }}
         >
-          <InvoiceDetail selectedInvoice={selectedInvoice} />
+          <InvoiceDetail selectedInvoice={selectedInvoice} onUpdateStatus={handleUpdateStatus} onCloseDrawer={() => setIsDrawerOpen(false)} />
+        </Drawer>
+
+        {/* 🔥 Drawer hiển thị danh sách yêu cầu hủy */}
+        <Drawer
+          anchor="right"
+          open={isCancelRequestsOpen}
+          onClose={handleCloseCancelRequests}
+          sx={{ width: 500, "& .MuiDrawer-paper": { width: 500, boxSizing: "border-box" } }}
+        >
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Danh sách yêu cầu hủy đơn
+            </Typography>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Mã đơn hàng</TableCell>
+                    <TableCell>Lý do hủy</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Hành động</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cancelRequests.map((request) => (
+                    <TableRow
+                      key={request.id}
+                      hover
+                      onClick={() => handleSelectCancelRequest(request)}
+                      className={selectedCancelRequest?.id === request.id ? "bg-gray-100" : ""}
+                    >
+                      <TableCell>{request.orderId}</TableCell>
+                      <TableCell>{request.cancellationReason}</TableCell>
+                      <TableCell>{request.cancellationStatus}</TableCell>
+                      <TableCell>
+                        {request.cancellationStatus === "Yêu cầu hủy đơn" && (
+                          <>
+                            <Button
+                              size="small"
+                              color="success"
+                              onClick={() => handleApproveCancellation(request.id, request.orderId)}
+                            >
+                              Duyệt
+                            </Button>
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => handleRejectCancellation(request.id, request.orderId)}
+                            >
+                              Từ chối
+                            </Button>
+                          </>
+                        )}
+                        {request.cancellationStatus !== "Yêu cầu hủy đơn" && (
+                          <Typography variant="caption">{request.cancellationStatus}</Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {cancelRequests.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">Không có yêu cầu hủy nào.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <Box mt={2} display="flex" justifyContent="flex-end">
+              <Button onClick={handleCloseCancelRequests}>Đóng</Button>
+            </Box>
+          </Box>
         </Drawer>
       </main>
     </div>
