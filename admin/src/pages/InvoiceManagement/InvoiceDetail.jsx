@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const InvoiceDetail = ({ selectedInvoice, onUpdateStatus }) => {
+const InvoiceDetail = ({ selectedInvoice, onUpdateStatus, onCloseDrawer }) => {
   if (!selectedInvoice) {
     return (
       <Box p={3}>
@@ -29,10 +29,12 @@ const InvoiceDetail = ({ selectedInvoice, onUpdateStatus }) => {
     try {
       const orderId = selectedInvoice.orderId;
       const apiUrl = `http://localhost:8082/api/orders/update-shipping-status/${orderId}?shippingStatus=${status}`;
-      
-      await axios.put(apiUrl);
+
+      const response = await axios.put(apiUrl);
       alert("Cập nhật trạng thái thành công!");
-      onUpdateStatus(null, status);
+      // Gọi hàm onUpdateStatus được truyền từ component cha
+      onUpdateStatus(response.data, status);
+      onCloseDrawer(); // Đóng drawer sau khi cập nhật thành công
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
       alert("Cập nhật trạng thái thất bại!");
@@ -41,10 +43,13 @@ const InvoiceDetail = ({ selectedInvoice, onUpdateStatus }) => {
 
   return (
     <Paper elevation={4} sx={{ p: 4, maxWidth: 600, margin: "auto", borderRadius: 3 }}>
-      <Typography variant="h5" fontWeight="bold" align="center" mb={2}>
-        HÓA ĐƠN THANH TOÁN
-      </Typography>
-      
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h5" fontWeight="bold">
+          HÓA ĐƠN THANH TOÁN
+        </Typography>
+        <Button onClick={onCloseDrawer} size="small">Đóng</Button>
+      </Box>
+
       <Divider sx={{ mb: 2 }} />
 
       <Typography variant="subtitle1"><strong>Mã hóa đơn:</strong> #{selectedInvoice.orderId}</Typography>
