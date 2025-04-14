@@ -14,6 +14,7 @@ import ForgotPassword from "../pages/Account/ForgotPassword";
 import AddressPage from "../pages/address/AddressPage";
 import CategoryPage from "../pages/CategoryPage/CategoryPage";
 import AddressSelectionPage from "../components/AddressSelectionPage/AddressSelectionPage";
+import ChatScreen from "../pages/chatbot/tempchatbot";
 
 const Layout = ({ children }) => (
   <>
@@ -41,6 +42,7 @@ const App = () => {
           <Route path="/address" element={<AddressPage />} />
           <Route path="/category/:categoryName" element={<CategoryPage />} />
           <Route path="/addressselection" element={<AddressSelectionPage />} />
+          <Route path="/chatbot" element={<ChatScreen />} />
         </Routes>
       </Layout>
     </BrowserRouter>
