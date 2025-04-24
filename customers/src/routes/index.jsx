@@ -14,7 +14,11 @@ import ForgotPassword from "../pages/Account/ForgotPassword";
 import AddressPage from "../pages/address/AddressPage";
 import CategoryPage from "../pages/CategoryPage/CategoryPage";
 import AddressSelectionPage from "../components/AddressSelectionPage/AddressSelectionPage";
+import ActivateAccount from "../pages/Account/ActivateAccount"; 
+import FillInfo from '../pages/Account/FillInfo';
+import ChangePassword from "../pages/profile/changePassword";
 import ChatScreen from "../pages/chatbot/tempchatbot";
+
 
 const Layout = ({ children }) => (
   <>
@@ -32,6 +36,8 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/activate" element={<ActivateAccount />} /> 
+          <Route path="/fill-info" element={<FillInfo />} />
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/productdetail/:id" element={<BookDetail />} />
@@ -42,6 +48,7 @@ const App = () => {
           <Route path="/address" element={<AddressPage />} />
           <Route path="/category/:categoryName" element={<CategoryPage />} />
           <Route path="/addressselection" element={<AddressSelectionPage />} />
+          <Route path="/changePassword" element={<ChangePassword />} />
           <Route path="/chatbot" element={<ChatScreen />} />
         </Routes>
       </Layout>

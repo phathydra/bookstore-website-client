@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AddAddress from "./AddAddress";
-import UpdateAddress from "./UpdateAddress";
+import SideNavProfile from "../profile/SideNavProfile";
+import { useNavigate } from "react-router-dom";
 
 const AddressPage = () => {
   const [addresses, setAddresses] = useState([]);
@@ -9,6 +10,8 @@ const AddressPage = () => {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('address');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAddresses();
@@ -47,24 +50,15 @@ const AddressPage = () => {
       }
 
       setAddresses((prevAddresses) => prevAddresses.filter((address) => address._id !== id));
-
       setSuccessMessage("Đã xóa địa chỉ thành công!");
-
       fetchAddresses();
-
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
-
       console.log("Đã xóa địa chỉ thành công với ID:", id);
     } catch (error) {
       setError(error.message);
     }
-  };
-
-  const handleUpdateClick = (address) => {
-    setSelectedAddress(address);
-    setIsUpdating(true);
   };
 
   const handleSetActiveAddress = async (addressId) => {
@@ -108,59 +102,80 @@ const AddressPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-md mt-10">
-      <h2 className="text-2xl font-semibold mb-4 text-center">Danh sách địa chỉ nhận hàng</h2>
-      {error && <p className="text-red-500 mb-2">Lỗi: {error}</p>}
-      {successMessage && <p className="text-green-500 mb-2">{successMessage}</p>}
+    <div className="flex flex-col md:flex-row !gap-4 !p-4 !ml-30">
+      {/* Sidenav */}
+      <SideNavProfile selected={selectedTab} onSelect={setSelectedTab} />
 
-      <button
-        onClick={() => setIsAddingAddress(true)}
-        className="block w-full bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
-      >
-        + Thêm địa chỉ mới
-      </button>
+      {/* Nội dung trang Địa chỉ */}
+      <div className="flex-1 bg-white rounded-lg !shadow !p-6 !mr-30">
+        <h2 className="text-2xl font-semibold mb-4 text-center">Danh sách địa chỉ nhận hàng</h2>
+        {error && <p className="text-red-500 mb-2">Lỗi: {error}</p>}
+        {successMessage && <p className="text-green-500 mb-2">{successMessage}</p>}
 
-      <div className="max-h-96 overflow-y-auto">
-        {addresses.map((address) => (
-          <div key={address._id || address.id} className="bg-gray-100 p-4 rounded mb-4 flex justify-between items-center">
-            <div>
-              <strong className="block">{address.recipientName}</strong>
-              <p className="text-sm">{address.city}, {address.district}, {address.ward}</p>
-              <p className="text-sm">SĐT: {address.phoneNumber}</p>
-              <p className="text-sm">Ghi chú: {address.note}</p>
-              <button
-                onClick={() => handleSetActiveAddress(address._id || address.id)}
-                className={`mt-2 py-1 px-3 rounded text-sm ${address.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-gray-300 hover:bg-gray-400"}`}
-              >
-                {address.status === "ACTIVE" ? "Địa chỉ mặc định" : "Chọn làm địa chỉ mặc định"}
-              </button>
+        <button
+          onClick={() => setIsAddingAddress(true)}
+          className="block w-full bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+        >
+          + Thêm địa chỉ mới
+        </button>
+
+        <div className="max-h-96 overflow-y-auto">
+          {addresses.map((address) => (
+            <div key={address._id || address.id} className="bg-gray-100 p-4 rounded mb-4 flex justify-between items-center">
+              <div>
+                <strong className="block">{address.recipientName}</strong>
+                <p className="text-sm">{address.city}, {address.district}, {address.ward}</p>
+                <p className="text-sm">SĐT: {address.phoneNumber}</p>
+                <p className="text-sm">Ghi chú: {address.note}</p>
+                <button
+                  onClick={() => handleSetActiveAddress(address._id || address.id)}
+                  className={`mt-2 py-1 px-3 rounded text-sm ${address.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-gray-300 hover:bg-gray-400"}`}
+                >
+                  {address.status === "ACTIVE" ? "Địa chỉ mặc định" : "Chọn làm địa chỉ mặc định"}
+                </button>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    console.log("Xóa địa chỉ ID:", address._id || address.id);
+                    if (address._id || address.id) {
+                      handleDelete(address._id || address.id);
+                    } else {
+                      console.error("ID địa chỉ không tồn tại.");
+                    }
+                  }}
+                  className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => {
-                  console.log("Xóa địa chỉ ID:", address._id || address.id);
-                  if (address._id || address.id) {
-                    handleDelete(address._id || address.id);
-                  } else {
-                    console.error("ID địa chỉ không tồn tại.");
-                  }
-                }}
-                className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
-              >
-                Xóa
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {isAddingAddress && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <AddAddress onClose={() => setIsAddingAddress(false)} onAdd={fetchAddresses} />
-          </div>
+          ))}
         </div>
-      )}
+
+        {isAddingAddress && (
+          <div className="fixed inset-0 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <AddAddress onClose={() => setIsAddingAddress(false)} onAdd={fetchAddresses} />
+            </div>
+          </div>
+        )}
+
+        {isUpdating && selectedAddress && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <UpdateAddress
+                address={selectedAddress}
+                onClose={() => {
+                  setIsUpdating(false);
+                  setSelectedAddress(null);
+                }}
+                onUpdate={fetchAddresses}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
