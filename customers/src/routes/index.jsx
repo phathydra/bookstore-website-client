@@ -17,6 +17,8 @@ import AddressSelectionPage from "../components/AddressSelectionPage/AddressSele
 import ActivateAccount from "../pages/Account/ActivateAccount"; 
 import FillInfo from '../pages/Account/FillInfo';
 import ChangePassword from "../pages/profile/changePassword";
+import ChatScreen from "../pages/chatbot/tempchatbot";
+
 
 const Layout = ({ children }) => (
   <>
@@ -47,6 +49,7 @@ const App = () => {
           <Route path="/category/:categoryName" element={<CategoryPage />} />
           <Route path="/addressselection" element={<AddressSelectionPage />} />
           <Route path="/changePassword" element={<ChangePassword />} />
+          <Route path="/chatbot" element={<ChatScreen />} />
         </Routes>
       </Layout>
     </BrowserRouter>
