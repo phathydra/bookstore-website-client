@@ -7,9 +7,9 @@ const SideNavProfile = ({ selected }) => {
 
   const navItems = [
     { label: 'Thông tin tài khoản', key: 'info', icon: <FaUser />, path: '/profile' },
-    { label: 'Địa chỉ nhận hàng', key: 'address', icon: <FaMapMarkerAlt />, path: '/profile' }, // Hoặc trang riêng
+    { label: 'Địa chỉ nhận hàng', key: 'address', icon: <FaMapMarkerAlt />, path: '/address' }, // Hoặc trang riêng
     { label: 'Đổi mật khẩu', key: 'password', icon: <FaLock />, path: '/changePassword' },
-    { label: 'Đơn hàng của tôi', key: 'orders', icon: <FaBox />, path: '/profile' }, // Hoặc trang riêng
+    { label: 'Đơn hàng của tôi', key: 'orders', icon: <FaBox />, path: '/orderHistory' }, // Hoặc trang riêng
     { label: 'Ví Voucher', key: 'voucher', icon: <FaWallet />, path: '/profile' }, // Hoặc trang riêng
   ];
 

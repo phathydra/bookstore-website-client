@@ -73,7 +73,7 @@ const ChangePassword = () => {
       <SideNavProfile selected={selectedTab} onSelect={setSelectedTab} /> {/* Truyền setSelectedTab */}
 
       {/* Content */}
-      <div className="!flex-1 !bg-white-100 !p-6 !rounded-xl !shadow-md !mr-30">
+      <div className="!flex-1 !bg-white-100 !p-6 !rounded-xl shadow !mr-30">
         <h2 className="text-2xl font-semibold !mb-6 text-gray-800">Đổi mật khẩu</h2>
         {message && (
           <div className={`!mb-4 !p-3 !rounded-md font-semibold ${
