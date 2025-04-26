@@ -10,7 +10,7 @@ const SideNavProfile = ({ selected }) => {
     { label: 'Địa chỉ nhận hàng', key: 'address', icon: <FaMapMarkerAlt />, path: '/address' }, // Hoặc trang riêng
     { label: 'Đổi mật khẩu', key: 'password', icon: <FaLock />, path: '/changePassword' },
     { label: 'Đơn hàng của tôi', key: 'orders', icon: <FaBox />, path: '/orderHistory' }, // Hoặc trang riêng
-    { label: 'Ví Voucher', key: 'voucher', icon: <FaWallet />, path: '/profile' }, // Hoặc trang riêng
+    { label: 'Ví Voucher', key: 'vouchers', icon: <FaWallet />, path: '/vouchersWallet' }, // Hoặc trang riêng
   ];
 
   const handleItemClick = (path) => {

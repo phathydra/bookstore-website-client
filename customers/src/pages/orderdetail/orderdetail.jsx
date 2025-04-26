@@ -38,7 +38,7 @@ const OrderDetail = () => {
   useEffect(() => {
     if (drawerVisible) {
       axios
-        .get(`http://localhost:8082/api/vouchers/available-voucher?userId=${userId}`)
+        .get(`http://localhost:8082/api/vouchers/available-voucher?accountId=${userId}`)
         .then((res) => {
           setPublicVouchers(res.data);
           setFilteredPublicVouchers(res.data);
@@ -46,7 +46,7 @@ const OrderDetail = () => {
         .catch(() => setVoucherError("Failed to load public vouchers"));
 
       axios
-        .get(`http://localhost:8082/api/vouchers/personal-voucher?userId=${userId}`)
+        .get(`http://localhost:8082/api/vouchers/personal-voucher?accountId=${userId}`)
         .then((res) => {
           setPersonalVouchers(res.data);
           setFilteredPersonalVouchers(res.data);
@@ -105,20 +105,39 @@ const OrderDetail = () => {
   // Calculate discounted total
   const calculateDiscountedTotal = () => {
     if (!appliedVoucher) return totalAmount;
+
     const { voucherType, percentageDiscount, highestDiscountValue, valueDiscount } = appliedVoucher;
-    let discount = voucherType === "Percentage Discount"
-      ? Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue)
-      : valueDiscount;
+    let discount = 0;
+
+    // For percentage-based discount
+    if (voucherType === "Percentage Discount") {
+      discount = Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue);
+    }
+    // For fixed value discount
+    else if (voucherType === "Value Discount") {
+      discount = valueDiscount;
+    }
+
     return totalAmount - discount;
   };
 
   // Calculate discount amount
   const calculateDiscountAmount = () => {
     if (!appliedVoucher) return 0;
+
     const { voucherType, percentageDiscount, highestDiscountValue, valueDiscount } = appliedVoucher;
-    return voucherType === "Percentage Discount"
-      ? Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue)
-      : valueDiscount;
+    let discount = 0;
+
+    // For percentage-based discount
+    if (voucherType === "Percentage Discount") {
+      discount = Math.min((percentageDiscount / 100) * totalAmount, highestDiscountValue);
+    }
+    // For fixed value discount
+    else if (voucherType === "Value Discount") {
+      discount = valueDiscount;
+    }
+
+    return discount;
   };
 
   // Place order
@@ -153,14 +172,14 @@ const OrderDetail = () => {
 
         if (appliedVoucher) {
           await axios.post("http://localhost:8082/api/vouchers/apply-voucher", {
-            orderId: res.data.id,
+            orderId: res.data.orderId,
             voucherCode: appliedVoucher.code,
             discountedPrice: calculateDiscountedTotal(),
           });
         }
-        alert("Đặt hàng thành công!");
-        const obtainVouchersRes = await axios.get(`http://localhost:8082/api/vouchers/obtain?orderId=${res.data.id}`)
+        const obtainVouchersRes = await axios.get(`http://localhost:8082/api/vouchers/obtain?orderId=${res.data.orderId}`)
         const obtainVouchers = obtainVouchersRes.data;
+        alert("Đặt hàng thành công!");
         if (Array.isArray(obtainVouchers) && obtainVouchers.length > 0) {
           alert(`Bạn vừa đủ điều kiện để nhận được ${obtainVouchers.length} voucher. Hãy kiểm tra ví voucher của bạn.`);
         }
@@ -259,7 +278,7 @@ const OrderDetail = () => {
             </Box>
             <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
               <Tab label="Public Vouchers" />
-              <Tab label="Personal Vouchers" />
+              <Tab label="Vouchers của bạn" />
             </Tabs>
             {tabValue === 0 && (
               <List>
@@ -273,6 +292,7 @@ const OrderDetail = () => {
                           : `Giảm ${voucher.valueDiscount.toLocaleString("vi-VN")}VND`}
                       </Typography>
                       <Typography>Hóa đơn tối thiểu: {voucher.minOrderValue.toLocaleString("vi-VN")}VND</Typography>
+                      <Typography>Số lượng còn lại: {voucher.usageLimit} vouchers</Typography>
                       <Button
                         variant="contained"
                         disabled={!isVoucherApplicable(voucher)}
@@ -298,6 +318,7 @@ const OrderDetail = () => {
                           : `Giảm ${voucher.valueDiscount.toLocaleString("vi-VN")}VND`}
                       </Typography>
                       <Typography>Hóa đơn tối thiểu: {voucher.minOrderValue.toLocaleString("vi-VN")}VND</Typography>
+                      <Typography>Số lượng còn lại: {voucher.usageLimit} lần</Typography>
                       <Button
                         variant="contained"
                         disabled={!isVoucherApplicable(voucher)}
