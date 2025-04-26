@@ -154,12 +154,16 @@ const OrderDetail = () => {
         if (appliedVoucher) {
           await axios.post("http://localhost:8082/api/vouchers/apply-voucher", {
             orderId: res.data.id,
-            voucherId: appliedVoucher.id,
+            voucherCode: appliedVoucher.code,
             discountedPrice: calculateDiscountedTotal(),
           });
         }
-
         alert("Đặt hàng thành công!");
+        const obtainVouchersRes = await axios.get(`http://localhost:8082/api/vouchers/obtain?orderId=${res.data.id}`)
+        const obtainVouchers = obtainVouchersRes.data;
+        if (Array.isArray(obtainVouchers) && obtainVouchers.length > 0) {
+          alert(`Bạn vừa đủ điều kiện để nhận được ${obtainVouchers.length} voucher. Hãy kiểm tra ví voucher của bạn.`);
+        }
         navigate("/orderhistory");
       } else {
         alert("Có lỗi xảy ra khi đặt hàng.");
