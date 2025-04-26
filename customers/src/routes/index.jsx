@@ -18,6 +18,7 @@ import ActivateAccount from "../pages/Account/ActivateAccount";
 import FillInfo from '../pages/Account/FillInfo';
 import ChangePassword from "../pages/profile/changePassword";
 import ChatScreen from "../pages/chatbot/tempchatbot";
+import VouchersWallet from "../pages/profile/vouchersWallet";
 
 
 const Layout = ({ children }) => (
@@ -50,6 +51,7 @@ const App = () => {
           <Route path="/addressselection" element={<AddressSelectionPage />} />
           <Route path="/changePassword" element={<ChangePassword />} />
           <Route path="/chatbot" element={<ChatScreen />} />
+          <Route path="/vouchersWallet" element={<VouchersWallet />} />
         </Routes>
       </Layout>
     </BrowserRouter>
