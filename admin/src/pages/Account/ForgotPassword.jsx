@@ -1,24 +1,50 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import "./style.css"; // Assuming your custom styles are still in place
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // Initialize useNavigate
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Make handleSubmit an async function
     e.preventDefault();
 
-    // Check if email is valid (this is a simple validation, you can improve it)
+    // Simple email validation
     if (!email.includes("@")) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    setError("");
-    // Handle forgot password functionality here
-    console.log("Email:", email);
-    // Ideally, you would send a request to your backend to handle the password reset process
+    setError(""); // Clear previous error
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/account/reset-password?email=${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", // Or whatever content type your server expects
+          },
+          // You might not need a body for a GET request with query parameters
+          // body: JSON.stringify({ email }),
+        }
+      );
+
+      if (response.ok) {
+        alert("Password reset email has been sent!");
+        setEmail(""); // Clear the email input
+        navigate("/login"); // Redirect to the login page after successful request
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to reset password. Please try again.");
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      setError("An unexpected error occurred. Please try again later.");
+    }
   };
 
   return (
@@ -35,10 +61,12 @@ const ForgotPassword = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter your email" // Changed placeholder for clarity
             />
-            <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+            {/* You can remove the label if you prefer the placeholder */}
+            {/* <label className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
               Enter your email
-            </label>
+            </label> */}
           </div>
 
           {error && <p className="text-red-600 text-sm mb-4">{error}</p>}

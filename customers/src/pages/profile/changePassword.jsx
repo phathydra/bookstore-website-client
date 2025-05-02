@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import SideNavProfile from './SideNavProfile'; // Đảm bảo đường dẫn đúng
+import SideNavProfile from './SideNavProfile'; // Ensure the correct path
+
+// Optionally, you can install `react-icons` if not already installed:
+// npm install react-icons
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -7,7 +11,12 @@ const ChangePassword = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [selectedTab, setSelectedTab] = useState('password'); // Chọn tab mặc định
+  const [selectedTab, setSelectedTab] = useState('password'); // Default selected tab
+
+  // State for toggling visibility of passwords
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const handleChangePassword = async () => {
     setMessage("");
@@ -45,7 +54,6 @@ const ChangePassword = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        // body: JSON.stringify({ oldPassword: currentPassword, newPassword: newPassword }),
       });
 
       const data = await response.json();
@@ -70,7 +78,7 @@ const ChangePassword = () => {
   return (
     <div className="flex flex-col md:flex-row !gap-4 !p-4 !ml-30">
       {/* Sidebar */}
-      <SideNavProfile selected={selectedTab} onSelect={setSelectedTab} /> {/* Truyền setSelectedTab */}
+      <SideNavProfile selected={selectedTab} onSelect={setSelectedTab} />
 
       {/* Content */}
       <div className="!flex-1 !bg-white-100 !p-6 !rounded-xl shadow !mr-30">
@@ -82,51 +90,82 @@ const ChangePassword = () => {
             {message}
           </div>
         )}
-                <div className="!mb-4">
-                    <label htmlFor="currentPassword" className="block text-gray-700 text-sm font-bold !mb-2">
-                        Mật khẩu hiện tại*
-                    </label>
-                    <input
-                        type="password"
-                        id="currentPassword"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                </div>
-                <div className="!mb-4">
-                    <label htmlFor="newPassword" className="block text-gray-700 text-sm font-bold !mb-2">
-                        Mật khẩu mới*
-                    </label>
-                    <input
-                        type="password"
-                        id="newPassword"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="shadow appearance-none border rounded w-full !py-2 !px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                </div>
-                <div className="!mb-6">
-                    <label htmlFor="confirmNewPassword" className="block text-gray-700 text-sm font-bold !mb-2">
-                        Nhập lại mật khẩu mới*
-                    </label>
-                    <input
-                        type="password"
-                        id="confirmNewPassword"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        className="shadow appearance-none border rounded w-full !py-2 !px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                </div>
-                <button
-                    onClick={handleChangePassword}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold !py-2 !px-4 !rounded focus:outline-none focus:shadow-outline w-full"
-                >
-                    Lưu thay đổi
-                </button>
-            </div>
+        
+        <div className="!mb-4">
+          <label htmlFor="currentPassword" className="block text-gray-700 text-sm font-bold !mb-2">
+            Mật khẩu hiện tại*
+          </label>
+          <div className="relative">
+            <input
+              type={showCurrentPassword ? "text" : "password"}
+              id="currentPassword"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            >
+              {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
         </div>
-    );
+
+        <div className="!mb-4">
+          <label htmlFor="newPassword" className="block text-gray-700 text-sm font-bold !mb-2">
+            Mật khẩu mới*
+          </label>
+          <div className="relative">
+            <input
+              type={showNewPassword ? "text" : "password"}
+              id="newPassword"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="shadow appearance-none border rounded w-full !py-2 !px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            >
+              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+        </div>
+
+        <div className="!mb-6">
+          <label htmlFor="confirmNewPassword" className="block text-gray-700 text-sm font-bold !mb-2">
+            Nhập lại mật khẩu mới*
+          </label>
+          <div className="relative">
+            <input
+              type={showConfirmNewPassword ? "text" : "password"}
+              id="confirmNewPassword"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="shadow appearance-none border rounded w-full !py-2 !px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            >
+              {showConfirmNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={handleChangePassword}
+          className="bg-red-500 hover:bg-red-700 text-white font-bold !py-2 !px-4 !rounded focus:outline-none focus:shadow-outline w-full"
+        >
+          Lưu thay đổi
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default ChangePassword;

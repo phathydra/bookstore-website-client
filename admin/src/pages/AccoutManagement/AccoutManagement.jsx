@@ -79,7 +79,7 @@ const AccountManagement = () => {
           className="sticky top-0 z-50 bg-white shadow-md"
         />
 
-        <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
+        <Box className="sticky top-[64px] z-30 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
           <Box className="flex-1 flex justify-center">
             <TextField
               label="Search"
