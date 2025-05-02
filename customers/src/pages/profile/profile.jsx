@@ -105,19 +105,44 @@ const Profile = () => {
                         {notification.message}
                     </div>
                 )}
-
                 <div className="mb-4 flex flex-col items-center">
-                    <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300">
-                        <img src={user.avatar} alt="Avatar" className="object-cover w-full h-full" />
-                        {isEditing && (
-                            <div className="absolute bottom-0 left-0 w-full bg-gray-200 bg-opacity-70 text-center py-1 cursor-pointer">
-                                <label htmlFor="image-upload" className="block text-sm text-gray-700">Đổi ảnh</label>
-                                <input type="file" id="image-upload" accept="image/*" onChange={handleImageChange} className="hidden" />
-                            </div>
-                        )}
-                    </div>
+                <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300">
+                    <img src={user.avatar} alt="Avatar" className="object-cover w-full h-full" />
+                    {isEditing && (
+                    <>
+                        <label htmlFor="image-upload" className="absolute bottom-1 right-9 cursor-pointer">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-white bg-black bg-opacity-50 rounded-full p-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 7h4l2-3h6l2 3h4a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z"
+                            />
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 11a3 3 0 100 6 3 3 0 000-6z"
+                            />
+                        </svg>
+                        <input
+                            type="file"
+                            id="image-upload"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                        />
+                        </label>
+                    </>
+                    )}
                 </div>
-
+                </div>
                 <div className="space-y-4">
                     <div>
                         <label className="block text-gray-700 text-sm font-bold mb-2">Name:</label>
@@ -164,9 +189,11 @@ const Profile = () => {
                         />
                     </div>
                 </div>
-
-                <button onClick={toggleEdit} className={`!mt-4 bg-red-500 hover:bg-red-700 text-white font-bold !py-2 !px-4 !rounded focus:outline-none focus:shadow-outline ${isEditing ? '' : 'w-full'}`}>
-                    {isEditing ? "Lưu" : "Lưu thay đổi"}
+                <button
+                onClick={toggleEdit}
+                className={`!mt-4 ${isEditing ? 'bg-green-500 hover:bg-green-700' : 'bg-red-500 hover:bg-red-700'} text-white font-bold !py-2 !px-4 !rounded focus:outline-none focus:shadow-outline w-full`}
+                >
+                {isEditing ? "Lưu thay đổi" : "Sửa"}
                 </button>
             </div>
         </div>

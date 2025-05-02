@@ -106,12 +106,6 @@ const Login = () => {
               className="w-full py-3 bg-gradient-to-r from-pink-500 to-indigo-600 text-white rounded-lg hover:bg-indigo-500 focus:outline-none"
             />
           </div>
-          <div className="text-center text-gray-600">
-            Not a member?{" "}
-            <Link to="/signup" className="text-blue-600 hover:underline">
-              Signup now
-            </Link>
-          </div>
         </form>
       </div>
     </div>

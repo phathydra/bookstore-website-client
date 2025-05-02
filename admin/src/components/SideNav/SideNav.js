@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaBook, FaFileInvoice, FaUsers, FaUserCog, FaFileImport, FaPlus, FaMinus } from 'react-icons/fa';
+import { FaBook, FaFileInvoice, FaUsers, FaUserCog, FaPercent, FaTicketAlt, FaTruck, FaPlus, FaMinus } from 'react-icons/fa';
 
 const SideNav = ({ onToggleCollapse }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -32,13 +32,13 @@ const SideNav = ({ onToggleCollapse }) => {
             <FaUsers /> {!isCollapsed && <span>Quản lý Khách Hàng</span>}
           </a>
           <a href="/discount-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
-            <FaFileImport /> {!isCollapsed && <span>Quản lý Giảm Giá</span>}
+            <FaPercent /> {!isCollapsed && <span>Quản lý Giảm Giá</span>}
           </a>
           <a href="/voucher-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
-            <FaFileImport /> <span>Quản lý Voucher</span>
+            <FaTicketAlt /> {!isCollapsed && <span>Quản lý Voucher</span>}
           </a>
           <a href="/supplier-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
-            <FaFileImport /> {!isCollapsed && <span>Quản lý Nhà cung cấp</span>}
+            <FaTruck /> {!isCollapsed && <span>Quản lý Nhà cung cấp</span>}
           </a>
         </nav>
       </div>

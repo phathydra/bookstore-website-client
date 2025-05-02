@@ -34,7 +34,7 @@ const Header = ({ title, isCollapsed }) => {
 
   return (
     <header
-  className={`fixed top-0 right-0 flex justify-between items-center bg-white shadow-md py-4 px-10 z-40 transition-all duration-300`}
+  className={`fixed top-0 right-0 flex justify-between items-center bg-white shadow-md py-4 px-10 z-50 transition-all duration-300`}
   style={{ left: isCollapsed ? "5rem" : "16.5%" }}
 >
 
@@ -49,7 +49,8 @@ const Header = ({ title, isCollapsed }) => {
         </button>
 
         {isMenuOpen && (
-          <div className="absolute top-12 right-0 bg-white shadow-lg rounded-lg w-48 py-2">
+  <div className="absolute top-12 right-0 bg-white shadow-lg rounded-lg w-48 py-2 z-50">
+
             <ul className="space-y-2">
               <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                 <Link to="/profile">Profile</Link>
