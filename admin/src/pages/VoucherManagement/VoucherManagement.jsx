@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination,
-    Button, Box, IconButton
+    Button, Box, IconButton, TextField, InputAdornment
 } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 import AddVoucher from './AddVoucher';
@@ -19,16 +20,21 @@ const VoucherManagement = () => {
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false); // State cho việc thu gọn sidebar
 
     // Fetch vouchers with pagination
     useEffect(() => {
-        refreshVouchers();
-    }, [page, rowsPerPage]);
+        const delayDebounce = setTimeout(() => {
+            refreshVouchers();
+        }, 300)
+
+        return () => clearTimeout(delayDebounce);
+    }, [page, rowsPerPage, searchTerm]);
 
     const refreshVouchers = async () => {
         try {
-            const response = await axios.get(`http://localhost:8082/api/vouchers?page=${page}&size=${rowsPerPage}`);
+            const response = await axios.get(`http://localhost:8082/api/vouchers?page=${page}&size=${rowsPerPage}&code=${searchTerm}`);
             setVouchers(response.data);
             setError('');
         } catch (error) {
@@ -39,6 +45,10 @@ const VoucherManagement = () => {
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
+    };
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -95,9 +105,27 @@ const VoucherManagement = () => {
                 <div className="p-10 pt-20 flex w-full overflow-x-auto" style={{ gap: '1rem' }}>
                     <Box className="flex-1 overflow-auto">
                         <Box className="flex justify-between mb-2">
-                            <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                                Voucher List
-                            </Typography>
+                            <Box className="flex-1 flex justify-center">
+                                <TextField
+                                label="Search by code"
+                                variant="outlined"
+                                size="small"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                className="w-[50%]"
+                                sx={{ borderRadius: '8px', backgroundColor: 'white' }}
+                                InputProps={{
+                                    endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton>
+                                        <Search />
+                                        </IconButton>
+                                    </InputAdornment>
+                                    ),
+                                    style: { borderRadius: '8px' }
+                                }}
+                                />
+                            </Box>
                             <Button
                                 variant="contained"
                                 style={{ backgroundColor: 'green' }}
