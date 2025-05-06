@@ -80,7 +80,7 @@ const DiscountManagement = () => {
 
         const delayDebounce = setTimeout(() => {
             fetchRecommendedBooks(searchQuery);
-        }, 500); // 300ms delay
+        }, 500);
 
         return () => clearTimeout(delayDebounce); // Cleanup function to cancel previous timeout
     }, [searchQuery]);
