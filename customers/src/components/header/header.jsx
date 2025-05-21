@@ -27,7 +27,7 @@ const Header = () => {
           .then((res) => res.json())
           .then((data) => {
             setUser({
-              name: data.name || "Guest",
+              name: data.name || "Username",
               avatar: data.avatar || "https://via.placeholder.com/40",
             });
             setIsLogin(true);
