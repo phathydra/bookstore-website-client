@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { PayPalButton } from "react-paypal-button-v2";
 import {
   Drawer,
   Box,
@@ -159,7 +160,7 @@ const OrderDetail = () => {
         quantity,
         price: discountedPrice ?? price,
       })),
-      orderStatus: "Chưa thanh toán",
+      orderStatus: paymentMethod === "COD" ? "Chưa thanh toán" : "Đã thanh toán",
       shippingStatus: "Chờ xử lý",
     };
 
@@ -340,7 +341,7 @@ const OrderDetail = () => {
           <h3 className="text-lg font-semibold mb-2">Phương thức thanh toán</h3>
           <div className="flex">
             <div className="flex flex-col">
-              {["COD", "Bank"].map((method, i) => (
+              {["COD", "Paypal"].map((method, i) => (
                 <div key={i} className="ml-4">
                   <input
                     type="radio"
@@ -355,10 +356,10 @@ const OrderDetail = () => {
               ))}
             </div>
             <div className="flex flex-col">
-              {["COD", "Bank"].map((method, i) => (
+              {["COD", "Paypal"].map((method, i) => (
                 <div key={i}>
                   <label htmlFor={method}>
-                    {method === "COD" ? "Thanh toán khi nhận hàng (COD)" : "Chuyển khoản ngân hàng"}
+                    {method === "COD" ? "Thanh toán khi nhận hàng (COD)" : "Thanh toán sử dụng Paypal"}
                   </label>
                 </div>
               ))}
@@ -390,12 +391,28 @@ const OrderDetail = () => {
           <h3 className="text-lg font-bold mb-3">
             Tổng tiền: {calculateDiscountedTotal().toLocaleString("vi-VN")} VND
           </h3>
-          <button
-            className="w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
-            onClick={handlePlaceOrder}
-          >
-            Đặt hàng
-          </button>
+          {paymentMethod === "COD" ? (
+            <button
+              className="w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
+              onClick={handlePlaceOrder}
+            >
+              Đặt hàng
+            </button>
+          ) : (
+            <PayPalButton
+              amount={parseFloat((calculateDiscountedTotal() / 23000).toFixed(2))}
+              // shippingPreference="NO_SHIPPING" // default is "GET_FROM_FILE"
+              onSuccess={(details, data) => {
+                alert("Transaction completed by " + details.payer.name.given_name);
+
+                handlePlaceOrder();
+              }}
+
+              onError={() => {
+                alert("Transaction failed")
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
