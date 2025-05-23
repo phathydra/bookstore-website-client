@@ -37,9 +37,6 @@ const SideNav = ({ onToggleCollapse }) => {
           <a href="/voucher-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaTicketAlt /> {!isCollapsed && <span>Quản lý Voucher</span>}
           </a>
-          <a href="/supplier-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
-            <FaTruck /> {!isCollapsed && <span>Quản lý Nhà cung cấp</span>}
-          </a>
         </nav>
       </div>
     </aside>

@@ -118,9 +118,10 @@ const AccountManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>Tên đăng nhập</TableCell>
-                  <TableCell>Mật khẩu</TableCell>
-                  <TableCell>Quyền</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell align="center">Mật khẩu</TableCell>
+                  <TableCell align="center">Quyền</TableCell>
+                  <TableCell align="center">Trạng thái</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -131,9 +132,23 @@ const AccountManagement = () => {
                     hover
                   >
                     <TableCell>{account.accountId}</TableCell>
-                    <TableCell>{account.username}</TableCell>
-                    <TableCell>{account.password}</TableCell>
-                    <TableCell>{account.role}</TableCell>
+                    <TableCell>{account.email}</TableCell>
+                    <TableCell align="center">*******</TableCell>
+                    <TableCell align="center">{account.role}</TableCell>
+                    <TableCell align="center">
+                      <span
+                        style={{
+                          backgroundColor: account.status === 'Active' ? '#4caf50' : '#f44336',
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '9999px',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {account.status}
+                      </span>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -169,7 +184,10 @@ const AccountManagement = () => {
             },
           }}
         >
-          <AccountDetail selectedAccount={selectedAccount} handleDeleteAccount={handleDeleteAccount} />
+          <AccountDetail
+            selectedAccount={selectedAccount}
+            handleDeleteAccount={handleDeleteAccount}
+          />
         </Drawer>
 
         {isAddModalOpen && (

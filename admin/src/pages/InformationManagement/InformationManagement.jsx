@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { debounce } from 'lodash';
-import AddInformation from './AddInformation';
 import UpdateInformation from './UpdateInformation';
 import InformationDetail from './InformationDetail';
 
@@ -82,120 +81,110 @@ const InformationManagement = () => {
     };
 
     return (
-        <div className="flex h-screen">
-            <SideNav onToggleCollapse={handleToggleMenu} />
-            <main
-                className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
-                style={{ paddingLeft: isCollapsed ? '5%' : '16.5%' }}
-            >
-                <Header
-                    title="Information Management"
-                    isCollapsed={isCollapsed}
-                    className="sticky top-0 z-50 bg-white shadow-md"
-                />
-                <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
-                    <Box className="flex-1 flex justify-center">
-                        <TextField
-                            label="Search"
-                            variant="outlined"
-                            size="small"
-                            onChange={handleSearchChange}
-                            className="w-[50%]"
-                            sx={{ borderRadius: '8px', backgroundColor: 'white' }}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton>
-                                            <Search />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                                style: { borderRadius: '8px' },
-                            }}
-                        />
-                    </Box>
-                    <Button
-                        variant="contained"
-                        style={{ backgroundColor: 'green' }}
-                        onClick={() => setIsAddModalOpen(true)}
-                        disabled={loading}
-                    >
-                        {loading ? <CircularProgress size={24} /> : "Add"}
-                    </Button>
-                </Box>
-                <div className="flex-1 overflow-auto pt-[72px] px-2">
-                    <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
-                        <Table stickyHeader>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>ID</TableCell>
-                                    <TableCell>Account ID</TableCell>
-                                    <TableCell>Name</TableCell>
-                                    <TableCell>Email</TableCell>
-                                    <TableCell>Phone</TableCell>
-                                    <TableCell>Address</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {information?.content?.map((info) => (
-                                    <TableRow key={info.id} onClick={() => handleSelectInformation(info)} hover>
-                                        <TableCell>{info.id}</TableCell>
-                                        <TableCell>{info.accountId}</TableCell>
-                                        <TableCell>{info.name}</TableCell>
-                                        <TableCell>{info.email}</TableCell>
-                                        <TableCell>{info.phone}</TableCell>
-                                        <TableCell>{info.address}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <Box className="sticky bottom-0 bg-white shadow-md">
-                        <TablePagination
-                            rowsPerPageOptions={[5, 10, 25]}
-                            component="div"
-                            count={information?.totalElements || 0}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={(event, newPage) => setPage(newPage)}
-                            onRowsPerPageChange={(event) => {
-                                setRowsPerPage(parseInt(event.target.value, 10));
-                                setPage(0);
-                            }}
-                        />
-                    </Box>
-                </div>
-                <Drawer
-                    anchor="right"
-                    open={isDrawerOpen}
-                    onClose={() => setIsDrawerOpen(false)}
-                    sx={{
-                        width: 400,
-                        flexShrink: 0,
-                        '& .MuiDrawer-paper': {
-                            width: 500,
-                            boxSizing: 'border-box',
-                        },
-                    }}
-                >
-                    <InformationDetail selectedInformation={selectedInformation} />
-                </Drawer>
-                {isAddModalOpen && <AddInformation onClose={() => setIsAddModalOpen(false)} onAdd={fetchInformation} />}
-                {isUpdateModalOpen && (
-                    <UpdateInformation
-                        selectedInformation={selectedInformation}
-                        onUpdate={handleUpdateInformation}
-                        onClose={() => setIsUpdateModalOpen(false)}
-                    />
-                )}
-                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-                    <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
-                        {snackbar.message}
-                    </Alert>
-                </Snackbar>
-            </main>
+    <div className="flex h-screen">
+        <SideNav onToggleCollapse={handleToggleMenu} />
+        <main
+        className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
+        style={{ paddingLeft: isCollapsed ? '5%' : '16.5%' }}
+        >
+        <Header
+            title="Information Management"
+            isCollapsed={isCollapsed}
+            className="sticky top-0 z-50 bg-white shadow-md"
+        />
+        <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-center">
+            <TextField
+            label="Search"
+            variant="outlined"
+            size="small"
+            onChange={handleSearchChange}
+            className="w-[50%]"
+            sx={{ borderRadius: '8px', backgroundColor: 'white' }}
+            InputProps={{
+                endAdornment: (
+                <InputAdornment position="end">
+                    <IconButton>
+                    <Search />
+                    </IconButton>
+                </InputAdornment>
+                ),
+                style: { borderRadius: '8px' },
+            }}
+            />
+        </Box>
+        <div className="flex-1 overflow-auto pt-[72px] px-2">
+            <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
+            <Table stickyHeader>
+                <TableHead>
+                <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Account ID</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Phone</TableCell>
+                    <TableCell>Address</TableCell>
+                </TableRow>
+                </TableHead>
+                <TableBody>
+                {information?.content?.map((info) => (
+                    <TableRow key={info.id} onClick={() => handleSelectInformation(info)} hover>
+                    <TableCell>{info.id ?? 'N/A'}</TableCell>
+                    <TableCell>{info.accountId ?? 'N/A'}</TableCell>
+                    <TableCell>{info.name?.trim() || 'N/A'}</TableCell>
+                    <TableCell>{info.email?.trim() || 'N/A'}</TableCell>
+                    <TableCell>{info.phone?.trim() || 'N/A'}</TableCell>
+                    <TableCell>{info.address?.trim() || 'N/A'}</TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            </TableContainer>
+            <Box className="sticky bottom-0 bg-white shadow-md">
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={information?.totalElements || 0}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                setRowsPerPage(parseInt(event.target.value, 10));
+                setPage(0);
+                }}
+            />
+            </Box>
         </div>
+        <Drawer
+            anchor="right"
+            open={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            sx={{
+            width: 400,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+                width: 500,
+                boxSizing: 'border-box',
+            },
+            }}
+        >
+            <InformationDetail selectedInformation={selectedInformation} />
+        </Drawer>
+        {isUpdateModalOpen && (
+            <UpdateInformation
+            selectedInformation={selectedInformation}
+            onUpdate={handleUpdateInformation}
+            onClose={() => setIsUpdateModalOpen(false)}
+            />
+        )}
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+            <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+            {snackbar.message}
+            </Alert>
+        </Snackbar>
+        </main>
+    </div>
     );
+
 };
 
 export default InformationManagement;
