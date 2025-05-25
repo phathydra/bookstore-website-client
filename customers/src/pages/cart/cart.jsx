@@ -167,10 +167,10 @@ const Cart = () => {
                                             className="w-5 h-5"
                                         />
                                     </th>
-                                    <th className="p-4 text-left">Book</th>
-                                    <th className="p-4 text-left">Quantity</th>
-                                    <th className="p-4 text-left ">Total Price</th>
-                                    <th className="p-4 text-left">Actions</th>
+                                    <th className="p-4 text-left">Sách</th>
+                                    <th className="p-4 text-left">Số lượng</th>
+                                    <th className="p-4 text-left ">Tổng giá</th>
+                                    <th className="p-4 text-left">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -231,7 +231,7 @@ const Cart = () => {
 
             {/* Cart Total Section */}
             <div className="cart-total sticky bottom-0 w-full bg-green-100 p-4 rounded-t-lg flex flex-col items-center z-10">
-                <h3 className="text-xl font-bold">Total: {totalAmount.toLocaleString("en-US")} VND</h3>
+                <h3 className="text-xl font-bold">Tổng hóa đơn: {totalAmount.toLocaleString("en-US")} VND</h3>
                 <button
                     className="mt-4 !bg-green-600 text-white py-3 px-6 !rounded-lg !shadow-lg hover:scale-105 hover:bg-green-700 transition-all duration-300 disabled:opacity-50 !disabled:cursor-not-allowed !text-lg !font-semibold w-80 !text-center"
                     disabled={totalAmount === 0}

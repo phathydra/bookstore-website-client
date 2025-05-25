@@ -417,7 +417,7 @@ const BookDetail = () => {
             <Link
               key={recBook.bookId}
               to={`/productdetail/${recBook.bookId}`}
-              className="block bg-white shadow-lg rounded-lg overflow-hidden p-4 border"
+              className="block bg-white shadow-lg rounded-lg overflow-hidden p-4 border !no-underline"
             >
               <img
                 src={recBook.bookImage || "/placeholder.svg"}

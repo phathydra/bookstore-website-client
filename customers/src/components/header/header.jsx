@@ -147,19 +147,19 @@ const Header = () => {
         </div>
         <nav className="flex" style={{ gap: "20px" }}>
           <button className="text-gray-700 hover:text-blue-500 focus:outline-none" onClick={() => navigate("/")}>
-            Home
+            Trang chủ
           </button>
           <button
             className="text-gray-700 hover:text-blue-500 focus:outline-none"
             onClick={() => navigate("/products?searchParam=")}
           >
-            Products
+            Sản phẩm
           </button>
           <button
             className="text-gray-700 hover:text-blue-500 focus:outline-none"
             onClick={() => navigate("/category/someCategory")}
           >
-            Category
+            Danh mục
           </button>
         </nav>
       </div>
@@ -170,7 +170,7 @@ const Header = () => {
         <div className="relative flex items-center w-full max-w-lg" ref={searchResultsRef}>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Tìm kiếm..."
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             value={input}

@@ -75,7 +75,7 @@ const Book = ({ book }) => {
     
             {/* Nhãn dán "Cháy hàng" */}
             {book.bookStockQuantity === 0 && (
-                <div className="absolute top-9 right-10 transform rotate-[-20deg] bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-sm shadow-md">
+                <div className="absolute top-9 right-9 transform rotate-[-20deg] bg-red-600 text-white text-sm font-bold px-4 py-1 rounded-sm shadow-md">
                     🔥 Cháy hàng
                 </div>
             )}

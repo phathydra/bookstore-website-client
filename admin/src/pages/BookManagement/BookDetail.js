@@ -94,10 +94,10 @@ const BookDetail = ({ selectedBook, handleOpenUpdateModal, handleDeleteBook }) =
 
           <Box className="flex justify-between" width="100%" display="flex" gap={2} p={2}>
             <Button variant="contained" color="primary" onClick={handleOpenUpdateModalClick} fullWidth>
-              Sửa
+              Sửa sách
             </Button>
             <Button variant="contained" color="error" onClick={handleDeleteBook} fullWidth>
-              Xóa
+              Xóa sách
             </Button>
           </Box>
 

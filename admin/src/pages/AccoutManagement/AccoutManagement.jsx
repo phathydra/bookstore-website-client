@@ -74,7 +74,7 @@ const AccountManagement = () => {
         style={{ paddingLeft: isCollapsed ? '5%' : '16.5%' }}
       >
         <Header
-          title="Account Management"
+          title="QUẢN LÝ TÀI KHOẢN"
           isCollapsed={isCollapsed}
           className="sticky top-0 z-50 bg-white shadow-md"
         />
@@ -105,7 +105,7 @@ const AccountManagement = () => {
             style={{ backgroundColor: 'green' }}
             onClick={() => setIsAddModalOpen(true)}
           >
-            Add
+            Thêm tài khoản
           </Button>
         </Box>
 
