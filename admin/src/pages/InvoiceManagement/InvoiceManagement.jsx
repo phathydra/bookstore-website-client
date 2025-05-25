@@ -21,7 +21,6 @@ import {
 
 const InvoiceManagement = () => {
     const [invoices, setInvoices] = useState([]);
-    const [filteredInvoices, setFilteredInvoices] = useState([]);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -32,26 +31,38 @@ const InvoiceManagement = () => {
     const [cancelRequests, setCancelRequests] = useState([]);
     const [isCancelRequestsOpen, setIsCancelRequestsOpen] = useState(false);
     const [selectedCancelRequest, setSelectedCancelRequest] = useState(null);
-    const [isCollapsed, setIsCollapsed] = useState(false); // State cho việc thu gọn sidebar
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
+        // Fetch invoices whenever page, rowsPerPage, filterStatus, or searchQuery changes
         fetchInvoices();
-        fetchCancelRequests();
-    }, [page, rowsPerPage]);
+    }, [page, rowsPerPage, filterStatus, searchQuery]);
 
     useEffect(() => {
-        filterInvoices();
-    }, [invoices, filterStatus, searchQuery]);
+        // Fetch cancel requests once on component mount or when manually refreshed
+        fetchCancelRequests();
+    }, []);
 
     const fetchInvoices = async () => {
         try {
-            const response = await axios.get(
-                `http://localhost:8082/api/orders?page=${page}&size=${rowsPerPage}`
-            );
+            const params = {
+                page: page,
+                size: rowsPerPage,
+            };
+            if (filterStatus) {
+                params.shippingStatus = filterStatus;
+            }
+            if (searchQuery) {
+                params.search = searchQuery;
+            }
+
+            const response = await axios.get("http://localhost:8082/api/orders", { params });
             setInvoices(response.data.content || []);
             setTotalInvoices(response.data.totalElements || 0);
         } catch (error) {
             console.error("Lỗi khi lấy danh sách hóa đơn:", error);
+            setInvoices([]);
+            setTotalInvoices(0);
         }
     };
 
@@ -61,22 +72,8 @@ const InvoiceManagement = () => {
             setCancelRequests(response.data || []);
         } catch (error) {
             console.error("Lỗi khi lấy danh sách yêu cầu hủy:", error);
+            setCancelRequests([]);
         }
-    };
-
-    const filterInvoices = () => {
-        let filtered = invoices;
-        if (filterStatus) {
-            filtered = filtered.filter((invoice) => invoice.shippingStatus === filterStatus);
-        }
-        if (searchQuery) {
-            filtered = filtered.filter(
-                (invoice) =>
-                    invoice.recipientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    invoice.orderId.toString().includes(searchQuery)
-            );
-        }
-        setFilteredInvoices(filtered);
     };
 
     const handleSelectInvoice = (invoice) => {
@@ -87,18 +84,8 @@ const InvoiceManagement = () => {
     const handleUpdateStatus = async (updatedInvoice, newStatus) => {
         try {
             await axios.put(`http://localhost:8082/api/orders/update-shipping-status/${updatedInvoice.orderId}?shippingStatus=${newStatus}`);
-            // Cập nhật trạng thái của hóa đơn trong danh sách invoices và filteredInvoices
-            const updatedInvoices = invoices.map((invoice) =>
-                invoice.orderId === updatedInvoice.orderId ? { ...invoice, shippingStatus: newStatus } : invoice
-            );
-            setInvoices(updatedInvoices);
-
-            const updatedFilteredInvoices = filteredInvoices.map((invoice) =>
-                invoice.orderId === updatedInvoice.orderId ? { ...invoice, shippingStatus: newStatus } : invoice
-            );
-            setFilteredInvoices(updatedFilteredInvoices);
-
-            setIsDrawerOpen(false); // Đóng drawer sau khi cập nhật
+            fetchInvoices(); // Fetch lại danh sách sau khi cập nhật
+            setIsDrawerOpen(false);
         } catch (error) {
             console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
             alert("Lỗi khi cập nhật trạng thái đơn hàng");
@@ -111,11 +98,17 @@ const InvoiceManagement = () => {
 
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+        setPage(0); // Luôn về trang 0 khi thay đổi số hàng hiển thị
     };
 
     const handleFilterClick = (status) => {
         setFilterStatus(status);
+        setPage(0); // Luôn về trang 0 khi thay đổi trạng thái lọc
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
+        setPage(0); // Luôn về trang 0 khi thay đổi tìm kiếm
     };
 
     const handleOpenCancelRequests = () => {
@@ -125,7 +118,7 @@ const InvoiceManagement = () => {
     const handleCloseCancelRequests = () => {
         setIsCancelRequestsOpen(false);
         setSelectedCancelRequest(null);
-        fetchCancelRequests(); // Refresh cancel requests after closing
+        fetchCancelRequests(); // Refresh cancel requests sau khi đóng
     };
 
     const handleSelectCancelRequest = (request) => {
@@ -135,12 +128,7 @@ const InvoiceManagement = () => {
     const handleApproveCancellation = async (requestId, orderId) => {
         try {
             await axios.put(`http://localhost:8082/api/cancelled-orders/update-status/${requestId}?status=Đồng ý`);
-            // Optionally update the order status in the main invoices list
-            const updatedInvoices = invoices.map(invoice =>
-                invoice.orderId === orderId ? { ...invoice, shippingStatus: "Đã hủy" } : invoice
-            );
-            setInvoices(updatedInvoices);
-            filterInvoices(); // Re-filter to update the displayed list
+            fetchInvoices(); // Refresh invoices để cập nhật trạng thái đơn hàng bị hủy
             fetchCancelRequests(); // Refresh cancel requests
             setSelectedCancelRequest(null);
         } catch (error) {
@@ -152,12 +140,7 @@ const InvoiceManagement = () => {
     const handleRejectCancellation = async (requestId, orderId) => {
         try {
             await axios.put(`http://localhost:8082/api/cancelled-orders/update-status/${requestId}?status=Từ chối`);
-            // Optionally update the order status in the main invoices list
-            const updatedInvoices = invoices.map(invoice =>
-                invoice.orderId === orderId ? { ...invoice, shippingStatus: "Đã nhận đơn" } : invoice
-            );
-            setInvoices(updatedInvoices);
-            filterInvoices(); // Re-filter to update the displayed list
+            fetchInvoices(); // Refresh invoices để cập nhật trạng thái đơn hàng bị hủy (nếu có)
             fetchCancelRequests(); // Refresh cancel requests
             setSelectedCancelRequest(null);
         } catch (error) {
@@ -180,13 +163,13 @@ const InvoiceManagement = () => {
             </div>
 
             <main
-                className="flex-1 flex flex-col transition-all duration-300"
+                className="flex-1 flex flex-col transition-all duration-300 overflow-hidden" // Thêm overflow-hidden
                 style={{ marginLeft: isCollapsed ? '5rem' : '16.666667%' }}
             >
                 <Header title="Invoice Management" isCollapsed={isCollapsed} />
 
-                <div className="flex flex-col flex-1 p-4">
-                    {/* 🔥 Thanh filter + tìm kiếm */}
+                <div className="flex flex-col flex-1 p-4 overflow-y-auto"> {/* Thêm overflow-y-auto ở đây */}
+                    {/* Thanh filter + tìm kiếm */}
                     <div className="flex flex-wrap justify-center items-center gap-4 mt-14 mb-4 bg-white p-4 rounded-lg shadow-md">
                         {["", "Chờ xử lý", "Đã nhận đơn", "Đang giao", "Đã giao", "Đã hủy"].map((status, index) => (
                             <Button
@@ -211,7 +194,7 @@ const InvoiceManagement = () => {
                             variant="outlined"
                             size="small"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={handleSearchChange}
                             className="!min-w-[250px] h-12"
                         />
 
@@ -230,8 +213,8 @@ const InvoiceManagement = () => {
                         </Button>
                     </div>
 
-                    {/* 🔥 Bảng hóa đơn - Có thanh cuộn riêng */}
-                    <TableContainer component={Paper} className="max-h-[70vh] overflow-y-auto rounded-lg bg-white shadow-md">
+                    {/* Bảng hóa đơn - Có thanh cuộn riêng */}
+                    <TableContainer component={Paper} className="flex-1 overflow-y-auto rounded-lg bg-white shadow-md"> {/* Thay max-h bằng flex-1 */}
                         <Table stickyHeader>
                             <TableHead>
                                 <TableRow>
@@ -247,7 +230,7 @@ const InvoiceManagement = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredInvoices.map((invoice) => (
+                                {invoices.map((invoice) => (
                                     <TableRow key={invoice.orderId} onClick={() => handleSelectInvoice(invoice)} hover>
                                         <TableCell>{invoice.orderId}</TableCell>
                                         <TableCell>{invoice.recipientName}</TableCell>
@@ -260,12 +243,19 @@ const InvoiceManagement = () => {
                                         <TableCell>{invoice.shippingStatus}</TableCell>
                                     </TableRow>
                                 ))}
+                                {invoices.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={9} align="center">
+                                            Không có hóa đơn nào được tìm thấy.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </TableContainer>
 
                     {/* Pagination */}
-                    <div className="mt-auto flex justify-end pr-6 pb-4">
+                    <div className="flex justify-end pr-6 pb-4 bg-white rounded-b-lg shadow-md mt-4"> {/* Thêm background, shadow, và margin-top */}
                         <TablePagination
                             rowsPerPageOptions={[5, 10, 25]}
                             component="div"
@@ -278,7 +268,7 @@ const InvoiceManagement = () => {
                     </div>
                 </div>
 
-                {/* 🔥 Drawer hiển thị chi tiết hóa đơn */}
+                {/* Drawer hiển thị chi tiết hóa đơn */}
                 <Drawer
                     anchor="right"
                     open={isDrawerOpen}
@@ -288,7 +278,7 @@ const InvoiceManagement = () => {
                     <InvoiceDetail selectedInvoice={selectedInvoice} onUpdateStatus={handleUpdateStatus} onCloseDrawer={() => setIsDrawerOpen(false)} />
                 </Drawer>
 
-                {/* 🔥 Drawer hiển thị danh sách yêu cầu hủy */}
+                {/* Drawer hiển thị danh sách yêu cầu hủy */}
                 <Drawer
                     anchor="right"
                     open={isCancelRequestsOpen}
