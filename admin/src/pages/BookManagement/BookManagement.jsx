@@ -111,7 +111,7 @@ const BookManagement = () => {
         style={{ marginLeft: isCollapsed ? '5rem' : '16.5%' }}
       >
         {/* Fixed Header */}
-        <Header title="Book Management" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
+        <Header title="QUẢN LÝ SÁCH" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
 
         {/* Fixed Search & Add Box */}
         <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
@@ -139,7 +139,7 @@ const BookManagement = () => {
           </Box>
           {/* Nút Add nằm bên trái */}
           <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>
-            Add
+            Thêm sách
           </Button>
         </Box>
         {/* Table Section with Padding */}
@@ -149,8 +149,8 @@ const BookManagement = () => {
               <TableHead>
                 <TableRow>
                   {[
-                    'ID', 'Name', 'Author', 'Price', 'Main Category', 'Category',
-                    'Year', 'Publisher', 'Language', 'Stock', 'Supplier', 'Description'
+                  'Id', 'Tên', 'Tác giả', 'Giá', 'Danh mục chính', 'Thể loại',
+                  'Năm xuất bản', 'Nhà xuất bản', 'Ngôn ngữ', 'Số lượng tồn kho', 'Nhà cung cấp', 'Mô tả'
                   ].map((header) => (
                     <TableCell key={header}>{header}</TableCell>
                   ))}

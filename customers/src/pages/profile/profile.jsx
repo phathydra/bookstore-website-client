@@ -145,7 +145,7 @@ const Profile = () => {
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Name:</label>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Tên:</label>
                         <input
                             type="text"
                             name="name"
@@ -167,7 +167,7 @@ const Profile = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Phone:</label>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Số điện thoại:</label>
                         <input
                             type="text"
                             name="phone"
@@ -178,7 +178,7 @@ const Profile = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Address:</label>
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Địa chỉ:</label>
                         <input
                             type="text"
                             name="address"

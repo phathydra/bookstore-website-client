@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination,
-    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper, ClickAwayListener
+    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper
 } from '@mui/material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 import AddDiscount from './AddDiscount';
 import UpdateDiscount from './UpdateDiscount';
+import DiscountDetail from './DiscountDetail';
 import CloseIcon from '@mui/icons-material/Close';
+// Removed unused imports: ClickAwayListener, EditIcon, DeleteIcon
 
 const DiscountManagement = () => {
     const [discounts, setDiscounts] = useState({});
@@ -20,28 +22,31 @@ const DiscountManagement = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
+    const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false); // State for detail drawer
     const [error, setError] = useState('');
-    const [isCollapsed, setIsCollapsed] = useState(false); // State cho việc thu gọn sidebar
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const addButtonRef = useRef(null);
     const anchorRef = useRef(null);
 
-    useEffect(() => {
-        const fetchDiscounts = async () => {
-            try {
-                const response = await axios.get(`http://localhost:8081/api/discounts?page=${page}&size=${rowsPerPage}`);
-                setDiscounts(response.data);
-                setError('');
-            } catch (error) {
-                console.error('Error fetching discounts:', error);
-                setError('Failed to fetch discounts. Please try again.');
-            }
-        };
-        fetchDiscounts();
-    }, [page, rowsPerPage]);
+    // Define fetchDiscounts using useCallback to make it a stable dependency
+    const fetchDiscounts = useCallback(async () => {
+        try {
+            const response = await axios.get(`http://localhost:8081/api/discounts?page=${page}&size=${rowsPerPage}`);
+            setDiscounts(response.data);
+            setError('');
+        } catch (error) {
+            console.error('Error fetching discounts:', error);
+            setError('Failed to fetch discounts. Please try again.');
+        }
+    }, [page, rowsPerPage]); // Dependencies for fetchDiscounts
 
-    const fetchRecommendedBooks = async (query) => {
+    useEffect(() => {
+        fetchDiscounts();
+    }, [page, rowsPerPage, fetchDiscounts]); // Added fetchDiscounts to dependency array
+
+    const fetchRecommendedBooks = useCallback(async (query) => {
         if (!query) {
             setRecommendedBooks([]);
             return;
@@ -53,11 +58,10 @@ const DiscountManagement = () => {
             console.error('Error fetching recommended books:', error);
             setRecommendedBooks([]);
         }
-    };
+    }, [selectedBooks]); // Added selectedBooks to dependency array
 
-    const fetchDiscountedBooks = async (discountId) => {
+    const fetchDiscountedBooks = useCallback(async (discountId) => {
         try {
-            console.log(discountId);
             const response = await axios.get(`http://localhost:8081/api/book/discounted_books?discountId=${discountId}`);
             setSelectedBooks(response.data);
         } catch (error) {
@@ -65,7 +69,7 @@ const DiscountManagement = () => {
             setSelectedBooks([]);
             setError('Failed to fetch discounted books. Please try again.');
         }
-    };
+    }, []); // No external dependencies for this specific fetch
 
     const handleSearchChange = (event) => {
         const query = event.target.value;
@@ -82,8 +86,8 @@ const DiscountManagement = () => {
             fetchRecommendedBooks(searchQuery);
         }, 500);
 
-        return () => clearTimeout(delayDebounce); // Cleanup function to cancel previous timeout
-    }, [searchQuery]);
+        return () => clearTimeout(delayDebounce);
+    }, [searchQuery, fetchRecommendedBooks]); // Added fetchRecommendedBooks to dependency array
 
     const handleBookSelect = (book) => {
         if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
@@ -97,10 +101,10 @@ const DiscountManagement = () => {
         setSelectedBooks((prev) => prev.filter((book) => book.bookId !== bookId));
     };
 
-    const handleApplyDiscount = (discount) => {
+    const handleOpenApplyDrawer = (discount) => {
         setSelectedDiscount(discount);
         fetchDiscountedBooks(discount.id);
-        setIsDrawerOpen(true);
+        setIsApplyDrawerOpen(true);
     };
 
     const handleConfirmApplyDiscount = async () => {
@@ -119,10 +123,9 @@ const DiscountManagement = () => {
                 }
             );
 
-
             alert(`Applied ${selectedDiscount?.percentage}% discount to ${selectedBooks.length} books.`);
             setSelectedBooks([]);
-            setIsDrawerOpen(false);
+            setIsApplyDrawerOpen(false);
             if (addButtonRef.current) {
                 addButtonRef.current.focus();
             }
@@ -132,11 +135,11 @@ const DiscountManagement = () => {
         }
     };
 
-    const handleCloseDrawer = () => {
+    const handleCloseApplyDrawer = () => {
         if (addButtonRef.current) {
             addButtonRef.current.focus();
         }
-        setIsDrawerOpen(false);
+        setIsApplyDrawerOpen(false);
         setSelectedDiscount(null);
         setSelectedBooks([]);
         setSearchQuery('');
@@ -156,6 +159,43 @@ const DiscountManagement = () => {
         setIsCollapsed(!isCollapsed);
     };
 
+    const handleOpenUpdateModal = (discount) => {
+        setSelectedDiscount(discount);
+        setIsUpdateModalOpen(true);
+        setIsDetailDrawerOpen(false); // Close detail drawer when opening update modal
+    };
+
+    const handleCloseUpdateModal = () => {
+        setIsUpdateModalOpen(false);
+        setSelectedDiscount(null);
+        fetchDiscounts(); // Refresh data after update
+    };
+
+    const handleDeleteDiscount = async (id) => {
+        if (window.confirm('Are you sure you want to delete this discount?')) {
+            try {
+                await axios.delete(`http://localhost:8081/api/discounts/${id}`);
+                fetchDiscounts(); // Refresh data after delete
+                setIsDetailDrawerOpen(false); // Close detail drawer after deletion
+                setSelectedDiscount(null);
+            } catch (error) {
+                console.error('Error deleting discount:', error);
+                setError('Failed to delete discount. Please try again.');
+            }
+        }
+    };
+
+    const handleRowClick = (discount) => {
+        setSelectedDiscount(discount);
+        setIsDetailDrawerOpen(true);
+    };
+
+    const handleCloseDetailDrawer = () => {
+        setIsDetailDrawerOpen(false);
+        setSelectedDiscount(null);
+    };
+
+
     return (
         <div className="flex h-screen">
             <div
@@ -165,9 +205,9 @@ const DiscountManagement = () => {
             </div>
             <main
                 className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
-                style={{ marginLeft: isCollapsed ? '5rem' : '16.666667%' }} // Điều chỉnh margin-left
+                style={{ marginLeft: isCollapsed ? '5rem' : '16.666667%' }}
             >
-                <Header title="Discount Management" isCollapsed={isCollapsed} /> {/* Truyền prop isCollapsed */}
+                <Header title="QUẢN LÝ MÃ GIẢM GIÁ" isCollapsed={isCollapsed} />
                 <div className="p-10 pt-20 flex w-full overflow-x-auto" style={{ gap: '1rem' }}>
                     <Box className="flex-1 overflow-auto">
                         <Box className="flex justify-between mb-2">
@@ -180,7 +220,7 @@ const DiscountManagement = () => {
                                 onClick={() => setIsAddModalOpen(true)}
                                 ref={addButtonRef}
                             >
-                                Add
+                                Thêm mã giảm giá
                             </Button>
                         </Box>
                         {error && (
@@ -193,10 +233,10 @@ const DiscountManagement = () => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>ID</TableCell>
-                                        <TableCell>Percentage</TableCell>
-                                        <TableCell>Start Date</TableCell>
-                                        <TableCell>End Date</TableCell>
-                                        <TableCell>Actions</TableCell>
+                                        <TableCell>Phần trăm</TableCell>
+                                        <TableCell>Ngày bắt đầu</TableCell>
+                                        <TableCell>Ngày kết thúc</TableCell>
+                                        <TableCell>Thao tác</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -204,10 +244,7 @@ const DiscountManagement = () => {
                                         <TableRow
                                             key={discount.id}
                                             hover
-                                            onClick={() => {
-                                                setSelectedDiscount(discount);
-                                                setIsUpdateModalOpen(true);
-                                            }}
+                                            onClick={() => handleRowClick(discount)} // Open detail drawer on row click
                                             style={{ cursor: 'pointer' }}
                                         >
                                             <TableCell>{discount.id}</TableCell>
@@ -220,8 +257,8 @@ const DiscountManagement = () => {
                                                     color="primary"
                                                     size="small"
                                                     onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleApplyDiscount(discount);
+                                                        e.stopPropagation(); // Prevent row click from firing
+                                                        handleOpenApplyDrawer(discount);
                                                     }}
                                                 >
                                                     Áp dụng
@@ -247,8 +284,8 @@ const DiscountManagement = () => {
                 {/* Drawer for applying discount */}
                 <Drawer
                     anchor="right"
-                    open={isDrawerOpen}
-                    onClose={handleCloseDrawer}
+                    open={isApplyDrawerOpen}
+                    onClose={handleCloseApplyDrawer}
                     sx={{
                         width: 400,
                         flexShrink: 0,
@@ -283,15 +320,15 @@ const DiscountManagement = () => {
                                 },
                             },
                         ]}
-                        sx={{ zIndex: 1300 }} // Ensure Popper is above other elements
+                        sx={{ zIndex: 1300 }}
                     >
                         <Paper
-                            elevation={4} // Increased elevation for better shadow
+                            elevation={4}
                             sx={{
-                                backgroundColor: '#fff', // White background for contrast
-                                marginTop: 1, // Add some space between TextField and Popper
-                                border: '1px solid #ccc', // Subtle border for definition
-                                width: 360, // Slightly less than Drawer width for better fit
+                                backgroundColor: '#fff',
+                                marginTop: 1,
+                                border: '1px solid #ccc',
+                                width: 360,
                             }}
                         >
                             <List
@@ -307,9 +344,9 @@ const DiscountManagement = () => {
                                         button
                                         onClick={() => handleBookSelect(book)}
                                         sx={{
-                                            transition: 'background-color 0.2s ease', // Smooth transition for hover
+                                            transition: 'background-color 0.2s ease',
                                             '&:hover': {
-                                                backgroundColor: '#f5f5f5', // Light gray on hover
+                                                backgroundColor: '#f5f5f5',
                                             },
                                         }}
                                     >
@@ -351,8 +388,32 @@ const DiscountManagement = () => {
                     </Button>
                 </Drawer>
 
-                {isAddModalOpen && <AddDiscount onClose={() => setIsAddModalOpen(false)} />}
-                {isUpdateModalOpen && <UpdateDiscount selectedDiscount={selectedDiscount} onClose={() => setIsUpdateModalOpen(false)} />}
+                {/* Drawer for Discount Details */}
+                <Drawer
+                    anchor="right"
+                    open={isDetailDrawerOpen}
+                    onClose={handleCloseDetailDrawer}
+                    sx={{
+                        width: 400,
+                        flexShrink: 0,
+                        '& .MuiDrawer-paper': {
+                            width: 400,
+                            boxSizing: 'border-box',
+                            padding: '20px'
+                        },
+                    }}
+                >
+                    <DiscountDetail
+                        selectedDiscount={selectedDiscount}
+                        handleOpenUpdateModal={() => handleOpenUpdateModal(selectedDiscount)}
+                        handleDeleteDiscount={() => handleDeleteDiscount(selectedDiscount.id)}
+                        onClose={handleCloseDetailDrawer}
+                    />
+                </Drawer>
+
+
+                {isAddModalOpen && <AddDiscount onClose={() => { setIsAddModalOpen(false); fetchDiscounts(); }} />}
+                {isUpdateModalOpen && <UpdateDiscount selectedDiscount={selectedDiscount} onClose={handleCloseUpdateModal} />}
             </main>
         </div>
     );

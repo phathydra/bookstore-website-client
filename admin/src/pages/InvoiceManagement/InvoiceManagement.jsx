@@ -166,7 +166,7 @@ const InvoiceManagement = () => {
                 className="flex-1 flex flex-col transition-all duration-300 overflow-hidden" // Thêm overflow-hidden
                 style={{ marginLeft: isCollapsed ? '5rem' : '16.666667%' }}
             >
-                <Header title="Invoice Management" isCollapsed={isCollapsed} />
+                <Header title="QUẢN LÝ HÓA ĐƠN" isCollapsed={isCollapsed} />
 
                 <div className="flex flex-col flex-1 p-4 overflow-y-auto"> {/* Thêm overflow-y-auto ở đây */}
                     {/* Thanh filter + tìm kiếm */}

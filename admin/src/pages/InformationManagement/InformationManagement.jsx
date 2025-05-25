@@ -88,7 +88,7 @@ const InformationManagement = () => {
         style={{ paddingLeft: isCollapsed ? '5%' : '16.5%' }}
         >
         <Header
-            title="Information Management"
+            title="QUẢN LÝ THÔNG TIN KHÁCH HÀNG"
             isCollapsed={isCollapsed}
             className="sticky top-0 z-50 bg-white shadow-md"
         />
@@ -119,10 +119,10 @@ const InformationManagement = () => {
                 <TableRow>
                     <TableCell>ID</TableCell>
                     <TableCell>Account ID</TableCell>
-                    <TableCell>Name</TableCell>
+                    <TableCell>Tên</TableCell>
                     <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Address</TableCell>
+                    <TableCell>Điện thoại</TableCell>
+                    <TableCell>Địa chỉ</TableCell>
                 </TableRow>
                 </TableHead>
                 <TableBody>

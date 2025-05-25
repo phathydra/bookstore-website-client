@@ -53,7 +53,7 @@ const Header = ({ title, isCollapsed }) => {
 
             <ul className="space-y-2">
               <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
-                <Link to="/profile">Profile</Link>
+                <Link to="/profile">Thông tin cá nhân</Link>
               </li>
               <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                 <Link to="/change-password">Đổi mật khẩu</Link>
