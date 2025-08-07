@@ -147,7 +147,7 @@ const OrderHistory = () => {
           {/* Filter */}
           <div className="overflow-x-auto mb-5"> {/* Thêm overflow-x-auto */}
             <div className="flex gap-3"> {/* Loại bỏ justify-center và flex-grow */}
-              {["Chờ xử lý", "Đã nhận đơn", "Đang giao hàng", "Đã giao", "Đã nhận hàng", "Đã yêu cầu hủy", "Đã hủy"].map((status) => (
+              {["Chờ xử lý", "Đã nhận đơn", "Đang giao", "Đã giao", "Đã nhận hàng", "Đã yêu cầu hủy", "Đã hủy"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
