@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AddAddress from "./AddAddress";
-import SideNavProfile from "../profile/SideNavProfile";
+import SideNavProfile from "../Profile/SideNavProfile";
 import { useNavigate } from "react-router-dom";
 
 const AddressPage = () => {

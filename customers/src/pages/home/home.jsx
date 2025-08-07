@@ -1,81 +1,26 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Slider from "../../components/slider/slider.jsx";
 import Book from "../../components/book/book.jsx";
-import SideNav from "../../components/SideNav/SideNav";
-
-const mainCategories = {
-  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
-  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
-  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
-  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
-  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
-  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
-  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Sách giáo dục trẻ em"],
-  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
-  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"],
-};
+import SideNav from "../../components/SideNav/SideNav.jsx";
+import { useBooksAndDiscountedBooks } from "./hooks/useBooksAndDiscountedBooks.js";
 
 const Home = () => {
-  const [books, setBooks] = useState({});
-  const [discountedBooks, setDiscountedBooks] = useState([]);
   const [topSellingBooks, setTopSellingBooks] = useState([]);
   const [suggestedBooks, setSuggestedBooks] = useState([]); // State mới cho sách gợi ý
   const [discountedPage, setDiscountedPage] = useState(0);
-  const [discountedTotalPages, setDiscountedTotalPages] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [onHovered, setOnHoverd] = useState(null);
   const navigate = useNavigate();
 
+  const {books, discountedBooks, discountedTotalPages} = useBooksAndDiscountedBooks(discountedPage);
   // IMPORTANT: Replace this with the actual user ID from your authentication system
   const USER_ID = "68064b397faaf761a304742a"; 
 
   useEffect(() => {
-    fetchBooks();
-    fetchDiscountedBooks();
     fetchTopSellingBooks();
     fetchSuggestedBooks(USER_ID); // Gọi hàm lấy sách gợi ý
-  }, [selectedCategory, discountedPage, USER_ID]); // Thêm USER_ID vào dependency array
-
-  const fetchBooks = async () => {
-    try {
-      const responses = await Promise.all(
-        Object.keys(mainCategories).map(async (mainCategory) => {
-          const url = `http://localhost:8081/api/book/mainCategory/${encodeURIComponent(
-            mainCategory
-          )}?page=0&size=5`;
-          const response = await axios.get(url);
-          return { category: mainCategory, books: response.data };
-        })
-      );
-
-      const booksData = responses.reduce((acc, { category, books }) => {
-        acc[category] = books.content || [];
-        return acc;
-      }, {});
-
-      setBooks(booksData);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách sách:", error);
-    }
-  };
-
-  const fetchDiscountedBooks = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8081/api/book?page=${discountedPage}&size=5`
-      );
-      const discounted = response.data.content.filter(
-        (book) => book.percentage > 0
-      );
-      setDiscountedBooks(discounted);
-      setDiscountedTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách sách giảm giá:", error);
-    }
-  };
+  }, [discountedPage, USER_ID]); // Thêm USER_ID vào dependency array
 
   const fetchTopSellingBooks = async () => {
     try {
@@ -146,7 +91,7 @@ const Home = () => {
     <div className="grid grid-cols-4 gap-4 p-4">
       {/* Phần trên: SideNav + Slider */}
       <div className="col-span-1 !ml-30">
-        <SideNav onCategorySelect={setSelectedCategory} />
+        <SideNav/>
       </div>
       <div className="col-span-3 !ml-2 !mr-30">
         <Slider />

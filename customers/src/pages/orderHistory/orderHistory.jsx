@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import SideNavProfile from '../profile/SideNavProfile'; 
+import SideNavProfile from '../Profile/SideNavProfile'; 
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
