@@ -3,77 +3,23 @@ import { useNavigate } from "react-router-dom";
 import Slider from "../../components/slider/slider.jsx";
 import Book from "../../components/book/book.jsx";
 import SideNav from "../../components/SideNav/SideNav.jsx";
-import { useBooksAndDiscountedBooks } from "./hooks/useBooksAndDiscountedBooks.js";
+import { useBooks } from "./hooks/useBooks.js";
+import { useDiscountedBooks } from "./hooks/useDiscountedBooks.js";
+import { useTopSellingBooks } from "./hooks/useTopSellingBooks.js";
+import { useSuggestedBooks } from "./hooks/useSuggestedBooks.js";
 
 const Home = () => {
-  const [topSellingBooks, setTopSellingBooks] = useState([]);
-  const [suggestedBooks, setSuggestedBooks] = useState([]); // State mới cho sách gợi ý
   const [discountedPage, setDiscountedPage] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [onHovered, setOnHoverd] = useState(null);
   const navigate = useNavigate();
 
-  const {books, discountedBooks, discountedTotalPages} = useBooksAndDiscountedBooks(discountedPage);
-  // IMPORTANT: Replace this with the actual user ID from your authentication system
   const USER_ID = "68064b397faaf761a304742a"; 
 
-  useEffect(() => {
-    fetchTopSellingBooks();
-    fetchSuggestedBooks(USER_ID); // Gọi hàm lấy sách gợi ý
-  }, [discountedPage, USER_ID]); // Thêm USER_ID vào dependency array
-
-  const fetchTopSellingBooks = async () => {
-    try {
-      const topSellingResponse = await axios.get("http://localhost:8082/api/orders/top-selling");
-      const topSellingData = topSellingResponse.data.slice(0, 5); 
-
-      const detailedTopSellingBooks = await Promise.all(
-        topSellingData.map(async (book) => {
-          try {
-            const detailResponse = await axios.get(`http://localhost:8081/api/book/${book.bookId}`);
-            return { ...detailResponse.data, totalSold: book.totalSold }; 
-          } catch (error) {
-            console.error(`Lỗi khi lấy chi tiết sách ${book.bookId}:`, error);
-            return null; 
-          }
-        })
-      );
-      setTopSellingBooks(detailedTopSellingBooks.filter(Boolean));
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách sách bán chạy:", error);
-    }
-  };
-
-  const fetchSuggestedBooks = async (userId) => {
-    try {
-      const purchasedBooksRes = await axios.get(`http://localhost:8082/api/orders/purchased-books/${userId}`);
-      const purchasedBookIds = purchasedBooksRes.data.map(item => item.bookId);
-
-      let allRecommendations = [];
-      const uniqueRecommendedBookIds = new Set(); // Use a Set to store unique book IDs
-
-      for (const bookId of purchasedBookIds) {
-        try {
-          const recommendationsRes = await axios.get(`http://localhost:8081/api/book/${bookId}/recommendations`);
-          // Filter out books that have already been purchased by the user
-          // and also ensure unique recommendations
-          const newRecommendations = recommendationsRes.data.filter(recBook => 
-            !purchasedBookIds.includes(recBook.bookId) && 
-            !uniqueRecommendedBookIds.has(recBook.bookId)
-          );
-          
-          newRecommendations.forEach(recBook => uniqueRecommendedBookIds.add(recBook.bookId));
-          allRecommendations = [...allRecommendations, ...newRecommendations];
-        } catch (error) {
-          console.error(`Lỗi khi lấy gợi ý cho sách ${bookId}:`, error);
-        }
-      }
-      setSuggestedBooks(allRecommendations);
-    } catch (error) {
-      console.error("Lỗi khi lấy sách đã mua để gợi ý:", error);
-      setSuggestedBooks([]);
-    }
-  };
+  const {books} = useBooks();
+  const {discountedBooks, discountedTotalPages} = useDiscountedBooks(discountedPage);
+  const {topSellingBooks} = useTopSellingBooks();
+  const {suggestedBooks} = useSuggestedBooks(USER_ID);
 
   const handleNextPage = () => {
     if (discountedPage < discountedTotalPages - 1) {
