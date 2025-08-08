@@ -10,6 +10,7 @@ import AddDiscount from './AddDiscount';
 import UpdateDiscount from './UpdateDiscount';
 import DiscountDetail from './DiscountDetail';
 import CloseIcon from '@mui/icons-material/Close';
+import { FaFileImport, FaFileExport } from "react-icons/fa";
 // Removed unused imports: ClickAwayListener, EditIcon, DeleteIcon
 
 const DiscountManagement = () => {
@@ -26,6 +27,7 @@ const DiscountManagement = () => {
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false); // State for detail drawer
     const [error, setError] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [file, setFile] = useState(null);
 
     const addButtonRef = useRef(null);
     const anchorRef = useRef(null);
@@ -133,6 +135,28 @@ const DiscountManagement = () => {
             console.error("Error applying discount:", error);
             setError("An error occurred while applying the discount!");
         }
+    };
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleImportExcel = async() => {
+      if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+        const response = await axios.post(`http://localhost:8081/api/discounts/addDiscountToBooksExcel?discountId=${selectedDiscount.id}`, formData, {
+            headers: {
+            "Content-Type": "multipart/form-data",
+            },
+        });
+        console.log("Upload successful:", response.data);
+        } catch (error) {
+        console.error("Upload failed:", error);
+        }  
     };
 
     const handleCloseApplyDrawer = () => {
@@ -287,7 +311,7 @@ const DiscountManagement = () => {
                     open={isApplyDrawerOpen}
                     onClose={handleCloseApplyDrawer}
                     sx={{
-                        width: 400,
+                        width: 500,
                         flexShrink: 0,
                         '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' },
                     }}
@@ -295,15 +319,23 @@ const DiscountManagement = () => {
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Apply {selectedDiscount?.percentage}% Discount
                     </Typography>
-
-                    <TextField
+                    <div>
+                        <TextField
                         fullWidth
                         label="Search Books"
                         value={searchQuery}
                         onChange={handleSearchChange}
                         inputRef={anchorRef}
                         sx={{ marginBottom: 2 }}
-                    />
+                        />
+                        <input type="file" accept='.xlsx,.xls' onChange={handleFileChange}/>
+                        <Button onClick={handleImportExcel}>
+                            <FaFileImport/> Import from excel
+                        </Button>
+                        <Button>
+                            <FaFileExport/> Export to excel
+                        </Button>
+                    </div>
 
                     {/* Popper for Recommended Books */}
                     <Popper
