@@ -28,6 +28,7 @@ const DiscountManagement = () => {
     const [error, setError] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [file, setFile] = useState(null);
+    const [currDiscount, setCurrDiscount] = useState(null);
 
     const addButtonRef = useRef(null);
     const anchorRef = useRef(null);
@@ -73,6 +74,32 @@ const DiscountManagement = () => {
         }
     }, []); // No external dependencies for this specific fetch
 
+    const handleExportDiscountedBooks = useCallback(async (discountId) => {
+        try{
+            const response = await axios.get(`http://localhost:8081/api/book/export_discounted_books?discountId=${discountId}`,{
+                responseType: "blob",
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            const link = document.createElement("a");
+
+            link.href = url;
+
+            link.setAttribute("download", `discounted_books_of_${discountId}.xlsx`);
+
+            document.body.appendChild(link);
+            link.click();
+
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+    
+        }catch (error) {
+            console.error('Error exporting discounted books:', error);
+            setError('Failed to export discounted books. Please try again.');
+        }
+    }, []);
+
     const handleSearchChange = (event) => {
         const query = event.target.value;
         setSearchQuery(query);
@@ -107,6 +134,7 @@ const DiscountManagement = () => {
         setSelectedDiscount(discount);
         fetchDiscountedBooks(discount.id);
         setIsApplyDrawerOpen(true);
+        setCurrDiscount(discount.id);
     };
 
     const handleConfirmApplyDiscount = async () => {
@@ -148,12 +176,13 @@ const DiscountManagement = () => {
         formData.append("file", file);
 
         try {
-        const response = await axios.post(`http://localhost:8081/api/discounts/addDiscountToBooksExcel?discountId=${selectedDiscount.id}`, formData, {
-            headers: {
-            "Content-Type": "multipart/form-data",
-            },
-        });
+        const response = await axios.put(`http://localhost:8081/api/discounts/addDiscountToBooksExcel?discountId=${selectedDiscount.id}`, formData);
         console.log("Upload successful:", response.data);
+        response.data.forEach(book => {
+        if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
+                setSelectedBooks((prev) => [...prev, book]);
+            }
+        });
         } catch (error) {
         console.error("Upload failed:", error);
         }  
@@ -332,7 +361,7 @@ const DiscountManagement = () => {
                         <Button onClick={handleImportExcel}>
                             <FaFileImport/> Import from excel
                         </Button>
-                        <Button>
+                        <Button onClick={() => handleExportDiscountedBooks(currDiscount)}>
                             <FaFileExport/> Export to excel
                         </Button>
                     </div>
