@@ -13,12 +13,9 @@ export const useDiscountedBooks = (discountedPage) => {
     const fetchDiscountedBooks = async () => {
         try {
         const response = await axios.get(
-            `http://localhost:8081/api/book?page=${discountedPage}&size=5`
+            `http://localhost:8081/api/book/discounted_books?page=${discountedPage}&size=5`
         );
-        const discounted = response.data.content.filter(
-            (book) => book.percentage > 0
-        );
-        setDiscountedBooks(discounted);
+        setDiscountedBooks(response.data.content);
         setDiscountedTotalPages(response.data.totalPages);
         } catch (error) {
         console.error("Lỗi khi lấy danh sách sách giảm giá:", error);

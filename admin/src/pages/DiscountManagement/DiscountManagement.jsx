@@ -65,7 +65,7 @@ const DiscountManagement = () => {
 
     const fetchDiscountedBooks = useCallback(async (discountId) => {
         try {
-            const response = await axios.get(`http://localhost:8081/api/book/discounted_books?discountId=${discountId}`);
+            const response = await axios.get(`http://localhost:8081/api/book/discounted_books_admin?discountId=${discountId}`);
             setSelectedBooks(response.data);
         } catch (error) {
             console.error('Error fetching discounted books:', error);
