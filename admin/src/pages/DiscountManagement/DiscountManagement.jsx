@@ -138,11 +138,6 @@ const DiscountManagement = () => {
     };
 
     const handleConfirmApplyDiscount = async () => {
-        if (!selectedDiscount || selectedBooks.length === 0) {
-            alert("Please select a discount and at least one book!");
-            return;
-        }
-
         try {
             await axios.put(`http://localhost:8081/api/discounts/addDiscountToBooks?discountId=${selectedDiscount.id}`,
                 selectedBooks.map(book => book.bookId),
