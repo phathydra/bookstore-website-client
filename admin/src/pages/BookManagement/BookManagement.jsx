@@ -5,9 +5,9 @@ import {
   Paper, Typography, TablePagination, Button, Box, Drawer, TextField, InputAdornment, IconButton,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import AddBook from './AddBook';
-import UpdateBook from './UpdateBook';
-import BookDetail from './BookDetail';
+import AddBook from './components/AddBook';
+import UpdateBook from './components/UpdateBook';
+import BookDetail from './components/BookDetail';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 
@@ -98,6 +98,24 @@ const BookManagement = () => {
     setSearchTerm(event.target.value);
   };
 
+  const handleExportBooks = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/export_books`, {
+      responseType: 'blob', // nhận dữ liệu dạng file
+    });
+
+    // Tạo URL từ blob
+    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'all_books.xlsx';
+    link.click();
+  } catch (error) {
+    console.error('Error exporting books:', error);
+  }
+};
+
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -138,9 +156,14 @@ const BookManagement = () => {
             />
           </Box>
           {/* Nút Add nằm bên trái */}
-          <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>
-            Thêm sách
-          </Button>
+          <Box className="flex gap-2">
+            <Button variant="contained" style={{ backgroundColor: 'blue' }} onClick={handleExportBooks}>
+              Export
+            </Button>
+            <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddModal}>
+              Thêm sách
+            </Button>
+          </Box>
         </Box>
         {/* Table Section with Padding */}
         <div className="flex-1 overflow-auto pt-[72px] px-2">

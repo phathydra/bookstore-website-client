@@ -1,17 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
   font-family: 'Poppins', sans-serif;
 }
 
-html, body {
-  height: 100%;
-  background: #f2f2f2;
-}
-
+/* Overlay modal */
 .fixed {
   position: fixed;
 }
@@ -29,37 +22,27 @@ html, body {
   background-color: #fff;
 }
 
+/* Gradient text cho tiêu đề */
 .text-gradient {
   background: -webkit-linear-gradient(left, #c850c0, #4158d0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.input-field {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-input[type="text"], input[type="email"], select {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
+/* Nút */
 .submit-button {
-  background: linear-gradient(-135deg, #c850c0, #4158d0);
-  color: #fff;
+  background: linear-gradient(-135deg, #c850c0, #4158d0) !important;
+  color: #fff !important;
 }
 
 .submit-button:hover {
-  background: linear-gradient(-135deg, #b047b0, #3b4ab8);
+  background: linear-gradient(-135deg, #b047b0, #3b4ab8) !important;
 }
 
 .cancel-button {
-  color: #999;
+  color: #999 !important;
 }
 
 .cancel-button:hover {
-  color: #555;
+  color: #555 !important;
 }

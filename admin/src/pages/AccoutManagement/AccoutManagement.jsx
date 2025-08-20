@@ -6,7 +6,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, TablePagination, Button, Box, Drawer, TextField, InputAdornment, IconButton
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, SaveAlt } from '@mui/icons-material';
 import AddAccount from './AddAccount';
 import AccountDetail from './AccountDetail';
 
@@ -65,6 +65,27 @@ const AccountManagement = () => {
     }
   };
 
+    // Hàm xử lý export
+  const handleExportAccounts = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8080/api/account/export_accounts",
+        { responseType: "blob" } // nhận về blob để tải file
+      );
+
+      // Tạo link ảo để tải file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "accounts.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Lỗi khi export accounts:", error);
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <SideNav onToggleCollapse={handleToggleMenu} />
@@ -79,6 +100,7 @@ const AccountManagement = () => {
           className="sticky top-0 z-50 bg-white shadow-md"
         />
 
+        {/* Thanh công cụ trên cùng */}
         <Box className="sticky top-[64px] z-30 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
           <Box className="flex-1 flex justify-center">
             <TextField
@@ -100,13 +122,27 @@ const AccountManagement = () => {
               }}
             />
           </Box>
-          <Button
-            variant="contained"
-            style={{ backgroundColor: 'green' }}
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            Thêm tài khoản
-          </Button>
+
+          <Box className="flex gap-2">
+            {/* Nút export */}
+            <Button
+              variant="outlined"
+              startIcon={<SaveAlt />}
+              onClick={handleExportAccounts}
+              style={{ borderColor: "green", color: "green" }}
+            >
+              Export
+            </Button>
+
+            {/* Nút thêm tài khoản */}
+            <Button
+              variant="contained"
+              style={{ backgroundColor: 'green' }}
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              Thêm tài khoản
+            </Button>
+          </Box>
         </Box>
 
         <div className="flex-1 overflow-auto pt-[72px] px-2">
