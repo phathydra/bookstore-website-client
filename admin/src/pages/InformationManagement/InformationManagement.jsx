@@ -80,6 +80,29 @@ const InformationManagement = () => {
         setSnackbar({ open: true, message: 'Cập nhật thông tin thành công.', severity: 'success' });
     };
 
+    const handleExportInformations = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:8080/api/account/export_informations",
+            { responseType: "blob" } // cần blob để tải file
+        );
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "informations.xlsx"); // tên file tải về
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setSnackbar({ open: true, message: "Xuất file Excel thành công.", severity: "success" });
+    } catch (error) {
+        console.error("Lỗi khi export thông tin:", error);
+        setSnackbar({ open: true, message: "Xuất file Excel thất bại.", severity: "error" });
+    }
+};
+
+
     return (
     <div className="flex h-screen">
         <SideNav onToggleCollapse={handleToggleMenu} />
@@ -92,25 +115,33 @@ const InformationManagement = () => {
             isCollapsed={isCollapsed}
             className="sticky top-0 z-50 bg-white shadow-md"
         />
-        <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-center">
+        <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
             <TextField
-            label="Search"
-            variant="outlined"
-            size="small"
-            onChange={handleSearchChange}
-            className="w-[50%]"
-            sx={{ borderRadius: '8px', backgroundColor: 'white' }}
-            InputProps={{
-                endAdornment: (
-                <InputAdornment position="end">
-                    <IconButton>
-                    <Search />
-                    </IconButton>
-                </InputAdornment>
-                ),
-                style: { borderRadius: '8px' },
-            }}
+                label="Search"
+                variant="outlined"
+                size="small"
+                onChange={handleSearchChange}
+                className="w-[50%]"
+                sx={{ borderRadius: '8px', backgroundColor: 'white' }}
+                InputProps={{
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton>
+                                <Search />
+                            </IconButton>
+                        </InputAdornment>
+                    ),
+                    style: { borderRadius: '8px' },
+                }}
             />
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={handleExportInformations}
+                sx={{ marginLeft: 2, borderRadius: "8px" }}
+            >
+                Export Excel
+            </Button>
         </Box>
         <div className="flex-1 overflow-auto pt-[72px] px-2">
             <TableContainer component={Paper} style={{ maxHeight: '70vh', overflowX: 'auto' }}>
