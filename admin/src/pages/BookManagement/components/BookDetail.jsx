@@ -1,16 +1,32 @@
-import React from "react";
-import { Box, Typography, Divider, Button } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Typography, Divider, Button, IconButton } from "@mui/material";
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import UpdateBook from "./UpdateBook";
 import { useBookDetail } from "../hooks/useBookDetail";
 
 const BookDetail = ({ selectedBook, handleDeleteBook }) => {
-  const {
-    openUpdateModal,
-    handleOpenUpdateModal,
-    handleCloseUpdateModal,
-  } = useBookDetail();
+  const { openUpdateModal, handleOpenUpdateModal, handleCloseUpdateModal } =
+    useBookDetail();
+
+  // Slider state
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!selectedBook) return null;
+
+  // lấy mảng ảnh (mặc định [])
+  const images = selectedBook.bookImages || [];
+
+  const handlePrev = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? images.length - 1 : prev - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentImageIndex((prev) =>
+      prev === images.length - 1 ? 0 : prev + 1
+    );
+  };
 
   return (
     <Box
@@ -38,16 +54,68 @@ const BookDetail = ({ selectedBook, handleDeleteBook }) => {
             alignItems: "center",
           }}
         >
-          <img
-            src={selectedBook.bookImage}
-            alt={selectedBook.bookName}
-            style={{
-              width: "320px",
-              height: "320px",
-              objectFit: "cover",
-              borderRadius: "4px",
-            }}
-          />
+        {/* Slider ảnh */}
+        <Box
+          sx={{
+            position: "relative",
+            width: "260px",
+            height: "320px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "4px",
+            overflow: "hidden",
+            border: "1px solid #ddd",
+            backgroundColor: "#fafafa", // thêm nền xám nhạt khi ảnh không fill hết
+          }}
+        >
+          {images.length > 0 ? (
+            <img
+              src={images[currentImageIndex]}
+              alt={`${selectedBook.bookName}-${currentImageIndex}`}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <Typography variant="body2" color="textSecondary">
+              Không có ảnh
+            </Typography>
+          )}
+
+          {/* Nút chuyển ảnh */}
+          {images.length > 1 && (
+            <>
+              <IconButton
+                onClick={handlePrev}
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: 5,
+                  transform: "translateY(-50%)",
+                  backgroundColor: "rgba(255,255,255,0.7)",
+                }}
+              >
+                <ChevronLeft />
+              </IconButton>
+              <IconButton
+                onClick={handleNext}
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  right: 5,
+                  transform: "translateY(-50%)",
+                  backgroundColor: "rgba(255,255,255,0.7)",
+                }}
+              >
+                <ChevronRight />
+              </IconButton>
+            </>
+          )}
+        </Box>
+          {/* Tên sách */}
           <Typography
             variant="h5"
             sx={{
@@ -59,6 +127,8 @@ const BookDetail = ({ selectedBook, handleDeleteBook }) => {
           >
             {selectedBook.bookName}
           </Typography>
+
+          {/* Mã sách */}
           <Box
             sx={{
               width: "100%",
@@ -83,7 +153,7 @@ const BookDetail = ({ selectedBook, handleDeleteBook }) => {
             {[
               { label: "Loại sách", value: selectedBook.bookCategory },
               { label: "Năm sản xuất", value: selectedBook.bookYearOfProduction },
-              { label: "Giá", value: `$${selectedBook.bookPrice}` },
+              { label: "Giá", value: `${selectedBook.bookPrice}₫` },
               { label: "Nhà XB", value: selectedBook.bookPublisher },
               { label: "Tác giả", value: selectedBook.bookAuthor },
               { label: "Ngôn ngữ", value: selectedBook.bookLanguage },
@@ -160,13 +230,7 @@ const BookDetail = ({ selectedBook, handleDeleteBook }) => {
       </Box>
 
       {/* Action buttons */}
-      <Box
-        className="flex justify-between"
-        width="100%"
-        display="flex"
-        gap={2}
-        p={2}
-      >
+      <Box width="100%" display="flex" gap={2} p={2}>
         <Button
           variant="contained"
           color="primary"

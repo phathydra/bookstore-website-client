@@ -1,237 +1,324 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams, Link, useNavigate } from "react-router-dom"
-import axios from "axios"
+import { useEffect, useState, useCallback } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+
+// Đặt base URL cho API để dễ quản lý và sửa đổi
+const API_URLS = {
+  BOOK: "http://localhost:8081/api/book",
+  REVIEW: "http://localhost:8081/api/reviews",
+  ANALYTICS: "http://localhost:8081/api/analytics",
+  ACCOUNT: "http://localhost:8080/api/account/fetch",
+  CART: "http://localhost:8082/cart/add",
+};
 
 const BookDetail = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [book, setBook] = useState(null)
-  const [recommendedBooks, setRecommendedBooks] = useState([])
-  const [reviews, setReviews] = useState([])
-  const [reviewsWithUserData, setReviewsWithUserData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [quantity, setQuantity] = useState(1)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalContent, setModalContent] = useState("")
-  const [purchaseCount, setPurchaseCount] = useState(0) // State để lưu số lượng đã bán
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!id) {
-      setError("Không có ID sách.")
-      setLoading(false)
-      return
-    }
+  // Khai báo state một cách có tổ chức
+  const [book, setBook] = useState(null);
+  const [recommendedBooks, setRecommendedBooks] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsWithUserData, setReviewsWithUserData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [purchaseCount, setPurchaseCount] = useState(0);
 
-    const fetchBook = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8081/api/book/${id}`)
-        setBook(response.data)
-      } catch (err) {
-        setError("Không thể tải dữ liệu sách.")
-        openModal("Không thể tải dữ liệu sách.")
-      } finally {
-        setLoading(false)
-      }
-    }
+  // States cho Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState("");
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [mainImageIndex, setMainImageIndex] = useState(0);
 
-    const fetchRecommendedBooks = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8081/api/book/${id}/recommendations`)
-        setRecommendedBooks(response.data)
-      } catch (err) {
-        console.error("Lỗi tải sách đề xuất:", err)
-      }
-    }
+  // Hàm mở và đóng Modal
+  const openModal = useCallback((content) => {
+    setModalContent(content);
+    setIsModalOpen(true);
+  }, []);
 
-    const fetchReviews = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8081/api/reviews/book/${id}`)
-        setReviews(response.data)
-
-        // Sau khi lấy reviews, lấy thông tin người dùng cho mỗi đánh giá
-        if (response.data && response.data.length > 0) {
-          fetchUserDataForReviews(response.data)
-        }
-      } catch (err) {
-        console.error("Lỗi tải đánh giá:", err)
-      }
-    }
-
-    const fetchPurchaseCount = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8081/api/analytics/${id}`)
-        setPurchaseCount(response.data.purchaseCount || 0)
-      } catch (error) {
-        console.error("Lỗi khi lấy số lượng đã bán:", error)
-        // Xử lý lỗi nếu không lấy được purchaseCount
-      }
-    }
-
-    fetchBook()
-    fetchRecommendedBooks()
-    fetchReviews()
-    fetchPurchaseCount()
-  }, [id])
+  const closeModal = () => setIsModalOpen(false);
+  const openImageModal = (image) => {
+    setSelectedImage(image);
+    setIsImageModalOpen(true);
+  };
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImage(null);
+  };
 
   // Hàm lấy thông tin người dùng cho mỗi đánh giá
   const fetchUserDataForReviews = async (reviewsData) => {
     try {
-      const reviewsWithData = await Promise.all(
-        reviewsData.map(async (review) => {
-          if (review.accountId) {
-            try {
-              const response = await fetch(`http://localhost:8080/api/account/fetch?accountId=${review.accountId}`)
-              const userData = await response.json()
-              return {
-                ...review,
-                userName: userData.name || review.reviewerName || "Khách hàng",
-                userAvatar: userData.avatar || "https://via.placeholder.com/40",
-              }
-            } catch (error) {
-              console.error(`Lỗi khi lấy thông tin người dùng cho đánh giá ID ${review.id}:`, error)
-              return {
-                ...review,
-                userName: review.reviewerName || "Khách hàng",
-                userAvatar: "https://via.placeholder.com/40",
-              }
-            }
-          } else {
+      const reviewPromises = reviewsData.map(async (review) => {
+        if (review.accountId) {
+          try {
+            const response = await fetch(
+              `${API_URLS.ACCOUNT}?accountId=${review.accountId}`
+            );
+            const userData = await response.json();
+            return {
+              ...review,
+              userName: userData.name || review.reviewerName || "Khách hàng",
+              userAvatar: userData.avatar || "https://via.placeholder.com/40",
+            };
+          } catch (error) {
+            console.error("Lỗi khi lấy thông tin người dùng:", error);
             return {
               ...review,
               userName: review.reviewerName || "Khách hàng",
               userAvatar: "https://via.placeholder.com/40",
-            }
+            };
           }
-        }),
-      )
-      setReviewsWithUserData(reviewsWithData)
+        }
+        return {
+          ...review,
+          userName: review.reviewerName || "Khách hàng",
+          userAvatar: "https://via.placeholder.com/40",
+        };
+      });
+      const data = await Promise.all(reviewPromises);
+      setReviewsWithUserData(data);
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng cho đánh giá:", error)
+      console.error("Lỗi khi lấy thông tin người dùng cho đánh giá:", error);
     }
-  }
+  };
 
+  // Hàm Fetch tất cả dữ liệu
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) {
+        setError("Không có ID sách.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [bookResponse, recommendedResponse, reviewsResponse, purchaseResponse] =
+          await Promise.allSettled([
+            axios.get(`${API_URLS.BOOK}/${id}`),
+            axios.get(`${API_URLS.BOOK}/${id}/recommendations`),
+            axios.get(`${API_URLS.REVIEW}/book/${id}`),
+            axios.get(`${API_URLS.ANALYTICS}/${id}`),
+          ]);
+
+        // Xử lý kết quả từng Promise
+        if (bookResponse.status === "fulfilled") {
+          setBook(bookResponse.value.data);
+        } else {
+          setError("Không thể tải dữ liệu sách.");
+          openModal("Không thể tải dữ liệu sách.");
+        }
+
+        if (recommendedResponse.status === "fulfilled") {
+          setRecommendedBooks(recommendedResponse.value.data);
+        } else {
+          console.error(
+            "Lỗi tải sách đề xuất:",
+            recommendedResponse.reason.message
+          );
+        }
+
+        if (reviewsResponse.status === "fulfilled") {
+          setReviews(reviewsResponse.value.data);
+          if (reviewsResponse.value.data?.length > 0) {
+            fetchUserDataForReviews(reviewsResponse.value.data);
+          }
+        } else {
+          console.error("Lỗi tải đánh giá:", reviewsResponse.reason.message);
+        }
+
+        if (purchaseResponse.status === "fulfilled") {
+          setPurchaseCount(purchaseResponse.value.data.purchaseCount || 0);
+        } else {
+          console.error("Lỗi khi lấy số lượng đã bán:", purchaseResponse.reason);
+        }
+      } catch (err) {
+        // Lỗi chung, ít khi xảy ra với Promise.allSettled
+        setError("Đã có lỗi xảy ra khi tải dữ liệu.");
+        openModal("Đã có lỗi xảy ra khi tải dữ liệu.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, openModal]);
+
+  // Các hàm xử lý logic
   const handleIncrease = () => {
     if (book && quantity < book.bookStockQuantity) {
-      setQuantity((prev) => prev + 1)
+      setQuantity((prev) => prev + 1);
     }
-  }
+  };
 
   const handleDecrease = () => {
-    if (quantity > 1) setQuantity((prev) => prev - 1)
-  }
+    if (quantity > 1) {
+      setQuantity((prev) => prev - 1);
+    }
+  };
 
   const addToCart = async () => {
-    if (!book) return
+    if (!book) return;
 
-    const accountId = localStorage.getItem("accountId")
+    const accountId = localStorage.getItem("accountId");
     if (!accountId) {
-      alert("Bạn cần đăng nhập để thêm vào giỏ hàng!")
-      navigate("/login")
-      return
+      alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
+      navigate("/login");
+      return;
     }
 
     if (book.bookStockQuantity <= 0) {
-      alert("Sách này đã hết hàng!")
-      return
+      alert("Sách này đã hết hàng!");
+      return;
     }
 
     try {
-      const response = await axios.post("http://localhost:8082/cart/add", {
+      const response = await axios.post(API_URLS.CART, {
         accountId: accountId,
         cartItems: [
           {
             bookId: book.bookId,
             bookName: book.bookName,
-            price: Number.parseFloat(book.bookPrice),
-            discountedPrice: book.discountedPrice ? Number.parseFloat(book.discountedPrice) : null,
+            price: parseFloat(book.bookPrice),
+            discountedPrice: book.discountedPrice
+              ? parseFloat(book.discountedPrice)
+              : null,
             percentage: book.percentage,
             quantity: quantity,
-            bookImage: book.bookImage,
+            bookImage: book.bookImages?.[0] || book.bookImage,
           },
         ],
-      })
+      });
 
       if (response.status === 200) {
-        alert("Sách đã được thêm vào giỏ hàng!")
-        navigate("/cart")
+        alert("Sách đã được thêm vào giỏ hàng!");
+        navigate("/cart");
       } else {
-        alert("Thêm vào giỏ hàng thất bại! Hãy thử lại.")
+        alert("Thêm vào giỏ hàng thất bại! Hãy thử lại.");
       }
     } catch (error) {
-      console.error("Lỗi khi thêm vào giỏ hàng:", error.response?.data || error.message)
-      alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!")
+      console.error("Lỗi khi thêm vào giỏ hàng:", error.response?.data || error.message);
+      alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
     }
-  }
-
-  const openModal = (content) => {
-    setModalContent(content)
-    setIsModalOpen(true)
-  }
-
-  const closeModal = () => {
-    setIsModalOpen(false)
-  }
+  };
 
   const handlePolicyClick = (policy) => {
     switch (policy) {
       case "Thời gian giao hàng":
         openModal(
-          "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, Fahasa.com cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng.",
-        )
-        break
+          "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, Fahasa.com cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng."
+        );
+        break;
       case "Chính sách đổi trả":
-        openModal("Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất.")
-        break
+        openModal(
+          "Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất."
+        );
+        break;
       case "Chính sách khách sỉ":
         openModal(
-          "Ưu đãi khi mua số lượng lớn\n\nFahasa.com cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn.",
-        )
-        break
+          "Ưu đãi khi mua số lượng lớn\n\nFahasa.com cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn."
+        );
+        break;
       default:
-        break
+        break;
     }
-  }
+  };
 
-  const calculateTotalPrice = () => {
-    if (book.discountedPrice && book.percentage > 0) {
-      return book.discountedPrice * quantity
-    } else {
-      return book.bookPrice * quantity
-    }
-  }
+  const handleImageNav = (direction) => {
+    if (!book || book.bookImages.length <= 1) return;
+    setMainImageIndex((prevIndex) => {
+      const nextIndex =
+        direction === "next"
+          ? (prevIndex + 1) % book.bookImages.length
+          : prevIndex === 0
+          ? book.bookImages.length - 1
+          : prevIndex - 1;
+      return nextIndex;
+    });
+  };
 
-  // Tính trung bình đánh giá
-  const calculateAverageRating = () => {
-    if (reviews.length === 0) return 0
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
-    return totalRating / reviews.length
-  }
+  // Tính toán
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
 
-  // Tính phần trăm cho mỗi mức sao
   const calculateRatingPercentage = (starLevel) => {
-    if (reviews.length === 0) return 0
-    const count = reviews.filter((review) => Math.round(review.rating) === starLevel).length
-    return Math.round((count / reviews.length) * 100)
-  }
+    if (reviews.length === 0) return 0;
+    const count = reviews.filter(
+      (review) => Math.round(review.rating) === starLevel
+    ).length;
+    return Math.round((count / reviews.length) * 100);
+  };
 
-  const averageRating = calculateAverageRating()
+  if (loading) return <div className="text-center py-10 text-lg">Đang tải...</div>;
+  if (error)
+    return <div className="text-center py-10 text-red-500">{error}</div>;
+  if (!book)
+    return <div className="text-center py-10 text-gray-600">Sách không tồn tại.</div>;
 
-  if (loading) return <div className="text-center py-10 text-lg">Đang tải...</div>
-  if (error) return <div className="text-center py-10 text-red-500">{error}</div>
-  if (!book) return <div className="text-center py-10 text-gray-600">Sách không tồn tại.</div>
+  const bookImages = book.bookImages && book.bookImages.length > 0 ? book.bookImages : [book.bookImage];
+  const displayPrice = book.discountedPrice && book.percentage > 0 ? book.discountedPrice : book.bookPrice;
+  const totalPrice = (displayPrice * quantity).toLocaleString();
+  const originalPrice = (book.bookPrice * quantity).toLocaleString();
 
   return (
     <div className="container mx-auto !px-4 !py-6">
-      <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden border p-5">
+      <div className="flex flex-col md:flex-row bg-white shadow-lg !rounded-lg overflow-hidden border p-5">
         <div className="md:w-1/3 flex flex-col items-center">
-          <img
-            src={book.bookImage || "/placeholder.svg"}
-            alt={book.bookName}
-            className="w-72 h-auto rounded-lg shadow-md"
-          />
+          {/* PHẦN ẢNH SÁCH */}
+          <div className="relative w-72 h-96 !rounded-lg shadow-md overflow-hidden bg-gray-100">
+            <img
+              src={bookImages?.[mainImageIndex] || "/placeholder.svg"}
+              alt={book.bookName}
+              className="w-full h-full object-contain cursor-zoom-in"
+              onClick={() => openImageModal(bookImages?.[mainImageIndex])}
+            />
+            {bookImages.length > 1 && (
+              <>
+                <button
+                  className="absolute top-1/2 left-0 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+                  onClick={() => handleImageNav("prev")}
+                >
+                  &#60;
+                </button>
+                <button
+                  className="absolute top-1/2 right-0 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+                  onClick={() => handleImageNav("next")}
+                >
+                  &#62;
+                </button>
+              </>
+            )}
+          </div>
+          {bookImages.length > 1 && (
+            <div className="flex space-x-2 mt-2 overflow-x-auto">
+              {bookImages.map((img, index) => (
+                <div
+                  key={index}
+                  className={`w-16 h-20 rounded cursor-pointer border-2 ${
+                    index === mainImageIndex ? "border-blue-500" : "border-gray-300"
+                  } overflow-hidden`}
+                  onClick={() => setMainImageIndex(index)}
+                >
+                  <img
+                    src={img}
+                    alt={`${book.bookName} - ${index + 1}`}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* NÚT THÊM VÀO GIỎ HÀNG VÀ SỐ LƯỢNG */}
           <div className="flex items-center !space-x-2 mt-4">
             <div className="flex items-center bg-white border-2 !border-gray-500 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
               <button onClick={handleDecrease} className="px-2 py-1 text-black">
@@ -249,35 +336,27 @@ const BookDetail = () => {
               Thêm vào
             </button>
           </div>
+
+          {/* CHÍNH SÁCH MUA HÀNG & ĐÁNH GIÁ */}
           <div className="!mt-4 !p-4 bg-gray-100 !rounded-lg text-gray-700 text-sm w-full">
             <h3 className="font-semibold text-base mb-2">Chính sách mua hàng</h3>
             <div className="space-y-2">
-              <button
-                onClick={() => handlePolicyClick("Thời gian giao hàng")}
-                className="text-blue-600 !text-start block"
-              >
+              <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="text-blue-600 !text-start block">
                 Thời gian giao hàng: Giao nhanh và uy tín
               </button>
-              <button
-                onClick={() => handlePolicyClick("Chính sách đổi trả")}
-                className="text-blue-600 !text-start block"
-              >
+              <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="text-blue-600 !text-start block">
                 Chính sách đổi trả: Đổi trả miễn phí toàn quốc
               </button>
-              <button
-                onClick={() => handlePolicyClick("Chính sách khách sỉ")}
-                className="text-blue-600 !text-start block"
-              >
+              <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="text-blue-600 !text-start block">
                 Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn
               </button>
             </div>
 
-            {/* PHẦN ĐÁNH GIÁ */}
             <div className="mt-6">
               <h4 className="text-base font-semibold text-gray-800 mb-2">Đánh giá sản phẩm</h4>
               <div className="flex items-start">
                 <div className="mr-4">
-                  <div className="text-4xl font-bold">{reviews.length > 0 ? averageRating.toFixed(1) : 0}</div>
+                  <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
                   <div className="text-sm">/5</div>
                   <div className="flex mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -290,21 +369,22 @@ const BookDetail = () => {
                 </div>
                 <div className="flex-1">
                   {[5, 4, 3, 2, 1].map((star) => {
-                    const percentage = calculateRatingPercentage(star)
+                    const percentage = calculateRatingPercentage(star);
                     return (
                       <div key={star} className="flex items-center mb-1">
                         <div className="w-16 text-sm">{star} sao</div>
                         <div className="flex-1 mx-2 bg-gray-200 h-2 rounded-full">
-                          <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
+                          <div
+                            className="bg-yellow-400 h-2 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
                         </div>
                         <div className="w-8 text-right text-xs">{percentage}%</div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
-
-              {/* Hiển thị bình luận với avatar và tên người dùng */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 {reviewsWithUserData.length === 0 ? (
                   <p className="text-sm text-gray-600 italic">Chưa có đánh giá nào cho sản phẩm này.</p>
@@ -342,33 +422,28 @@ const BookDetail = () => {
           </div>
         </div>
 
+        {/* PHẦN THÔNG TIN SÁCH */}
         <div className="hidden md:block border-l-2 border-gray-300 mx-4"></div>
-
         <div className="md:w-2/3 p-5">
           <h2 className="!text-2xl font-bold text-gray-800 mb-2">{book.bookName}</h2>
           {book.percentage > 0 ? (
             <div>
-              <div className="text-2xl font-bold text-red-600">{calculateTotalPrice().toLocaleString()} VNĐ</div>
+              <div className="text-2xl font-bold text-red-600">{totalPrice} VNĐ</div>
               <div className="text-lg text-gray-500 line-through">
-                {(book.bookPrice * quantity).toLocaleString()} VNĐ
+                {originalPrice} VNĐ
               </div>
               <div className="text-lg font-semibold text-green-600">-{book.percentage}%</div>
             </div>
           ) : (
-            <div className="text-2xl font-bold text-gray-800">{calculateTotalPrice().toLocaleString()} VNĐ</div>
+            <div className="text-2xl font-bold text-gray-800">{totalPrice} VNĐ</div>
           )}
-
           <p className="!text-lg my-2">
             <span className="px-3 py-1 bg-blue-400 text-white rounded-lg font-semibold">
               {`${book.bookStockQuantity} sản phẩm còn`}
             </span>
           </p>
-
-          {/* Hiển thị số lượng đã bán */}
           <p className="text-sm text-gray-600 italic">Đã bán: {purchaseCount} quyển</p>
-
           <hr className="my-4 border-gray-300" />
-
           <div>
             <p className="text-lg font-semibold">THÔNG TIN CHI TIẾT</p>
             <p>
@@ -399,9 +474,7 @@ const BookDetail = () => {
               </Link>
             </p>
           </div>
-
           <hr className="my-4 border-gray-300" />
-
           <div>
             <h3 className="text-xl font-semibold border-b pb-2">MÔ TẢ SÁCH</h3>
             <p className="text-base text-gray-600 mt-4 text-justify">{book.bookDescription}</p>
@@ -409,48 +482,104 @@ const BookDetail = () => {
         </div>
       </div>
 
-      {/* Sách đề xuất */}
+      {/* SÁCH ĐỀ XUẤT */}
       <div className="mt-8">
-        <h3 className="text-xl font-semibold border-b pb-2">GIỚI THIỆU CHO BẠN</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <h3 className="text-lg font-semibold border-b pb-2">GIỚI THIỆU CHO BẠN</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 !gap-2 !mt-2">
           {recommendedBooks.map((recBook) => (
             <Link
               key={recBook.bookId}
               to={`/productdetail/${recBook.bookId}`}
-              className="block bg-white shadow-lg rounded-lg overflow-hidden p-4 border !no-underline"
+              className="block bg-white shadow-md rounded-md overflow-hidden border !no-underline transition-transform transform hover:scale-105"
             >
-              <img
-                src={recBook.bookImage || "/placeholder.svg"}
-                alt={recBook.bookName}
-                className="w-full h-52 object-cover rounded-lg"
-              />
-              <p className="mt-2 text-center text-base font-semibold text-gray-700">{recBook.bookName}</p>
+              <div className="w-full aspect-[3/4] overflow-hidden">
+                <img
+                  src={recBook.bookImages?.[0] || recBook.bookImage || "/placeholder.svg"}
+                  alt={recBook.bookName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-2">
+                <p className="text-center text-sm font-semibold text-gray-700 truncate">{recBook.bookName}</p>
+              </div>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Modal thông báo */}
+      {/* MODAL THÔNG BÁO CHÍNH SÁCH */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white !rounded-md shadow-lg w-96 max-w-lg"> {/* Kích thước cố định và max-width */}
-            <div className="p-6"> {/* Thêm padding cho nội dung */}
-              <h2 className="text-lg font-semibold mb-2">Thông báo</h2>
-              <p className="text-gray-700 !text-justify !leading-relaxed">{modalContent}</p> {/* Căn đều 2 lề và thêm line-height */}
-              <div className="!mt-4 flex justify-end">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white !rounded-md shadow-lg w-96 max-w-lg">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-2">Thông báo</h2>
+              <p className="text-gray-700 !text-justify !leading-relaxed">{modalContent}</p>
+              <div className="!mt-4 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-export default BookDetail
+      {/* MODAL PHÓNG TO ẢNH */}
+      {isImageModalOpen && (
+      <div
+        className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50"
+        onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          closeImageModal();
+        }
+        }}
+      >
+        <div className="relative w-3/4 h-3/4 bg-[rgba(255,255,255,0.3)] !rounded-lg flex justify-center items-center p-4">
+        <img
+          src={selectedImage}
+          alt="Phóng to ảnh sách"
+          className="max-w-full max-h-full object-contain !rounded-lg"
+        />
+        {bookImages.length > 1 && (
+          <>
+          <button
+            className="absolute top-1/2 left-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+            onClick={(e) => {
+            e.stopPropagation();
+            handleImageNav("prev");
+            setSelectedImage(
+              bookImages[(mainImageIndex === 0 ? bookImages.length - 1 : mainImageIndex - 1)]
+            );
+            }}
+          >
+            &#60;
+          </button>
+          <button
+            className="absolute top-1/2 right-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+            onClick={(e) => {
+            e.stopPropagation();
+            handleImageNav("next");
+            setSelectedImage(bookImages[(mainImageIndex + 1) % bookImages.length]);
+            }}
+          >
+            &#62;
+          </button>
+          </>
+        )}
+        <button
+          onClick={closeImageModal}
+          className="absolute top-2 right-2 text-rose-700 text-3xl font-bold p-2 bg-white !rounded-full hover:text-gray-700"
+        >
+          &times;
+        </button>
+        </div>
+      </div>
+      )}
+    </div>
+  );
+};
+
+export default BookDetail;

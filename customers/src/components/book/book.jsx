@@ -93,16 +93,18 @@ const Book = ({ book }) => {
                     🔥 Cháy hàng
                 </div>
             )}
-
             {/* Hình ảnh sách */}
             <div className="w-full h-48 overflow-hidden mb-3">
-                <img
-                    className="w-full h-full object-cover"
-                    src={book.bookImage}
-                    alt={book.bookName}
-                />
+            <img
+                className="w-full h-full object-cover rounded-md"
+                src={
+                Array.isArray(book.bookImages) && book.bookImages.length > 0
+                    ? book.bookImages[0] // lấy ảnh đầu tiên
+                    : book.bookImage   // fallback nếu không có mảng
+                }
+                alt={book.bookName}
+            />
             </div>
-
             {/* Tên sách */}
             <div className="flex flex-col items-start flex-grow w-full text-left">
                 <div className="text-lg text-gray-800 max-h-12 overflow-hidden overflow-ellipsis line-clamp-2">

@@ -14,67 +14,78 @@ export const useAddBook = (onClose) => {
     bookStockQuantity: "",
     bookSupplier: "",
     bookDescription: "",
-    bookImage: null,
+    bookImages: [],   // ⬅️ mảng thay vì 1 ảnh
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [imagePreviewUrls, setImagePreviewUrls] = useState([]); // nhiều ảnh
   const [excelFile, setExcelFile] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  // Xử lý input change
+const handleChange = (e) => {
+  const { name, value, files } = e.target;
 
-    if (name === "bookImage" && files && files[0]) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreviewUrl(reader.result);
-      reader.readAsDataURL(file);
-      setFormData({ ...formData, bookImage: file });
-    } else if (name === "mainCategory") {
-      setFormData({ ...formData, [name]: value, bookCategory: "" });
-    } else {
-      setFormData({ ...formData, [name]: files ? files[0] : value });
-    }
-    setError("");
-  };
+  if (name === "bookImages" && files) {
+    const fileArray = Array.from(files);
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    // preview ảnh
+    const previewUrls = fileArray.map((file) => URL.createObjectURL(file));
 
-    try {
-      let imageUrl = formData.bookImage;
+    setFormData({ ...formData, bookImages: [...formData.bookImages, ...fileArray] });
+    setImagePreviewUrls([...imagePreviewUrls, ...previewUrls]);
+  } else if (name === "mainCategory") {
+    setFormData({ ...formData, [name]: value, bookCategory: "" });
+  } else {
+    setFormData({ ...formData, [name]: files ? files[0] : value });
+  }
+  setError("");
+};
 
-      // Nếu là file ảnh, upload trước và lấy URL
-      if (formData.bookImage instanceof File) {
-        imageUrl = await uploadImage(formData.bookImage); // uploadImage phải trả URL string
+
+  // Xử lý thêm sách
+const handleAdd = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
+
+  try {
+    let imageUrls = [];
+
+    // Upload từng ảnh
+    if (formData.bookImages.length > 0) {
+      for (let file of formData.bookImages) {
+        if (file instanceof File) {
+          const url = await uploadImage(file); // phải trả URL string
+          imageUrls.push(url);
+        } else {
+          imageUrls.push(file);
+        }
       }
-
-      // Chuyển các trường số từ string sang number
-      const payload = {
-        ...formData,
-        bookPrice: parseFloat(formData.bookPrice) || 0,
-        bookYearOfProduction: parseInt(formData.bookYearOfProduction) || 0,
-        bookStockQuantity: parseInt(formData.bookStockQuantity) || 0,
-        bookImage: imageUrl || "",
-      };
-
-      await addBook(payload);
-
-      // Đóng modal và reload
-      onClose();
-      setTimeout(() => window.location.reload(), 500);
-    } catch (err) {
-      console.error(err);
-      setError("Lỗi khi thêm sách. Vui lòng kiểm tra dữ liệu.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    const payload = {
+      ...formData,
+      bookPrice: parseFloat(formData.bookPrice) || 0,
+      bookYearOfProduction: parseInt(formData.bookYearOfProduction) || 0,
+      bookStockQuantity: parseInt(formData.bookStockQuantity) || 0,
+      bookImages: imageUrls,
+    };
+
+    await addBook(payload);
+
+    onClose();
+    setTimeout(() => window.location.reload(), 500);
+  } catch (err) {
+    console.error(err);
+    setError("Lỗi khi thêm sách. Vui lòng kiểm tra dữ liệu.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
+  // Xử lý import excel
   const handleExcelChange = (e) => setExcelFile(e.target.files[0]);
 
   const handleImport = async () => {
@@ -98,7 +109,7 @@ export const useAddBook = (onClose) => {
     setFormData,
     isLoading,
     error,
-    imagePreviewUrl,
+    imagePreviewUrls,
     excelFile,
     handleChange,
     handleAdd,
