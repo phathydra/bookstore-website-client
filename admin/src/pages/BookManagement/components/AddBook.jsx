@@ -34,7 +34,7 @@ const AddBook = ({ onAdd, onClose }) => {
 
   const {
     formData, isLoading, error,
-    imagePreviewUrl, excelFile,
+    imagePreviewUrls, excelFile,
     handleChange, handleAdd,
     handleExcelChange, handleImport
   } = useAddBook(onClose);
@@ -239,6 +239,7 @@ const AddBook = ({ onAdd, onClose }) => {
             </Grid>
 
             {/* RIGHT COLUMN - IMAGE */}
+            {/* RIGHT COLUMN - IMAGES */}
             <Grid item xs={12} md={4}>
               <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
                 <Box
@@ -251,24 +252,45 @@ const AddBook = ({ onAdd, onClose }) => {
                     justifyContent: "center",
                     borderRadius: 2,
                     bgcolor: "#fafafa",
-                    overflow: "hidden",
+                    overflow: "auto",
+                    flexWrap: "wrap",
+                    p: 1,
                   }}
                 >
-                  {imagePreviewUrl ? (
-                    <img
-                      src={imagePreviewUrl}
-                      alt="Book preview"
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
+                  {imagePreviewUrls.length > 0 ? (
+                    <Grid container spacing={1}>
+                      {imagePreviewUrls.map((url, index) => (
+                        <Grid item xs={6} key={index}>
+                          <img
+                            src={url}
+                            alt={`preview-${index}`}
+                            style={{
+                              width: "100%",
+                              height: 200,
+                              objectFit: "cover",
+                              borderRadius: 8,
+                            }}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
                   ) : (
                     <Typography variant="body2" color="textSecondary">
                       Chưa có ảnh
                     </Typography>
                   )}
                 </Box>
+
                 <Button variant="contained" component="label" fullWidth>
                   Chọn hình ảnh
-                  <input type="file" name="bookImage" hidden onChange={handleChange} />
+                  <input
+                    type="file"
+                    name="bookImages"
+                    hidden
+                    multiple
+                    accept="image/*"
+                    onChange={handleChange}
+                  />
                 </Button>
               </Box>
             </Grid>
