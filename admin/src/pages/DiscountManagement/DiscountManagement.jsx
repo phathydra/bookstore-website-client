@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination,
-    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper
+    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
@@ -11,7 +11,10 @@ import UpdateDiscount from './UpdateDiscount';
 import DiscountDetail from './DiscountDetail';
 import CloseIcon from '@mui/icons-material/Close';
 import { FaFileImport, FaFileExport } from "react-icons/fa";
-// Removed unused imports: ClickAwayListener, EditIcon, DeleteIcon
+import { useFetchDiscount } from './hooks/useFetchDiscount';
+import { useFetchExpiredDiscount } from './hooks/useFetchExpiredDiscount';
+import { useFetchActiveDiscount } from './hooks/useFetchActiveDiscount';
+import { useFetchUpcomingDiscount } from './hooks/useFetchUpcomingDiscount';
 
 const DiscountManagement = () => {
     const [discounts, setDiscounts] = useState({});
@@ -24,30 +27,34 @@ const DiscountManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
-    const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false); // State for detail drawer
+    const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
     const [error, setError] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [file, setFile] = useState(null);
     const [currDiscount, setCurrDiscount] = useState(null);
+    const [status, setStatus] = useState('ALL'); // New state for status filter
 
     const addButtonRef = useRef(null);
     const anchorRef = useRef(null);
 
-    // Define fetchDiscounts using useCallback to make it a stable dependency
-    const fetchDiscounts = useCallback(async () => {
-        try {
-            const response = await axios.get(`http://localhost:8081/api/discounts?page=${page}&size=${rowsPerPage}`);
-            setDiscounts(response.data);
-            setError('');
-        } catch (error) {
-            console.error('Error fetching discounts:', error);
-            setError('Failed to fetch discounts. Please try again.');
-        }
-    }, [page, rowsPerPage]); // Dependencies for fetchDiscounts
+    // Use custom hooks for fetching discounts based on status
+    const allDiscounts = useFetchDiscount(status, page, rowsPerPage);
+    const expiredDiscounts = useFetchExpiredDiscount(status, page, rowsPerPage);
+    const activeDiscounts = useFetchActiveDiscount(status, page, rowsPerPage);
+    const upcomingDiscounts = useFetchUpcomingDiscount(status, page, rowsPerPage);
 
     useEffect(() => {
-        fetchDiscounts();
-    }, [page, rowsPerPage, fetchDiscounts]); // Added fetchDiscounts to dependency array
+        if (status === 'ALL') {
+            setDiscounts(allDiscounts);
+        } else if (status === 'EXPIRED') {
+            setDiscounts(expiredDiscounts);
+        } else if (status === 'ACTIVE') {
+            setDiscounts(activeDiscounts);
+        } else if (status === 'UPCOMING') {
+            setDiscounts(upcomingDiscounts);
+        }
+        setError('');
+    }, [allDiscounts, expiredDiscounts, activeDiscounts, upcomingDiscounts, status]);
 
     const fetchRecommendedBooks = useCallback(async (query) => {
         if (!query) {
@@ -61,7 +68,7 @@ const DiscountManagement = () => {
             console.error('Error fetching recommended books:', error);
             setRecommendedBooks([]);
         }
-    }, [selectedBooks]); // Added selectedBooks to dependency array
+    }, [selectedBooks]);
 
     const fetchDiscountedBooks = useCallback(async (discountId) => {
         try {
@@ -72,29 +79,23 @@ const DiscountManagement = () => {
             setSelectedBooks([]);
             setError('Failed to fetch discounted books. Please try again.');
         }
-    }, []); // No external dependencies for this specific fetch
+    }, []);
 
     const handleExportDiscountedBooks = useCallback(async (discountId) => {
-        try{
-            const response = await axios.get(`http://localhost:8081/api/book/export_discounted_books?discountId=${discountId}`,{
+        try {
+            const response = await axios.get(`http://localhost:8081/api/book/export_discounted_books?discountId=${discountId}`, {
                 responseType: "blob",
             });
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
-
             const link = document.createElement("a");
-
             link.href = url;
-
             link.setAttribute("download", `discounted_books_of_${discountId}.xlsx`);
-
             document.body.appendChild(link);
             link.click();
-
             link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(url);
-    
-        }catch (error) {
+        } catch (error) {
             console.error('Error exporting discounted books:', error);
             setError('Failed to export discounted books. Please try again.');
         }
@@ -116,7 +117,7 @@ const DiscountManagement = () => {
         }, 500);
 
         return () => clearTimeout(delayDebounce);
-    }, [searchQuery, fetchRecommendedBooks]); // Added fetchRecommendedBooks to dependency array
+    }, [searchQuery, fetchRecommendedBooks]);
 
     const handleBookSelect = (book) => {
         if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
@@ -147,7 +148,6 @@ const DiscountManagement = () => {
                     }
                 }
             );
-
             alert(`Applied ${selectedDiscount?.percentage}% discount to ${selectedBooks.length} books.`);
             setSelectedBooks([]);
             setIsApplyDrawerOpen(false);
@@ -164,23 +164,23 @@ const DiscountManagement = () => {
         setFile(e.target.files[0]);
     };
 
-    const handleImportExcel = async() => {
-      if (!file) return;
+    const handleImportExcel = async () => {
+        if (!file) return;
 
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-        const response = await axios.put(`http://localhost:8081/api/discounts/addDiscountToBooksExcel?discountId=${selectedDiscount.id}`, formData);
-        console.log("Upload successful:", response.data);
-        response.data.forEach(book => {
-        if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
-                setSelectedBooks((prev) => [...prev, book]);
-            }
-        });
+            const response = await axios.put(`http://localhost:8081/api/discounts/addDiscountToBooksExcel?discountId=${selectedDiscount.id}`, formData);
+            console.log("Upload successful:", response.data);
+            response.data.forEach(book => {
+                if (!selectedBooks.some(selectedBook => selectedBook.bookId === book.bookId)) {
+                    setSelectedBooks((prev) => [...prev, book]);
+                }
+            });
         } catch (error) {
-        console.error("Upload failed:", error);
-        }  
+            console.error("Upload failed:", error);
+        }
     };
 
     const handleCloseApplyDrawer = () => {
@@ -210,21 +210,19 @@ const DiscountManagement = () => {
     const handleOpenUpdateModal = (discount) => {
         setSelectedDiscount(discount);
         setIsUpdateModalOpen(true);
-        setIsDetailDrawerOpen(false); // Close detail drawer when opening update modal
+        setIsDetailDrawerOpen(false);
     };
 
     const handleCloseUpdateModal = () => {
         setIsUpdateModalOpen(false);
         setSelectedDiscount(null);
-        fetchDiscounts(); // Refresh data after update
     };
 
     const handleDeleteDiscount = async (id) => {
         if (window.confirm('Are you sure you want to delete this discount?')) {
             try {
                 await axios.delete(`http://localhost:8081/api/discounts/${id}`);
-                fetchDiscounts(); // Refresh data after delete
-                setIsDetailDrawerOpen(false); // Close detail drawer after deletion
+                setIsDetailDrawerOpen(false);
                 setSelectedDiscount(null);
             } catch (error) {
                 console.error('Error deleting discount:', error);
@@ -243,6 +241,10 @@ const DiscountManagement = () => {
         setSelectedDiscount(null);
     };
 
+    const handleStatusChange = (event) => {
+        setStatus(event.target.value);
+        setPage(0); // Reset page to 0 when status changes
+    };
 
     return (
         <div className="flex h-screen">
@@ -262,14 +264,29 @@ const DiscountManagement = () => {
                             <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
                                 Discount List
                             </Typography>
-                            <Button
-                                variant="contained"
-                                style={{ backgroundColor: 'green' }}
-                                onClick={() => setIsAddModalOpen(true)}
-                                ref={addButtonRef}
-                            >
-                                Thêm mã giảm giá
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Status</InputLabel>
+                                    <Select
+                                        value={status}
+                                        onChange={handleStatusChange}
+                                        label="Status"
+                                    >
+                                        <MenuItem value="ALL">All</MenuItem>
+                                        <MenuItem value="EXPIRED">Expired</MenuItem>
+                                        <MenuItem value="ACTIVE">Active</MenuItem>
+                                        <MenuItem value="UPCOMING">Upcoming</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: 'green' }}
+                                    onClick={() => setIsAddModalOpen(true)}
+                                    ref={addButtonRef}
+                                >
+                                    Thêm mã giảm giá
+                                </Button>
+                            </Box>
                         </Box>
                         {error && (
                             <Typography color="error" sx={{ mb: 2 }}>
@@ -292,7 +309,7 @@ const DiscountManagement = () => {
                                         <TableRow
                                             key={discount.id}
                                             hover
-                                            onClick={() => handleRowClick(discount)} // Open detail drawer on row click
+                                            onClick={() => handleRowClick(discount)}
                                             style={{ cursor: 'pointer' }}
                                         >
                                             <TableCell>{discount.id}</TableCell>
@@ -305,7 +322,7 @@ const DiscountManagement = () => {
                                                     color="primary"
                                                     size="small"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent row click from firing
+                                                        e.stopPropagation();
                                                         handleOpenApplyDrawer(discount);
                                                     }}
                                                 >
@@ -345,12 +362,12 @@ const DiscountManagement = () => {
                     </Typography>
                     <div>
                         <TextField
-                        fullWidth
-                        label="Search Books"
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        inputRef={anchorRef}
-                        sx={{ marginBottom: 2 }}
+                            fullWidth
+                            label="Search Books"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            inputRef={anchorRef}
+                            sx={{ marginBottom: 2 }}
                         />
                         <input type="file" accept='.xlsx,.xls' onChange={handleFileChange}/>
                         <Button onClick={handleImportExcel}>
@@ -467,8 +484,7 @@ const DiscountManagement = () => {
                     />
                 </Drawer>
 
-
-                {isAddModalOpen && <AddDiscount onClose={() => { setIsAddModalOpen(false); fetchDiscounts(); }} />}
+                {isAddModalOpen && <AddDiscount onClose={() => { setIsAddModalOpen(false); }} />}
                 {isUpdateModalOpen && <UpdateDiscount selectedDiscount={selectedDiscount} onClose={handleCloseUpdateModal} />}
             </main>
         </div>
