@@ -9,12 +9,12 @@ import {
   FormControl,
   InputLabel,
   Grid,
-  Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import axios from 'axios';
 
-const AddVoucher = ({ onClose, onSuccess }) => {
+const AddVoucher = ({ onClose }) => {
   const [formData, setFormData] = useState({
     code: '',
     voucherType: '',
@@ -44,13 +44,25 @@ const AddVoucher = ({ onClose, onSuccess }) => {
   const handleAdd = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     try {
-      await axios.post('http://localhost:8082/api/vouchers', formData);
-      onSuccess();
-      onClose();
+      const response = await axios.post('http://localhost:8082/api/vouchers', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Voucher added successfully:', response.data); // Log response for debugging
+      onClose(); // Call onClose to close the modal
     } catch (error) {
-      console.error('Error adding voucher:', error);
-      setError('Error adding voucher.');
+      console.error('Error adding voucher:', {
+        message: error.message,
+        response: error.response ? {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+        } : 'No response received',
+      });
+      setError(error.response?.data?.message || error.message || 'Error adding voucher. Please check the console for details.');
     } finally {
       setIsLoading(false);
     }

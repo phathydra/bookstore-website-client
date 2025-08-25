@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination,
-    Button, Box, IconButton, TextField, InputAdornment, Drawer // Import Drawer
+    Button, Box, IconButton, TextField, InputAdornment, Drawer, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 import AddVoucher from './AddVoucher';
 import UpdateVoucher from './UpdateVoucher';
-import VoucherDetail from './VoucherDetail'; // Import VoucherDetail
-// import EditIcon from '@mui/icons-material/Edit'; // Không còn sử dụng
-// import DeleteIcon from '@mui/icons-material/Delete'; // Không còn sử dụng
+import VoucherDetail from './VoucherDetail';
+import { useFetchVoucher } from './hooks/useFetchVoucher';
+import { useFetchActiveVoucher } from './hooks/useFetchActiveVoucher';
+import { useFetchExpiredVoucher } from './hooks/useFetchExpiredVoucher';
+import { useFetchUpcomingVoucher } from './hooks/useFetchUpcomingVoucher';
 
 const VoucherManagement = () => {
     const [vouchers, setVouchers] = useState({ content: [], totalElements: 0 });
@@ -24,25 +26,30 @@ const VoucherManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+    const [status, setStatus] = useState('ALL');
+
+    const allVouchers = useFetchVoucher(status, page, rowsPerPage, searchTerm);
+    const activeVouchers = useFetchActiveVoucher(status, page, rowsPerPage);
+    const expiredVouchers = useFetchExpiredVoucher(status, page, rowsPerPage);
+    const upcomingVouchers = useFetchUpcomingVoucher(status, page, rowsPerPage);
 
     useEffect(() => {
-        const delayDebounce = setTimeout(() => {
-            refreshVouchers();
-        }, 300)
-
-        return () => clearTimeout(delayDebounce);
-    }, [page, rowsPerPage, searchTerm]);
-
-    const refreshVouchers = async () => {
-        try {
-            const response = await axios.get(`http://localhost:8082/api/vouchers?page=${page}&size=${rowsPerPage}&code=${searchTerm}`);
-            setVouchers(response.data);
-            setError('');
-        } catch (error) {
-            console.error('Error fetching vouchers:', error);
-            setError('Failed to fetch vouchers. Please try again.');
+        if (status === 'ALL') {
+            setVouchers(allVouchers);
+        } else if (status === 'EXPIRED') {
+            setVouchers(expiredVouchers);
+        } else if (status === 'ACTIVE') {
+            setVouchers(activeVouchers);
+        } else if (status === 'UPCOMING') {
+            setVouchers(upcomingVouchers);
         }
-    };
+        setError('');
+    }, [allVouchers, expiredVouchers, activeVouchers, upcomingVouchers, status]);
+
+    useEffect(() => {
+        setStatus('ALL');
+        setPage(0);
+    }, [searchTerm]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -63,7 +70,6 @@ const VoucherManagement = () => {
 
     const handleCloseAddModal = () => {
         setIsAddModalOpen(false);
-        refreshVouchers();
     };
 
     const handleOpenUpdateModal = (voucher) => {
@@ -74,14 +80,12 @@ const VoucherManagement = () => {
     const handleCloseUpdateModal = () => {
         setIsUpdateModalOpen(false);
         setSelectedVoucher(null);
-        refreshVouchers();
     };
 
     const handleDeleteVoucher = async (id) => {
         if (window.confirm('Are you sure you want to delete this voucher?')) {
             try {
                 await axios.delete(`http://localhost:8082/api/vouchers/${id}`);
-                refreshVouchers();
                 setIsDetailDrawerOpen(false);
                 setSelectedVoucher(null);
             } catch (error) {
@@ -103,6 +107,11 @@ const VoucherManagement = () => {
     const handleCloseDetailDrawer = () => {
         setIsDetailDrawerOpen(false);
         setSelectedVoucher(null);
+    };
+
+    const handleStatusChange = (event) => {
+        setStatus(event.target.value);
+        setPage(0); // Reset page to 0 when status changes
     };
 
     return (
@@ -141,13 +150,28 @@ const VoucherManagement = () => {
                                     }}
                                 />
                             </Box>
-                            <Button
-                                variant="contained"
-                                style={{ backgroundColor: 'green' }}
-                                onClick={handleOpenAddModal}
-                            >
-                                Thêm Voucher
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Status</InputLabel>
+                                    <Select
+                                        value={status}
+                                        onChange={handleStatusChange}
+                                        label="Status"
+                                    >
+                                        <MenuItem value="ALL">All</MenuItem>
+                                        <MenuItem value="EXPIRED">Expired</MenuItem>
+                                        <MenuItem value="ACTIVE">Active</MenuItem>
+                                        <MenuItem value="UPCOMING">Upcoming</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: 'green' }}
+                                    onClick={handleOpenAddModal}
+                                >
+                                    Thêm Voucher
+                                </Button>
+                            </Box>
                         </Box>
                         {error && (
                             <Typography color="error" sx={{ mb: 2 }}>
@@ -163,12 +187,12 @@ const VoucherManagement = () => {
                                         <TableCell>Loại</TableCell>
                                         <TableCell>Ngày bắt đầu</TableCell>
                                         <TableCell>Ngày kết thúc</TableCell>
-                                        {/* Đã xóa <TableCell>Actions</TableCell> */}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {vouchers.content?.map((voucher) => (
-                                        <TableRow key={voucher.id}
+                                        <TableRow
+                                            key={voucher.id}
                                             onClick={() => handleSelectVoucher(voucher)}
                                             hover
                                             style={{ cursor: 'pointer' }}
@@ -178,7 +202,6 @@ const VoucherManagement = () => {
                                             <TableCell>{voucher.voucherType}</TableCell>
                                             <TableCell>{new Date(voucher.startDate).toLocaleDateString()}</TableCell>
                                             <TableCell>{new Date(voucher.endDate).toLocaleDateString()}</TableCell>
-                                            {/* Đã xóa <TableCell> và các IconButton */}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -195,11 +218,10 @@ const VoucherManagement = () => {
                         />
                     </Box>
                 </div>
-                {isAddModalOpen && <AddVoucher onClose={handleCloseAddModal} onSuccess={refreshVouchers} />}
+                {isAddModalOpen && <AddVoucher onClose={handleCloseAddModal} />}
                 {isUpdateModalOpen && (
-                    <UpdateVoucher selectedVoucher={selectedVoucher} onClose={handleCloseUpdateModal} onSuccess={refreshVouchers} />
+                    <UpdateVoucher selectedVoucher={selectedVoucher} onClose={handleCloseUpdateModal} />
                 )}
-
                 <Drawer
                     anchor="right"
                     open={isDetailDrawerOpen}

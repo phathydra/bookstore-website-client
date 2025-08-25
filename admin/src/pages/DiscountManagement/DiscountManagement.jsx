@@ -32,12 +32,11 @@ const DiscountManagement = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [file, setFile] = useState(null);
     const [currDiscount, setCurrDiscount] = useState(null);
-    const [status, setStatus] = useState('ALL'); // New state for status filter
+    const [status, setStatus] = useState('ALL');
 
     const addButtonRef = useRef(null);
     const anchorRef = useRef(null);
 
-    // Use custom hooks for fetching discounts based on status
     const allDiscounts = useFetchDiscount(status, page, rowsPerPage);
     const expiredDiscounts = useFetchExpiredDiscount(status, page, rowsPerPage);
     const activeDiscounts = useFetchActiveDiscount(status, page, rowsPerPage);
@@ -243,7 +242,7 @@ const DiscountManagement = () => {
 
     const handleStatusChange = (event) => {
         setStatus(event.target.value);
-        setPage(0); // Reset page to 0 when status changes
+        setPage(0);
     };
 
     return (
