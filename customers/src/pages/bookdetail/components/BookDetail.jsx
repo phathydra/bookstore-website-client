@@ -1,261 +1,51 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-// Đặt base URL cho API để dễ quản lý và sửa đổi
-const API_URLS = {
-  BOOK: "http://localhost:8081/api/book",
-  REVIEW: "http://localhost:8081/api/reviews",
-  ANALYTICS: "http://localhost:8081/api/analytics",
-  ACCOUNT: "http://localhost:8080/api/account/fetch",
-  CART: "http://localhost:8082/cart/add",
-};
+import { useBookDetail } from "../hooks/useBookDetail";
+import { useState } from "react";
 
 const BookDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const {
+    book,
+    recommendedBooks,
+    reviews,
+    reviewsWithUserData,
+    loading,
+    error,
+    quantity,
+    purchaseCount,
+    isModalOpen,
+    modalContent,
+    isImageModalOpen,
+    selectedImage,
+    mainImageIndex,
+    openModal,
+    closeModal,
+    openImageModal,
+    closeImageModal,
+    increaseQty,
+    decreaseQty,
+    addToCart,
+    handlePolicyClick,
+    handleImageNav,
+    setMainImageIndex,
+    averageRating,
+    calculateRatingPercentage,
+    fetchBookSummary,
+  } = useBookDetail(id, navigate);
 
-  // Khai báo state một cách có tổ chức
-  const [book, setBook] = useState(null);
-  const [recommendedBooks, setRecommendedBooks] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [reviewsWithUserData, setReviewsWithUserData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [purchaseCount, setPurchaseCount] = useState(0);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [summaryContent, setSummaryContent] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
-  // States cho Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState("");
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [mainImageIndex, setMainImageIndex] = useState(0);
-
-  // Hàm mở và đóng Modal
-  const openModal = useCallback((content) => {
-    setModalContent(content);
-    setIsModalOpen(true);
-  }, []);
-
-  const closeModal = () => setIsModalOpen(false);
-  const openImageModal = (image) => {
-    setSelectedImage(image);
-    setIsImageModalOpen(true);
-  };
-  const closeImageModal = () => {
-    setIsImageModalOpen(false);
-    setSelectedImage(null);
-  };
-
-  // Hàm lấy thông tin người dùng cho mỗi đánh giá
-  const fetchUserDataForReviews = async (reviewsData) => {
-    try {
-      const reviewPromises = reviewsData.map(async (review) => {
-        if (review.accountId) {
-          try {
-            const response = await fetch(
-              `${API_URLS.ACCOUNT}?accountId=${review.accountId}`
-            );
-            const userData = await response.json();
-            return {
-              ...review,
-              userName: userData.name || review.reviewerName || "Khách hàng",
-              userAvatar: userData.avatar || "https://via.placeholder.com/40",
-            };
-          } catch (error) {
-            console.error("Lỗi khi lấy thông tin người dùng:", error);
-            return {
-              ...review,
-              userName: review.reviewerName || "Khách hàng",
-              userAvatar: "https://via.placeholder.com/40",
-            };
-          }
-        }
-        return {
-          ...review,
-          userName: review.reviewerName || "Khách hàng",
-          userAvatar: "https://via.placeholder.com/40",
-        };
-      });
-      const data = await Promise.all(reviewPromises);
-      setReviewsWithUserData(data);
-    } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng cho đánh giá:", error);
-    }
-  };
-
-  // Hàm Fetch tất cả dữ liệu
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) {
-        setError("Không có ID sách.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [bookResponse, recommendedResponse, reviewsResponse, purchaseResponse] =
-          await Promise.allSettled([
-            axios.get(`${API_URLS.BOOK}/${id}`),
-            axios.get(`${API_URLS.BOOK}/${id}/recommendations`),
-            axios.get(`${API_URLS.REVIEW}/book/${id}`),
-            axios.get(`${API_URLS.ANALYTICS}/${id}`),
-          ]);
-
-        // Xử lý kết quả từng Promise
-        if (bookResponse.status === "fulfilled") {
-          setBook(bookResponse.value.data);
-        } else {
-          setError("Không thể tải dữ liệu sách.");
-          openModal("Không thể tải dữ liệu sách.");
-        }
-
-        if (recommendedResponse.status === "fulfilled") {
-          setRecommendedBooks(recommendedResponse.value.data);
-        } else {
-          console.error(
-            "Lỗi tải sách đề xuất:",
-            recommendedResponse.reason.message
-          );
-        }
-
-        if (reviewsResponse.status === "fulfilled") {
-          setReviews(reviewsResponse.value.data);
-          if (reviewsResponse.value.data?.length > 0) {
-            fetchUserDataForReviews(reviewsResponse.value.data);
-          }
-        } else {
-          console.error("Lỗi tải đánh giá:", reviewsResponse.reason.message);
-        }
-
-        if (purchaseResponse.status === "fulfilled") {
-          setPurchaseCount(purchaseResponse.value.data.purchaseCount || 0);
-        } else {
-          console.error("Lỗi khi lấy số lượng đã bán:", purchaseResponse.reason);
-        }
-      } catch (err) {
-        // Lỗi chung, ít khi xảy ra với Promise.allSettled
-        setError("Đã có lỗi xảy ra khi tải dữ liệu.");
-        openModal("Đã có lỗi xảy ra khi tải dữ liệu.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id, openModal]);
-
-  // Các hàm xử lý logic
-  const handleIncrease = () => {
-    if (book && quantity < book.bookStockQuantity) {
-      setQuantity((prev) => prev + 1);
-    }
-  };
-
-  const handleDecrease = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
-
-  const addToCart = async () => {
-    if (!book) return;
-
-    const accountId = localStorage.getItem("accountId");
-    if (!accountId) {
-      alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
-      navigate("/login");
-      return;
-    }
-
-    if (book.bookStockQuantity <= 0) {
-      alert("Sách này đã hết hàng!");
-      return;
-    }
-
-    try {
-      const response = await axios.post(API_URLS.CART, {
-        accountId: accountId,
-        cartItems: [
-          {
-            bookId: book.bookId,
-            bookName: book.bookName,
-            price: parseFloat(book.bookPrice),
-            discountedPrice: book.discountedPrice
-              ? parseFloat(book.discountedPrice)
-              : null,
-            percentage: book.percentage,
-            quantity: quantity,
-            bookImage: book.bookImages?.[0] || book.bookImage,
-          },
-        ],
-      });
-
-      if (response.status === 200) {
-        alert("Sách đã được thêm vào giỏ hàng!");
-        navigate("/cart");
-      } else {
-        alert("Thêm vào giỏ hàng thất bại! Hãy thử lại.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi thêm vào giỏ hàng:", error.response?.data || error.message);
-      alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
-    }
-  };
-
-  const handlePolicyClick = (policy) => {
-    switch (policy) {
-      case "Thời gian giao hàng":
-        openModal(
-          "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, Fahasa.com cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng."
-        );
-        break;
-      case "Chính sách đổi trả":
-        openModal(
-          "Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất."
-        );
-        break;
-      case "Chính sách khách sỉ":
-        openModal(
-          "Ưu đãi khi mua số lượng lớn\n\nFahasa.com cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn."
-        );
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleImageNav = (direction) => {
-    if (!book || book.bookImages.length <= 1) return;
-    setMainImageIndex((prevIndex) => {
-      const nextIndex =
-        direction === "next"
-          ? (prevIndex + 1) % book.bookImages.length
-          : prevIndex === 0
-          ? book.bookImages.length - 1
-          : prevIndex - 1;
-      return nextIndex;
-    });
-  };
-
-  // Tính toán
-  const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : 0;
-
-  const calculateRatingPercentage = (starLevel) => {
-    if (reviews.length === 0) return 0;
-    const count = reviews.filter(
-      (review) => Math.round(review.rating) === starLevel
-    ).length;
-    return Math.round((count / reviews.length) * 100);
+  const handleSummaryClick = async () => {
+    setSummaryLoading(true);
+    setIsSummaryModalOpen(true);
+    const summary = await fetchBookSummary();
+    setSummaryContent(summary);
+    setSummaryLoading(false);
   };
 
   if (loading) return <div className="text-center py-10 text-lg">Đang tải...</div>;
@@ -321,11 +111,11 @@ const BookDetail = () => {
           {/* NÚT THÊM VÀO GIỎ HÀNG VÀ SỐ LƯỢNG */}
           <div className="flex items-center !space-x-2 mt-4">
             <div className="flex items-center bg-white border-2 !border-gray-500 rounded-xl px-3 py-2 text-lg font-semibold w-[140px] h-14 justify-between">
-              <button onClick={handleDecrease} className="px-2 py-1 text-black">
+              <button onClick={decreaseQty} className="px-2 py-1 text-black">
                 -
               </button>
               <span className="px-4">{quantity}</span>
-              <button onClick={handleIncrease} className="px-2 py-1 text-black">
+              <button onClick={increaseQty} className="px-2 py-1 text-black">
                 +
               </button>
             </div>
@@ -390,8 +180,8 @@ const BookDetail = () => {
                   <p className="text-sm text-gray-600 italic">Chưa có đánh giá nào cho sản phẩm này.</p>
                 ) : (
                   <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                    {reviewsWithUserData.map((review, index) => (
-                      <div key={index} className="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                    {reviewsWithUserData.map((review) => (
+                      <div key={review.reviewId} className="bg-white p-3 rounded border border-gray-200 shadow-sm">
                         <div className="flex items-center mb-2">
                           <img
                             src={review.userAvatar || "/placeholder.svg"}
@@ -425,7 +215,15 @@ const BookDetail = () => {
         {/* PHẦN THÔNG TIN SÁCH */}
         <div className="hidden md:block border-l-2 border-gray-300 mx-4"></div>
         <div className="md:w-2/3 p-5">
-          <h2 className="!text-2xl font-bold text-gray-800 mb-2">{book.bookName}</h2>
+          <div className="flex items-center mb-2">
+            <h2 className="!text-2xl font-bold text-gray-800 mr-4">{book.bookName}</h2>
+            <button
+              onClick={handleSummaryClick}
+              className="flex-shrink-0 px-4 py-2 bg-blue-600 text-white text-base font-semibold rounded-xl hover:bg-blue-700 transition shadow-md"
+            >
+              Tóm tắt
+            </button>
+          </div>
           {book.percentage > 0 ? (
             <div>
               <div className="text-2xl font-bold text-red-600">{totalPrice} VNĐ</div>
@@ -509,7 +307,7 @@ const BookDetail = () => {
 
       {/* MODAL THÔNG BÁO CHÍNH SÁCH */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white !rounded-md shadow-lg w-96 max-w-lg">
             <div className="p-6">
               <h2 className="text-lg font-semibold mb-2">Thông báo</h2>
@@ -529,54 +327,82 @@ const BookDetail = () => {
 
       {/* MODAL PHÓNG TO ẢNH */}
       {isImageModalOpen && (
-      <div
-        className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50"
-        onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          closeImageModal();
-        }
-        }}
-      >
-        <div className="relative w-3/4 h-3/4 bg-[rgba(255,255,255,0.3)] !rounded-lg flex justify-center items-center p-4">
-        <img
-          src={selectedImage}
-          alt="Phóng to ảnh sách"
-          className="max-w-full max-h-full object-contain !rounded-lg"
-        />
-        {bookImages.length > 1 && (
-          <>
-          <button
-            className="absolute top-1/2 left-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
-            onClick={(e) => {
-            e.stopPropagation();
-            handleImageNav("prev");
-            setSelectedImage(
-              bookImages[(mainImageIndex === 0 ? bookImages.length - 1 : mainImageIndex - 1)]
-            );
-            }}
-          >
-            &#60;
-          </button>
-          <button
-            className="absolute top-1/2 right-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
-            onClick={(e) => {
-            e.stopPropagation();
-            handleImageNav("next");
-            setSelectedImage(bookImages[(mainImageIndex + 1) % bookImages.length]);
-            }}
-          >
-            &#62;
-          </button>
-          </>
-        )}
-        <button
-          onClick={closeImageModal}
-          className="absolute top-2 right-2 text-rose-700 text-3xl font-bold p-2 bg-white !rounded-full hover:text-gray-700"
+        <div
+          className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeImageModal();
+            }
+          }}
         >
-          &times;
-        </button>
+          <div className="relative w-3/4 h-3/4 bg-[rgba(255,255,255,0.3)] !rounded-lg flex justify-center items-center p-4">
+            <img
+              src={selectedImage}
+              alt="Phóng to ảnh sách"
+              className="max-w-full max-h-full object-contain !rounded-lg"
+            />
+            {bookImages.length > 1 && (
+              <>
+                <button
+                  className="absolute top-1/2 left-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleImageNav("prev");
+                  }}
+                >
+                  &#60;
+                </button>
+                <button
+                  className="absolute top-1/2 right-4 -translate-y-1/2 bg-gray-200 !rounded-full p-2 hover:bg-gray-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleImageNav("next");
+                  }}
+                >
+                  &#62;
+                </button>
+              </>
+            )}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-2 right-2 text-rose-700 text-3xl font-bold p-2 bg-white !rounded-full hover:text-gray-700"
+            >
+              &times;
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* MODAL TÓM TẮT SÁCH */}
+      {isSummaryModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white !rounded-md !shadow-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Tóm tắt sách: {book.bookName}</h2>
+              <button
+                onClick={() => setIsSummaryModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold !rounded-lg "
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 text-gray-700">
+              {summaryLoading ? (
+                <div className="text-center text-lg">Đang tạo tóm tắt...</div>
+              ) : (
+                <p className="whitespace-pre-wrap">{summaryContent.summary}</p>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setIsSummaryModalOpen(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

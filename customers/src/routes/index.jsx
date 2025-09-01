@@ -4,7 +4,7 @@ import Products from "../pages/products/products";
 import Cart from "../pages/cart/cart";
 import OrderHistory from "../pages/orderHistory/orderHistory";
 import Profile from "../pages/profile/profile";
-import BookDetail from "../pages/bookdetail/bookdetail";
+import BookDetail from "../pages/bookdetail/components/bookdetail";
 import OrderDetail from "../pages/orderdetail/orderdetail";
 import Header from "../components/header/header";
 import Footer from "../components/footer/footer";
