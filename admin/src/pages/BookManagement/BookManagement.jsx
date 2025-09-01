@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, TablePagination, Button, Box, Drawer, TextField, InputAdornment, IconButton,
+  Paper, Typography, TablePagination, Button, Box, Drawer, TextField,
+  InputAdornment, IconButton, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import AddBook from './components/AddBook';
@@ -12,7 +13,7 @@ import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
 
 const BookManagement = () => {
-  const [books, setBooks] = useState({ content: [], totalElements: 0 }); // Khởi tạo state với cấu trúc phân trang
+  const [books, setBooks] = useState({ content: [], totalElements: 0 });
   const [selectedBook, setSelectedBook] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -21,24 +22,38 @@ const BookManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [filter, setFilter] = useState('all'); // Thêm state cho combobox lọc
 
   const apiUrl = 'http://localhost:8081/api/book';
 
   useEffect(() => {
     fetchBooks();
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, searchTerm, filter]); // Thêm 'filter' vào dependency array
 
   const fetchBooks = async () => {
     try {
-      let url = `${apiUrl}?page=${page}&size=${rowsPerPage}`;
+      let url = '';
       let response;
+
       if (searchTerm) {
-        response = await axios.post(
-          `${apiUrl}/search?page=0&size=${rowsPerPage}&input=${searchTerm}`
-        );
+        url = `${apiUrl}/search?page=${page}&size=${rowsPerPage}&input=${searchTerm}`;
+        response = await axios.post(url);
       } else {
+        switch (filter) {
+          case 'in-stock':
+            url = `${apiUrl}/in-stock?page=${page}&size=${rowsPerPage}`;
+            break;
+          case 'out-of-stock':
+            url = `${apiUrl}/out-of-stock?page=${page}&size=${rowsPerPage}`;
+            break;
+          case 'all':
+          default:
+            url = `${apiUrl}?page=${page}&size=${rowsPerPage}`;
+            break;
+        }
         response = await axios.get(url);
       }
+
       setBooks(response.data);
     } catch (error) {
       console.error('Error fetching books:', error);
@@ -58,7 +73,7 @@ const BookManagement = () => {
   const handleAddBook = async (newBook) => {
     try {
       await axios.post(apiUrl, newBook);
-      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
+      fetchBooks();
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Error adding book:', error);
@@ -68,7 +83,7 @@ const BookManagement = () => {
   const handleUpdateBook = async (updatedBook) => {
     try {
       await axios.put(`${apiUrl}/${selectedBook.bookId}`, updatedBook);
-      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
+      fetchBooks();
       setSelectedBook(null);
       setIsUpdateModalOpen(false);
       setIsDrawerOpen(false);
@@ -80,7 +95,7 @@ const BookManagement = () => {
   const handleDeleteBook = async () => {
     try {
       await axios.delete(`${apiUrl}/${selectedBook.bookId}`);
-      fetchBooks(); // Gọi lại fetchBooks để cập nhật dữ liệu
+      fetchBooks();
       setSelectedBook(null);
       setIsDrawerOpen(false);
     } catch (error) {
@@ -98,43 +113,39 @@ const BookManagement = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleExportBooks = async () => {
-  try {
-    const response = await axios.get(`${apiUrl}/export_books`, {
-      responseType: 'blob', // nhận dữ liệu dạng file
-    });
+  // Thêm handler mới cho combobox
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+    setPage(0); // Reset trang về 0 khi thay đổi bộ lọc
+  };
 
-    // Tạo URL từ blob
+const handleExportBooks = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/export_books?filter=${filter}`, {
+      responseType: 'blob',
+    });
     const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    link.download = 'all_books.xlsx';
+    link.download = `books_${filter}.xlsx`;
     link.click();
   } catch (error) {
     console.error('Error exporting books:', error);
   }
 };
 
-
   return (
     <div className="flex h-screen">
-      {/* Sidebar */}
       <div className={`bg-white shadow-md z-50 fixed h-full transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-1/6'}`}>
         <SideNav onToggleCollapse={() => setIsCollapsed(!isCollapsed)} />
       </div>
-
-      {/* Main Content */}
       <main
         className="flex-1 bg-gray-100 relative flex flex-col transition-all duration-300"
         style={{ marginLeft: isCollapsed ? '5rem' : '16.5%' }}
       >
-        {/* Fixed Header */}
         <Header title="QUẢN LÝ SÁCH" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
-
-        {/* Fixed Search & Add Box */}
         <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
-          {/* Ô tìm kiếm căn giữa, kéo dài và bo tròn */}
-          <Box className="flex-1 flex justify-center">
+          <Box className="flex-1 flex items-center justify-center">
             <TextField
               label="Search"
               variant="outlined"
@@ -155,8 +166,21 @@ const BookManagement = () => {
               }}
             />
           </Box>
-          {/* Nút Add nằm bên trái */}
           <Box className="flex gap-2">
+            {/* Thêm combobox lọc */}
+            <FormControl variant="outlined" size="small" sx={{ width: 150, marginRight: 2 }}>
+              <InputLabel id="filter-label">Lọc</InputLabel>
+              <Select
+                labelId="filter-label"
+                value={filter}
+                onChange={handleFilterChange}
+                label="Lọc"
+              >
+                <MenuItem value="all">Tất cả</MenuItem>
+                <MenuItem value="in-stock">Còn hàng</MenuItem>
+                <MenuItem value="out-of-stock">Hết hàng</MenuItem>
+              </Select>
+            </FormControl>
             <Button variant="contained" style={{ backgroundColor: 'blue' }} onClick={handleExportBooks}>
               Export
             </Button>
@@ -165,15 +189,14 @@ const BookManagement = () => {
             </Button>
           </Box>
         </Box>
-        {/* Table Section with Padding */}
         <div className="flex-1 overflow-auto pt-[72px] px-2">
           <TableContainer component={Paper} sx={{ maxHeight: '70vh', overflow: 'auto' }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   {[
-                  'Id', 'Tên', 'Tác giả', 'Giá', 'Danh mục chính', 'Thể loại',
-                  'Năm xuất bản', 'Nhà xuất bản', 'Ngôn ngữ', 'Số lượng tồn kho', 'Nhà cung cấp', 'Mô tả'
+                    'Id', 'Tên', 'Tác giả', 'Giá', 'Danh mục chính', 'Thể loại',
+                    'Năm xuất bản', 'Nhà xuất bản', 'Ngôn ngữ', 'Số lượng tồn kho', 'Nhà cung cấp', 'Mô tả'
                   ].map((header) => (
                     <TableCell key={header}>{header}</TableCell>
                   ))}
@@ -201,8 +224,6 @@ const BookManagement = () => {
               </TableBody>
             </Table>
           </TableContainer>
-
-          {/* Pagination cố định bên dưới */}
           <Box className="sticky bottom-0 bg-white shadow-md">
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
@@ -215,7 +236,6 @@ const BookManagement = () => {
             />
           </Box>
         </div>
-        {/* Drawer */}
         <Drawer
           anchor="right"
           open={isDrawerOpen}
@@ -224,8 +244,6 @@ const BookManagement = () => {
         >
           <BookDetail selectedBook={selectedBook} handleOpenUpdateModal={handleOpenUpdateModal} handleDeleteBook={handleDeleteBook} />
         </Drawer>
-
-        {/* Modals */}
         {isAddModalOpen && <AddBook handleAddBook={handleAddBook} onClose={handleCloseAddModal} />}
         {isUpdateModalOpen && <UpdateBook selectedBook={selectedBook} handleUpdateBook={handleUpdateBook} onClose={handleCloseUpdateModal} />}
       </main>
