@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "../pages/home/home";
-import Products from "../pages/products/products";
+import Products from "../pages/products/ProductsPage";
 import Cart from "../pages/cart/cart";
 import OrderHistory from "../pages/orderHistory/orderHistory";
 import Profile from "../pages/profile/profile";
