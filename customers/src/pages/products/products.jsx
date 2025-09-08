@@ -1,24 +1,12 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Book from "../../components/book/book";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Range } from "react-range";
-
-export const mainCategories = {
-  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
-  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
-  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
-  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
-  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
-  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
-  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Sách giáo dục trẻ em"],
-  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
-  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"],
-};
+import { mainCategories } from "../../constant";
 
 const Products = () => {
+  const { categoryName } = useParams();
   const [books, setBooks] = useState({});
   const [authorDetails, setAuthorDetails] = useState(null);
   const [page, setPage] = useState(0);
@@ -38,6 +26,40 @@ const Products = () => {
   const supplierParam = searchParam.get("bookSupplier");
   const authorrParam = searchParam.get("bookAuthor");
   const [authorFilter, setAuthorFilter] = useState("");
+
+  console.log("Category Name from URL:", categoryName);
+
+  useEffect(() => { 
+    if (categoryName) {
+      if (mainCategories[categoryName]) {
+        setSelectedCategories((prev) =>
+          prev.includes(categoryName) ? prev : [...prev, categoryName]
+        );
+        setOpenCategories((prev) =>
+          prev.includes(categoryName) ? prev : [...prev, categoryName]
+        );
+      } else {
+        let foundMainCategory = null;
+        for (const [mainCategory, subCategories] of Object.entries(mainCategories)) {
+          if (subCategories.includes(categoryName)) {
+            foundMainCategory = mainCategory;
+            break;
+          }
+        }
+        if (foundMainCategory) {
+          setSelectedSubCategories((prev) =>
+            prev.includes(categoryName) ? prev : [...prev, categoryName]
+          );
+          setSelectedCategories((prev) =>
+            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+          );
+          setOpenCategories((prev) =>
+            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+          );
+        }
+      }
+    }
+  }, [categoryName]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -272,8 +294,6 @@ const Products = () => {
               )}
               renderThumb={({ props, key }) => (
                 <div
-                  key={key}
-                  {...props}
                   style={{
                     ...props.style,
                     height: "20px",

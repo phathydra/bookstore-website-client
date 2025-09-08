@@ -23,7 +23,7 @@ const SideNav = () => {
                         {/* Nhấn vào danh mục chính */}
                         <button
                             className="w-full text-left px-1 py-3 hover:bg-cyan-600 transition-colors"
-                            onClick={() => navigate(`/category/${encodeURIComponent(mainCategory)}`)}
+                            onClick={() => navigate(`/products/${encodeURIComponent(mainCategory)}`)}
                         >
                             {mainCategory}
                         </button>
@@ -35,7 +35,7 @@ const SideNav = () => {
                                     <li
                                         key={subIndex}
                                         className="px-4 py-2 text-sm hover:bg-cyan-500 cursor-pointer"
-                                        onClick={() => navigate(`/category/${encodeURIComponent(subCategory)}`)}
+                                        onClick={() => navigate(`/products/${encodeURIComponent(subCategory)}`)}
                                     >
                                         {subCategory}
                                     </li>
