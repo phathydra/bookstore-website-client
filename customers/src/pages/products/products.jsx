@@ -27,39 +27,37 @@ const Products = () => {
   const authorrParam = searchParam.get("bookAuthor");
   const [authorFilter, setAuthorFilter] = useState("");
 
-  console.log("Category Name from URL:", categoryName);
-
-  useEffect(() => { 
-    if (categoryName) {
-      if (mainCategories[categoryName]) {
-        setSelectedCategories((prev) =>
-          prev.includes(categoryName) ? prev : [...prev, categoryName]
-        );
-        setOpenCategories((prev) =>
-          prev.includes(categoryName) ? prev : [...prev, categoryName]
-        );
-      } else {
-        let foundMainCategory = null;
-        for (const [mainCategory, subCategories] of Object.entries(mainCategories)) {
-          if (subCategories.includes(categoryName)) {
-            foundMainCategory = mainCategory;
-            break;
-          }
-        }
-        if (foundMainCategory) {
-          setSelectedSubCategories((prev) =>
-            prev.includes(categoryName) ? prev : [...prev, categoryName]
-          );
-          setSelectedCategories((prev) =>
-            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
-          );
-          setOpenCategories((prev) =>
-            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
-          );
-        }
-      }
-    }
-  }, [categoryName]);
+  // useEffect(() => { 
+  //   if (categoryName) {
+  //     if (mainCategories[categoryName]) {
+  //       setSelectedCategories((prev) =>
+  //         prev.includes(categoryName) ? prev : [...prev, categoryName]
+  //       );
+  //       setOpenCategories((prev) =>
+  //         prev.includes(categoryName) ? prev : [...prev, categoryName]
+  //       );
+  //     } else {
+  //       let foundMainCategory = null;
+  //       for (const [mainCategory, subCategories] of Object.entries(mainCategories)) {
+  //         if (subCategories.includes(categoryName)) {
+  //           foundMainCategory = mainCategory;
+  //           break;
+  //         }
+  //       }
+  //       if (foundMainCategory) {
+  //         setSelectedSubCategories((prev) =>
+  //           prev.includes(categoryName) ? prev : [...prev, categoryName]
+  //         );
+  //         setSelectedCategories((prev) =>
+  //           prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+  //         );
+  //         setOpenCategories((prev) =>
+  //           prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+  //         );
+  //       }
+  //     }
+  //   }
+  // }, [categoryName]);
 
   useEffect(() => {
     const fetchBooks = async () => {
