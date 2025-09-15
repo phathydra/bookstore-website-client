@@ -12,6 +12,7 @@ import Password from "./pages/Profile/Password";
 import DiscountManagement from "./pages/DiscountManagement/DiscountManagement";
 import VoucherManagement from "./pages/VoucherManagement/VoucherManagement";
 import ApiManagement from "./pages/ApiManagement/ApiManagement";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 const PrivateRoute = ({ children }) => {
     const navigate = useNavigate();
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/discount-management" element={<PrivateRoute><DiscountManagement /></PrivateRoute>} />
                 <Route path="/voucher-management" element={<PrivateRoute><VoucherManagement /></PrivateRoute>} />
                 <Route path="/api-management" element={<PrivateRoute><ApiManagement /></PrivateRoute>} />
+                <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             </Routes>
         </div>
     );
