@@ -149,11 +149,11 @@ export const useBookDetail = (id, navigate) => {
   const handlePolicyClick = (policy) => {
     const messages = {
       "Thời gian giao hàng":
-        "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, Fahasa.com cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng.",
+        "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, bookstore cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng.",
       "Chính sách đổi trả":
         "Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất.",
       "Chính sách khách sỉ":
-        "Ưu đãi khi mua số lượng lớn\n\nFahasa.com cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn.",
+        "Ưu đãi khi mua số lượng lớn\n\nbookstore cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn.",
     };
     if (messages[policy]) openModal(messages[policy]);
   };
