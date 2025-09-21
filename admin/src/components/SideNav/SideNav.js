@@ -22,6 +22,9 @@ const SideNav = ({ onToggleCollapse }) => {
           <a href="/book-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaBook /> {!isCollapsed && <span>Quản lý Sách</span>}
           </a>
+          <a href="/import-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaTruck /> {!isCollapsed && <span>Quản lý Nhập kho</span>}
+          </a>
           <a href="/invoice-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaFileInvoice /> {!isCollapsed && <span>Quản lý Hóa Đơn</span>}
           </a>
@@ -36,6 +39,12 @@ const SideNav = ({ onToggleCollapse }) => {
           </a>
           <a href="/voucher-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaTicketAlt /> {!isCollapsed && <span>Quản lý Voucher</span>}
+          </a>
+          <a href="/api-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaTicketAlt /> {!isCollapsed && <span>Quản lý API</span>}
+          </a>
+          <a href="/dashboard" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaTicketAlt /> {!isCollapsed && <span>Thống kê</span>}
           </a>
         </nav>
       </div>

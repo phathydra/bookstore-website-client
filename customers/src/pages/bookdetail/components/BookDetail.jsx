@@ -45,6 +45,7 @@ const BookDetail = () => {
     averageRating,
     calculateRatingPercentage,
     fetchBookSummary,
+    booksByAuthor, // Giả sử bạn đã thêm điều này vào useBookDetail
   } = useBookDetail(id, navigate);
 
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -118,26 +119,36 @@ const BookDetail = () => {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 bg-white rounded-xl shadow-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 bg-white !rounded-xl shadow-lg">
         {/* Left Column: Image, Share */}
         <div className="lg:col-span-1">
-          <div className="relative w-full aspect-[3/4] rounded-lg shadow-md overflow-hidden bg-white">
+          <div className="relative w-full aspect-[3/4] !rounded-lg shadow-md overflow-hidden bg-white">
             <img
               src={bookImages?.[mainImageIndex] || "/placeholder.svg"}
               alt={book.bookName}
               className="w-full h-full object-contain cursor-zoom-in"
               onClick={() => openImageModal(bookImages?.[mainImageIndex])}
             />
+
+            {/* Nút Tóm tắt sách */}
+            <button 
+              onClick={handleSummaryClick} 
+              className="absolute top-4 left-18 flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white text-sm font-semibold !rounded-lg shadow-lg hover:bg-blue-600 transition-colors"
+            >
+              <FaBook />
+              <span>Tóm tắt sách</span>
+            </button>
+            
             {bookImages.length > 1 && (
               <>
                 <button
-                  className="absolute top-1/2 left-2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-800 hover:bg-white transition-colors"
+                  className="absolute top-1/2 left-2 -translate-y-1/2 bg-white/70 backdrop-blur-sm !rounded-full p-2 text-gray-800 hover:bg-white transition-colors"
                   onClick={() => handleImageNav("prev")}
                 >
                   <FaChevronLeft />
                 </button>
                 <button
-                  className="absolute top-1/2 right-2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 text-gray-800 hover:bg-white transition-colors"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 bg-white/70 backdrop-blur-sm !rounded-full p-2 text-gray-800 hover:bg-white transition-colors"
                   onClick={() => handleImageNav("next")}
                 >
                   <FaChevronRight />
@@ -151,13 +162,33 @@ const BookDetail = () => {
                 key={index}
                 src={img}
                 alt={`${book.bookName} - ${index + 1}`}
-                className={`w-16 h-20 object-contain rounded-md cursor-pointer transition-all ${
+                className={`w-16 h-20 object-contain !rounded-md cursor-pointer transition-all ${
                   index === mainImageIndex ? "ring-2 ring-blue-600 scale-110 shadow-md" : "opacity-80 hover:opacity-100"
                 }`}
                 onClick={() => setMainImageIndex(index)}
               />
             ))}
           </div>
+          
+          {/* Chính sách đã được di chuyển xuống đây */}
+          <div className="bg-gray-50 p-6 !rounded-xl shadow-inner mt-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Chính sách</h3>
+            <div className="!space-y-3">
+              <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
+                <FaInfoCircle size={20} className="flex-shrink-0" />
+                <span className="text-sm">Thời gian giao hàng: Giao nhanh và uy tín</span>
+              </button>
+              <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
+                <FaInfoCircle size={20} className="flex-shrink-0" />
+                <span className="text-sm">Chính sách đổi trả: Đổi trả miễn phí toàn quốc</span>
+              </button>
+              <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
+                <FaInfoCircle size={20} className="flex-shrink-0" />
+                <span className="text-sm">Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn</span>
+              </button>
+            </div>
+          </div>
+          
         </div>
 
         {/* Middle Column: Details, Price, Quantity, Add to Cart */}
@@ -169,11 +200,11 @@ const BookDetail = () => {
               <span className="font-semibold">{averageRating.toFixed(1)}</span>
               <span className="text-sm text-gray-500">({reviews.length} đánh giá)</span>
             </div>
-            <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+            <span className="w-1 h-1 bg-gray-400 !rounded-full"></span>
             <span className="text-sm text-gray-500">Đã bán: {purchaseCount}</span>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-xl shadow-inner">
+          <div className="bg-gray-50 p-4 !rounded-xl shadow-inner">
             <div className="flex items-center justify-between mb-2">
               <span className="text-lg text-gray-700">Giá bán:</span>
               <span className="text-2xl font-bold text-red-600">{displayPrice.toLocaleString()} VNĐ</span>
@@ -185,13 +216,13 @@ const BookDetail = () => {
                   <span className="text-md text-gray-500 line-through">
                     {book.bookPrice.toLocaleString()} VNĐ
                   </span>
-                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-sm font-semibold rounded-full">-{book.percentage}%</span>
+                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-sm font-semibold !rounded-full">-{book.percentage}%</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-xl">
+          <div className="bg-gray-50 p-4 !rounded-xl">
             <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center space-x-2">
               <FaGift className="text-red-500" />
               <span>Khuyến mãi & ưu đãi</span>
@@ -208,7 +239,7 @@ const BookDetail = () => {
                   return (
                     <li
                       key={voucher.id}
-                      className={`flex flex-col p-2 rounded-md shadow-sm transition-colors duration-200 ${isApplicable ? 'bg-green-50' : 'bg-gray-200'}`}
+                      className={`flex flex-col p-2 !rounded-md shadow-sm transition-colors duration-200 ${isApplicable ? 'bg-green-50' : 'bg-gray-200'}`}
                     >
                       <span className="text-sm font-semibold text-gray-700">{discountText}</span>
                       <p className="text-xs text-gray-500 italic mt-0.5">Đơn tối thiểu {voucher.minOrderValue.toLocaleString()} VNĐ</p>
@@ -225,7 +256,7 @@ const BookDetail = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-gray-700">Số lượng:</span>
-            <div className="flex items-center border border-gray-300 rounded-full h-10 w-32">
+            <div className="flex items-center border border-gray-300 !rounded-full h-10 w-32">
               <button onClick={decreaseQty} className="w-1/3 text-lg font-bold text-gray-600 hover:text-gray-900 transition">-</button>
               <span className="w-1/3 text-center text-xl font-semibold text-gray-800">{quantity}</span>
               <button onClick={increaseQty} className="w-1/3 text-lg font-bold text-gray-600 hover:text-gray-900 transition">+</button>
@@ -240,9 +271,9 @@ const BookDetail = () => {
           </div>
         </div>
 
-        {/* Right Column: Product Specs, Summary & Policies */}
+        {/* Right Column: Product Specs & Sách cùng tác giả */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
+          <div className="bg-gray-50 p-6 !rounded-xl shadow-inner">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Thông tin chi tiết</h3>
             <div className="space-y-2 text-sm text-gray-700">
               <p><strong>Tác giả:</strong> <Link to={`/products?bookAuthor=${book.bookAuthor}`} className="text-blue-600 hover:underline">{book.bookAuthor}</Link></p>
@@ -254,37 +285,33 @@ const BookDetail = () => {
             </div>
           </div>
 
-          <button onClick={handleSummaryClick} className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-orange-500 text-white text-lg font-semibold !rounded-full shadow-lg hover:bg-orange-600 transition-colors transform hover:scale-105">
-            <FaBook />
-            <span>Tóm tắt sách</span>
-          </button>
-          
-          {/* Chính sách đã được thêm vào đây */}
-          <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Chính sách</h3>
-            <div className="!space-y-3">
-              <button onClick={() => handlePolicyClick("Thời gian giao hàng")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
-                <FaInfoCircle size={20} className="flex-shrink-0" />
-                <span className="text-sm">Thời gian giao hàng: Giao nhanh và uy tín</span>
-              </button>
-              <button onClick={() => handlePolicyClick("Chính sách đổi trả")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
-                <FaInfoCircle size={20} className="flex-shrink-0" />
-                <span className="text-sm">Chính sách đổi trả: Đổi trả miễn phí toàn quốc</span>
-              </button>
-              <button onClick={() => handlePolicyClick("Chính sách khách sỉ")} className="flex items-center text-left space-x-2 text-blue-600 hover:underline">
-                <FaInfoCircle size={20} className="flex-shrink-0" />
-                <span className="text-sm">Chính sách khách sỉ: Ưu đãi khi mua số lượng lớn</span>
-              </button>
+          {/* KHỐI MỚI: Sách cùng tác giả */}
+          <div className="bg-gray-50 p-6 !rounded-xl shadow-inner">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Sách cùng tác giả</h3>
+            <div className="space-y-4 max-h-[25rem] overflow-y-auto pr-2">
+              {book.booksByAuthor && book.booksByAuthor.length > 0 ? (
+                book.booksByAuthor.map((relatedBook) => (
+                  <Link key={relatedBook.bookId} to={`/productdetail/${relatedBook.bookId}`} className="group flex items-start space-x-4 p-2 !rounded-lg shadow-sm transition-all duration-300 transform hover:scale-[1.02] hover:bg-gray-50">
+                    <img src={relatedBook.bookImages?.[0] || relatedBook.bookImage || "/placeholder.svg"} alt={relatedBook.bookName} className="flex-shrink-0 w-16 h-20 object-contain !rounded-md shadow-sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{relatedBook.bookName}</p>
+                      <p className="text-xs text-gray-500 truncate">{relatedBook.bookAuthor}</p>
+                      <p className="text-sm font-bold text-blue-600 mt-1">{relatedBook.bookPrice.toLocaleString()} VNĐ</p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 italic">Không tìm thấy sách khác của tác giả này.</p>
+              )}
             </div>
-            </div>
-          {/* Kết thúc phần chính sách */}
+          </div>
         </div>
       </div>
 
       {/* Summary & Recommended Books Section */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Summary */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+        {/* Summary (Mô tả sản phẩm) */}
+        <div className="lg:col-span-2 bg-white p-6 !rounded-2xl shadow-lg">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">Mô tả sản phẩm </h3>
           <div className="max-h-[30rem] overflow-y-auto pr-2">
             {summaryLoading ? (
@@ -296,12 +323,12 @@ const BookDetail = () => {
         </div>
         
         {/* Recommended Books */}
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+        <div className="lg:col-span-1 bg-white p-6 !rounded-2xl shadow-lg">
           <h3 className="text-2xl font-bold text-gray-900 mb-6">Gợi ý cho bạn</h3>
           <div className="space-y-4 max-h-[30rem] overflow-y-auto pr-2">
             {recommendedBooks.map((recBook) => (
-              <Link key={recBook.bookId} to={`/productdetail/${recBook.bookId}`} className="group flex items-start space-x-4 p-2 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-[1.02] hover:bg-gray-50">
-                <img src={recBook.bookImages?.[0] || recBook.bookImage || "/placeholder.svg"} alt={recBook.bookName} className="flex-shrink-0 w-20 h-24 object-contain rounded-md shadow-sm" />
+              <Link key={recBook.bookId} to={`/productdetail/${recBook.bookId}`} className="group flex items-start space-x-4 p-2 !rounded-lg shadow-sm transition-all duration-300 transform hover:scale-[1.02] hover:bg-gray-50">
+                <img src={recBook.bookImages?.[0] || recBook.bookImage || "/placeholder.svg"} alt={recBook.bookName} className="flex-shrink-0 w-20 h-24 object-contain !rounded-md shadow-sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{recBook.bookName}</p>
                   <p className="text-xs text-gray-500 truncate">{recBook.bookAuthor}</p>
@@ -314,7 +341,7 @@ const BookDetail = () => {
       </div>
 
       {/* Reviews Section */}
-      <div className="mt-8 bg-white p-6 rounded-2xl shadow-lg">
+      <div className="mt-8 bg-white p-6 !rounded-2xl shadow-lg">
         <h3 className="text-2xl font-bold text-gray-900 mb-4">Đánh giá sản phẩm</h3>
         <div className="flex items-center space-x-6 mb-4">
           <div className="flex-shrink-0 text-center">
@@ -332,7 +359,7 @@ const BookDetail = () => {
               return (
                 <div key={star} className="flex items-center">
                   <span className="w-6 text-sm text-gray-600 mr-2">{star}</span>
-                  <div className="flex-1 bg-gray-200 h-2 rounded-full"><div className="bg-yellow-400 h-2 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div></div>
+                  <div className="flex-1 bg-gray-200 h-2 !rounded-full"><div className="bg-yellow-400 h-2 !rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div></div>
                   <span className="w-10 text-right text-xs text-gray-600 ml-2">{percentage}%</span>
                 </div>
               );
@@ -345,7 +372,7 @@ const BookDetail = () => {
         {/* Thêm phần lọc đánh giá */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 !rounded-full text-sm font-medium transition-colors ${
                     filterRating === 0 
                         ? "bg-blue-600 text-white shadow-lg" 
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -357,7 +384,7 @@ const BookDetail = () => {
             {[5, 4, 3, 2, 1].map((star) => (
                 <button
                     key={star}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 !rounded-full text-sm font-medium transition-colors ${
                         filterRating === star 
                             ? "bg-blue-600 text-white shadow-lg" 
                             : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -374,9 +401,9 @@ const BookDetail = () => {
             <p className="text-center text-gray-500 italic py-8">Chưa có đánh giá nào phù hợp.</p>
           ) : (
             filteredReviews.map((review) => (
-              <div key={review.reviewId} className="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100">
+              <div key={review.reviewId} className="bg-gray-50 p-4 !rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-start space-x-3 mb-2">
-                  <img src={review.userAvatar || "/placeholder.svg"} alt={review.userName} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                  <img src={review.userAvatar || "/placeholder.svg"} alt={review.userName} className="w-10 h-10 !rounded-full object-cover border border-gray-200" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">{review.userName}</p>
                     {/* Khối code đã được sửa */}
@@ -422,14 +449,14 @@ const BookDetail = () => {
 // Helper Components for Modals
 const Modal = ({ onClose, title, content }) => (
   <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
-    <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 animate-fade-in-up">
+    <div className="bg-white !rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 animate-fade-in-up">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition"><FaTimes size={20} /></button>
       </div>
       <p className="text-gray-700 leading-relaxed mb-6">{content}</p>
       <div className="flex justify-end">
-        <button onClick={onClose} className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">Đóng</button>
+        <button onClick={onClose} className="px-6 py-2 bg-gray-200 text-gray-800 !rounded-lg hover:bg-gray-300 transition">Đóng</button>
       </div>
     </div>
   </div>
@@ -448,12 +475,12 @@ const ImageModal = ({ onClose, selectedImage, bookImages, handleImageNav }) => {
         <img 
           src={selectedImage} 
           alt="Phóng to ảnh sách" 
-          className="max-w-full max-h-full object-contain rounded-lg shadow-xl" 
+          className="max-w-full max-h-full object-contain !rounded-lg shadow-xl" 
         />
         {bookImages.length > 1 && (
           <>
-            <button className="absolute top-1/2 left-4 -translate-y-1/2 bg-white/50 backdrop-blur-sm rounded-full p-3 text-gray-800 hover:bg-white transition-colors" onClick={(e) => { e.stopPropagation(); handleImageNav("prev"); }}><FaChevronLeft size={20} /></button>
-            <button className="absolute top-1/2 right-4 -translate-y-1/2 bg-white/50 backdrop-blur-sm rounded-full p-3 text-gray-800 hover:bg-white transition-colors" onClick={(e) => { e.stopPropagation(); handleImageNav("next"); }}><FaChevronRight size={20} /></button>
+            <button className="absolute top-1/2 left-4 -translate-y-1/2 bg-white/50 backdrop-blur-sm !rounded-full p-3 text-gray-800 hover:bg-white transition-colors" onClick={(e) => { e.stopPropagation(); handleImageNav("prev"); }}><FaChevronLeft size={20} /></button>
+            <button className="absolute top-1/2 right-4 -translate-y-1/2 bg-white/50 backdrop-blur-sm !rounded-full p-3 text-gray-800 hover:bg-white transition-colors" onClick={(e) => { e.stopPropagation(); handleImageNav("next"); }}><FaChevronRight size={20} /></button>
           </>
         )}
         <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-red-400 transition"><FaTimes size={30} /></button>
@@ -477,7 +504,7 @@ const SummaryModal = ({ onClose, bookName, summaryContent, summaryLoading }) => 
         )}
       </div>
       <div className="p-6 border-t border-gray-200 flex justify-end">
-        <button onClick={onClose} className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">Đóng</button>
+        <button onClick={onClose} className="px-6 py-2 bg-blue-600 text-white font-semibold !rounded-lg hover:bg-blue-700 transition">Đóng</button>
       </div>
     </div>
   </div>
