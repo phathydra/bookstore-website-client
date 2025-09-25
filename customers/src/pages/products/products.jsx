@@ -6,7 +6,6 @@ import { Range } from "react-range";
 import { mainCategories } from "../../constant";
 
 const Products = () => {
-  const { categoryName } = useParams();
   const [books, setBooks] = useState({});
   const [authorDetails, setAuthorDetails] = useState(null);
   const [page, setPage] = useState(0);
@@ -17,7 +16,7 @@ const Products = () => {
   const [openCategories, setOpenCategories] = useState([]);
   const [selectedPublishers, setSelectedPublishers] = useState([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 200000]);
+  const [priceRange, setPriceRange] = useState([0, 200000]);  
   const location = useLocation();
   const navigate = useNavigate();
   const searchParam = new URLSearchParams(location.search);
@@ -25,39 +24,49 @@ const Products = () => {
   const publisherParam = searchParam.get("bookPublisher");
   const supplierParam = searchParam.get("bookSupplier");
   const authorrParam = searchParam.get("bookAuthor");
+  const categoryName = searchParam.get("categoryName");
   const [authorFilter, setAuthorFilter] = useState("");
+  
+  // DEBUG: Log everything
+  console.log("=== URL DEBUG ===");
+  console.log("Full location:", location);
+  console.log("location.search:", location.search);
+  console.log("location.pathname:", location.pathname);
+  console.log("Raw search string:", location.search);
+  console.log("URLSearchParams object:", searchParam);
+  console.log("All search params:", Object.fromEntries(searchParam));
 
-  // useEffect(() => { 
-  //   if (categoryName) {
-  //     if (mainCategories[categoryName]) {
-  //       setSelectedCategories((prev) =>
-  //         prev.includes(categoryName) ? prev : [...prev, categoryName]
-  //       );
-  //       setOpenCategories((prev) =>
-  //         prev.includes(categoryName) ? prev : [...prev, categoryName]
-  //       );
-  //     } else {
-  //       let foundMainCategory = null;
-  //       for (const [mainCategory, subCategories] of Object.entries(mainCategories)) {
-  //         if (subCategories.includes(categoryName)) {
-  //           foundMainCategory = mainCategory;
-  //           break;
-  //         }
-  //       }
-  //       if (foundMainCategory) {
-  //         setSelectedSubCategories((prev) =>
-  //           prev.includes(categoryName) ? prev : [...prev, categoryName]
-  //         );
-  //         setSelectedCategories((prev) =>
-  //           prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
-  //         );
-  //         setOpenCategories((prev) =>
-  //           prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
-  //         );
-  //       }
-  //     }
-  //   }
-  // }, [categoryName]);
+  useEffect(() => { 
+    if (categoryName) {
+      if (mainCategories[categoryName]) {
+        setSelectedCategories((prev) =>
+          prev.includes(categoryName) ? prev : [...prev, categoryName]
+        );
+        setOpenCategories((prev) =>
+          prev.includes(categoryName) ? prev : [...prev, categoryName]
+        );
+      } else {
+        let foundMainCategory = null;
+        for (const [mainCategory, subCategories] of Object.entries(mainCategories)) {
+          if (subCategories.includes(categoryName)) {
+            foundMainCategory = mainCategory;
+            break;
+          }
+        }
+        if (foundMainCategory) {
+          setSelectedSubCategories((prev) =>
+            prev.includes(categoryName) ? prev : [...prev, categoryName]
+          );
+          setSelectedCategories((prev) =>
+            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+          );
+          setOpenCategories((prev) =>
+            prev.includes(foundMainCategory) ? prev : [...prev, foundMainCategory]
+          );
+        }
+      }
+    }
+  }, [categoryName]);
 
   useEffect(() => {
     const fetchBooks = async () => {
