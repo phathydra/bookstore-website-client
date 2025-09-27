@@ -18,6 +18,7 @@ import ActivateAccount from "../pages/Account/ActivateAccount";
 import FillInfo from '../pages/Account/FillInfo';
 import ChangePassword from "../pages/profile/changePassword";
 import VouchersWallet from "../pages/profile/vouchersWallet";
+import ChatbotPage from "../pages/ChatbotPage/ChatbotPage";
 
 
 const Layout = ({ children }) => (
@@ -39,7 +40,6 @@ const App = () => {
           <Route path="/activate" element={<ActivateAccount />} /> 
           <Route path="/fill-info" element={<FillInfo />} />
           <Route path="/" element={<Home />} />
-          <Route path="/products/:categoryName" element={<Products />} />
           <Route path="/products" element={<Products />} />
           <Route path="/productdetail/:id" element={<BookDetail />} />
           <Route path="/profile" element={<Profile />} />
@@ -51,6 +51,7 @@ const App = () => {
           <Route path="/addressselection" element={<AddressSelectionPage />} />
           <Route path="/changePassword" element={<ChangePassword />} />
           <Route path="/vouchersWallet" element={<VouchersWallet />} />
+          <Route path="/chatbot" element={<ChatbotPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
