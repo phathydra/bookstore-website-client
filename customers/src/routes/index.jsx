@@ -3,6 +3,7 @@ import Home from "../pages/home/home";
 import Products from "../pages/products/ProductsPage";
 import Cart from "../pages/cart/cart";
 import OrderHistory from "../pages/orderHistory/orderHistory";
+import MapView from "../pages/orderHistory/MapView";
 import Profile from "../pages/profile/profile";
 import BookDetail from "../pages/bookdetail/components/bookdetail";
 import OrderDetail from "../pages/orderdetail/orderdetail";
@@ -52,6 +53,7 @@ const App = () => {
           <Route path="/changePassword" element={<ChangePassword />} />
           <Route path="/vouchersWallet" element={<VouchersWallet />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
+          <Route path="/map-view" element={<MapView />} />
         </Routes>
       </Layout>
     </BrowserRouter>
