@@ -33,13 +33,13 @@ const ChatPage = () => {
   return (
     <div className="flex h-[80vh]">
       {/* Sidebar */}
-      <div className="w-1/4 border-r p-3 flex flex-col">
+      <div className="w-1/4 !border-r !rounded-xl p-3 flex flex-col">
         {/* Tabs */}
         <div className="flex mb-3 space-x-2">
           {tabs.map((tab) => (
             <button
               key={tab}
-              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex-1 py-2 !rounded-xl text-sm font-semibold transition-all ${
                 activeTab === tab
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 hover:bg-gray-300"
