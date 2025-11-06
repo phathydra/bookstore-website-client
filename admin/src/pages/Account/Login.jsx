@@ -11,40 +11,45 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-  
-    try {
-      const response = await fetch("http://localhost:8080/api/account/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-  
-      const responseData = await response.json();
-      console.log("API Response:", responseData);  // Log entire response
-  
-      if (!response.ok) {
-        throw new Error(responseData.statusMsg || "Invalid credentials");
-      }
-  
-      // Check if role is present and if it is "Admin"
-      if (responseData.role !== "Admin") {
-        console.log("User is not Admin, role: ", responseData.role);  // Log role to check value
-        throw new Error("You do not have admin rights");
-      }
-  
-      // If role is Admin, save accountId and role in localStorage
-      localStorage.setItem("accountId", responseData.accountId);
-      localStorage.setItem("role", responseData.role);
-  
-      navigate("/book-management");  // Redirect if logged in successfully
-    } catch (error) {
-      console.error("Error during login:", error);
-      setError(error.message);
-    }
-  };
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+  
+    try {
+      const response = await fetch("http://localhost:8080/api/account/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const responseData = await response.json();
+      console.log("API Response:", responseData);  // Log entire response
+  
+      if (!response.ok) {
+        throw new Error(responseData.statusMsg || "Invalid credentials");
+      }
+  
+      // Check if role is present and if it is "Admin"
+      if (responseData.role !== "Admin") {
+        console.log("User is not Admin, role: ", responseData.role);  // Log role to check value
+        throw new Error("You do not have admin rights");
+      }
+  
+      // === SỬA LỖI Ở ĐÂY ===
+      // Thêm dòng này để lưu token
+      localStorage.setItem("token", responseData.token);
+      // ===================
+      
+      // If role is Admin, save accountId and role in localStorage
+      localStorage.setItem("accountId", responseData.accountId);
+      localStorage.setItem("role", responseData.role);
+  
+      navigate("/book-management");  // Redirect if logged in successfully
+    } catch (error) {
+      console.error("Error during login:", error);
+      setError(error.message);
+    }
+  };
   
 
   return (

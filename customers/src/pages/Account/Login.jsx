@@ -12,34 +12,39 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
 
-    try {
-      const response = await fetch("http://localhost:8080/api/account/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    try {
+      const response = await fetch("http://localhost:8080/api/account/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      const responseData = await response.json();
-      console.log("API Response:", responseData);
+      const responseData = await response.json();
+      console.log("API Response:", responseData); // Dòng này sẽ in token ra console
 
-      if (!response.ok) {
-        throw new Error(responseData.statusMsg || "Invalid credentials");
-      }
+      if (!response.ok) {
+        throw new Error(responseData.statusMsg || "Invalid credentials");
+      }
 
-      localStorage.setItem("accountId", responseData.accountId);
-      localStorage.setItem("role", responseData.role);
+      // === SỬA LỖI Ở ĐÂY ===
+      // Thêm dòng này để lưu token
+      localStorage.setItem("token", responseData.token); 
+      // ===================
 
-      navigate("/"); // Điều hướng trang
-      window.location.reload(); // Tải lại trang sau khi điều hướng
-    } catch (error) {
-      console.error("Error during login:", error);
-      setError(error.message);
-    }
-  };
+      localStorage.setItem("accountId", responseData.accountId);
+      localStorage.setItem("role", responseData.role);
+
+      navigate("/"); // Điều hướng trang
+      window.location.reload(); // Tải lại trang sau khi điều hướng
+    } catch (error) {
+      console.error("Error during login:", error);
+      setError(error.message);
+    }
+  };
 
   return (
     <div className="!h-screen flex !justify-center items-center relative overflow-hidden">

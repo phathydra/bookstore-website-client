@@ -1,14 +1,13 @@
-// src/pages/orderdetail/OrderDetail.jsx
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
-import { PayPalButton } from "react-paypal-button-v2";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 import AddressSection from "./components/AddressSection";
 import ProductList from "./components/ProductList";
 import VoucherDrawer from "./components/VoucherDrawer";
 import PaymentSummary from "./components/PaymentSummary";
 import { useVoucher } from "./hooks/useVoucher";
-import * as orderService from "./services/orderService";
+import * as orderService from "./services/orderService"; // Import service
 
 const OrderDetail = () => {
   const { state } = useLocation();
@@ -17,6 +16,7 @@ const OrderDetail = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const userId = localStorage.getItem("accountId");
 
   const {
@@ -28,6 +28,43 @@ const OrderDetail = () => {
 
   // Place order
   const handlePlaceOrder = async () => {
+    // (1) Chống spam click
+    if (isPlacingOrder) return;
+    setIsPlacingOrder(true);
+
+    // ==========================================================
+    // (SỬA 2) GỌI API TRACK "ORDER_SUCCESS" NGAY KHI NHẤN NÚT
+    // ==========================================================
+    try {
+      // (SỬA A) Chuẩn bị "items" đầy đủ (thay vì chỉ "bookIds")
+      const trackingItems = selectedBooks.map(book => ({
+        bookId: book.bookId,
+        quantity: book.quantity,
+        price: book.discountedPrice ?? book.price // Dùng giá cuối cùng
+      }));
+
+      const trackData = {
+        accountId: userId,
+        // (SỬA B) Đổi key 'totalAmount' thành 'totalPrice' để DTO Java khớp
+        totalPrice: calculateDiscountedTotal(),
+        paymentMethod: paymentMethod,
+        voucherCode: appliedVoucher ? appliedVoucher.code : null,
+        // (SỬA C) Đổi key 'bookIds' thành 'items' và dùng data mới
+        items: trackingItems
+      };
+
+      // "Fire-and-forget" - không cần await, gọi và tiếp tục chạy
+      // Giữ nguyên hàm 'trackOrderSuccess' vì đây là intent của bạn
+      orderService.trackOrderSuccess(trackData).catch(err => {
+        console.warn("Lỗi khi tracking đặt hàng (success):", err);
+      });
+    } catch (trackError) {
+      // Bỏ qua lỗi tracking để không ảnh hưởng luồng chính
+      console.warn("Lỗi chuẩn bị data tracking:", trackError);
+    }
+    // ==========================================================
+
+    // (3) Chuẩn bị dữ liệu order
     const order = {
       accountId: userId,
       phoneNumber: address.phoneNumber,
@@ -36,6 +73,7 @@ const OrderDetail = () => {
       city: address.city,
       district: address.district,
       ward: address.ward,
+      note: address.note,
       totalPrice: calculateDiscountedTotal(),
       paymentMethod,
       orderItems: selectedBooks.map(({ bookId, bookName, bookImage, quantity, price, discountedPrice }) => ({
@@ -49,11 +87,12 @@ const OrderDetail = () => {
       shippingStatus: "Chờ xử lý",
     };
 
+    // (4) Gửi đơn hàng
     try {
       const res = await orderService.createOrder(order);
       if (res.status === 200) {
-        // Track purchases
-        await Promise.all(selectedBooks.map((book) => orderService.trackPurchase(book.bookId)));
+
+        // (BỎ) Track purchases
 
         // Apply voucher if one was used
         if (appliedVoucher) {
@@ -64,25 +103,29 @@ const OrderDetail = () => {
           );
         }
 
+        // Get obtained vouchers
         const obtainVouchersRes = await orderService.getObtainedVouchers(res.data.orderId);
         const obtainVouchers = obtainVouchersRes.data;
-        
+
         alert("Đặt hàng thành công!");
 
         if (Array.isArray(obtainVouchers) && obtainVouchers.length > 0) {
           alert(`Bạn vừa đủ điều kiện để nhận được ${obtainVouchers.length} voucher. Hãy kiểm tra ví voucher của bạn.`);
         }
-        
+
         navigate("/orderhistory");
       } else {
         alert("Có lỗi xảy ra khi đặt hàng.");
+        setIsPlacingOrder(false);
       }
     } catch (err) {
       console.error(err);
       alert("Đặt hàng không thành công, vui lòng thử lại sau.");
+      setIsPlacingOrder(false);
     }
   };
 
+  // (PHẦN JSX SẠCH SẼ - KHÔNG CÓ KÝ TỰ LẠ)
   return (
     <div className="flex justify-center items-start min-h-screen bg-gray-100 p-5">
       <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-md flex flex-col space-y-2">
@@ -175,20 +218,39 @@ const OrderDetail = () => {
           </h3>
           {paymentMethod === "COD" ? (
             <button
-              className="w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
+              className={`w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition ${isPlacingOrder ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handlePlaceOrder}
+              disabled={isPlacingOrder}
             >
-              Đặt hàng
+              {isPlacingOrder ? "Đang xử lý..." : "Đặt hàng"}
             </button>
           ) : (
-            <PayPalButton
-              amount={parseFloat((calculateDiscountedTotal() / 23000).toFixed(2))}
-              onSuccess={async (details) => {
-                alert("Transaction completed by " + details.payer.name.given_name);
-                handlePlaceOrder();
+            <PayPalButtons
+              style={{ layout: "vertical" }}
+              disabled={isPlacingOrder}
+              createOrder={(data, actions) => {
+                const amountInUSD = (calculateDiscountedTotal() / 23000).toFixed(2);
+                return actions.order.create({
+                  purchase_units: [{
+                    amount: {
+                      value: amountInUSD,
+                      currency_code: "USD"
+                    }
+                  }]
+                });
               }}
-              onError={() => {
-                alert("Transaction failed");
+              onApprove={(data, actions) => {
+                if (isPlacingOrder) return;
+                return actions.order.capture().then((details) => {
+                  alert("Thanh toán thành công bởi " + details.payer.name.given_name);
+                  // Gọi handlePlaceOrder sau khi Paypal xong
+                  // Hàm này đã có logic tracking ở đầu rồi
+                  handlePlaceOrder();
+                });
+              }}
+              onError={(err) => {
+                console.error("Lỗi thanh toán PayPal:", err);
+                alert("Thanh toán không thành công. Vui lòng thử lại.");
               }}
             />
           )}

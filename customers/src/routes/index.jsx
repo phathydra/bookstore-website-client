@@ -20,6 +20,7 @@ import FillInfo from '../pages/Account/FillInfo';
 import ChangePassword from "../pages/profile/changePassword";
 import VouchersWallet from "../pages/profile/vouchersWallet";
 import ChatPage from "../pages/ChatPage/ChatPage";
+import ComboDetailsPage from '../pages/ComboDetailsPage/ComboDetailsPage';
 
 
 const Layout = ({ children }) => (
@@ -54,6 +55,7 @@ const App = () => {
           <Route path="/vouchersWallet" element={<VouchersWallet />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/map-view" element={<MapView />} />
+          <Route path="/combo/:comboId" element={<ComboDetailsPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
