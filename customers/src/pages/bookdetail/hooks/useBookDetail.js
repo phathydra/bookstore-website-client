@@ -1,17 +1,25 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   fetchBookDetail,
   fetchRecommendations,
+  fetchCollaborativeRecs, // ⬅️ THÊM HÀM MỚI
   fetchReviews,
   fetchAnalytics,
   fetchAccount,
   addToCartService,
-  fetchSummaryService, // Thêm hàm mới vào đây
+  fetchSummaryService,
+  fetchBooksByAuthorService,
+  trackAddToCart,
+  trackClickSummary,
 } from "../services/bookService";
+import axios from "axios";
+const BACKEND_BOOK_API = "http://localhost:8081/api/book";
 
 export const useBookDetail = (id, navigate) => {
   const [book, setBook] = useState(null);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
+  const [collaborativeBooks, setCollaborativeBooks] = useState([]); // ⬅️ THÊM STATE MỚI
+  const [booksByAuthor, setBooksByAuthor] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [reviewsWithUserData, setReviewsWithUserData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +30,6 @@ export const useBookDetail = (id, navigate) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [mainImageIndex, setMainImageIndex] = useState(0);
 
   const openModal = useCallback((content) => {
@@ -31,13 +38,11 @@ export const useBookDetail = (id, navigate) => {
   }, []);
   const closeModal = () => setIsModalOpen(false);
 
-  const openImageModal = (image) => {
-    setSelectedImage(image);
+  const openImageModal = () => {
     setIsImageModalOpen(true);
   };
   const closeImageModal = () => {
     setIsImageModalOpen(false);
-    setSelectedImage(null);
   };
 
   const fetchUserDataForReviews = async (reviewsData) => {
@@ -83,24 +88,92 @@ export const useBookDetail = (id, navigate) => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setBooksByAuthor([]);
+      setRecommendedBooks([]);
+      setCollaborativeBooks([]); // ⬅️ RESET STATE MỚI
+      setMainImageIndex(0);
+      setQuantity(1);
+
       try {
         const [
           { data: bookData },
-          { data: recommendedData },
           { data: reviewsData },
           { data: analyticsData },
         ] = await Promise.all([
           fetchBookDetail(id),
-          fetchRecommendations(id),
           fetchReviews(id),
           fetchAnalytics(id),
         ]);
 
         setBook(bookData);
-        setRecommendedBooks(recommendedData);
         setReviews(reviewsData);
         if (reviewsData?.length) fetchUserDataForReviews(reviewsData);
         setPurchaseCount(analyticsData.purchaseCount || 0);
+
+        // LOGIC 1: "Sản phẩm tương tự" (Content-Based)
+        try {
+          const { data: aiRecs } = await fetchRecommendations(id);
+          
+          if (aiRecs && aiRecs.length > 0) {
+            const bookDetailPromises = aiRecs.map(rec => 
+              axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
+            );
+            const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
+            const fullBookObjects = bookDetailResponses
+              .filter(res => res.status === 'fulfilled' && res.value.data)
+              .map(res => res.value.data);
+            setRecommendedBooks(fullBookObjects);
+          }
+        } catch (recErr) {
+          console.error("Lỗi khi lấy gợi ý AI (similar-to):", recErr);
+          setRecommendedBooks([]);
+        }
+
+        // ⬇️ LOGIC MỚI: "NGƯỜI KHÁC CŨNG MUA" (Collaborative) ⬇️
+        const accountId = localStorage.getItem("accountId");
+        if (accountId) { // Chỉ chạy nếu user đã đăng nhập
+            try {
+                const { data: aiCollabRecs } = await fetchCollaborativeRecs(accountId);
+                
+                if (aiCollabRecs && aiCollabRecs.length > 0) {
+                    const bookDetailPromises = aiCollabRecs.map(rec => 
+                        axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
+                    );
+                    
+                    const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
+                    
+                    const fullBookObjects = bookDetailResponses
+                        .filter(res => res.status === 'fulfilled' && res.value.data)
+                        .map(res => res.value.data)
+                        // Lọc bỏ cuốn sách đang xem ra khỏi danh sách
+                        .filter(book => book.bookId !== id); 
+                        
+                    setCollaborativeBooks(fullBookObjects); // ⬅️ SET STATE MỚI
+                }
+            } catch (collabErr) {
+                console.error("Lỗi khi lấy gợi ý AI (for-user):", collabErr);
+                setCollaborativeBooks([]);
+            }
+        }
+        // ⬆️ KẾT THÚC LOGIC MỚI ⬆️
+
+        // Logic Sách cùng tác giả (giữ nguyên)
+        if (bookData && bookData.bookAuthor) {
+          try {
+            const { data: authorBooksPage } = await fetchBooksByAuthorService(
+              bookData.bookAuthor, 0, 5 
+            );
+            if (authorBooksPage && authorBooksPage.content) {
+              setBooksByAuthor(
+                authorBooksPage.content.filter(b => b.bookId !== bookData.bookId)
+              );
+            }
+          } catch (authorErr) {
+            console.error("Lỗi khi lấy sách cùng tác giả:", authorErr);
+            setBooksByAuthor([]);
+          }
+        }
+        
       } catch (err) {
         setError("Đã có lỗi xảy ra khi tải dữ liệu.");
         openModal("Đã có lỗi xảy ra khi tải dữ liệu.");
@@ -123,53 +196,52 @@ export const useBookDetail = (id, navigate) => {
 
   const addToCart = async () => {
     if (!book) return;
-
     const accountId = localStorage.getItem("accountId");
     if (!accountId) {
-      alert("Bạn cần đăng nhập để thêm vào giỏ hàng!");
+      openModal("Bạn cần đăng nhập để thêm vào giỏ hàng!");
       navigate("/login");
       return;
     }
-
     if (book.bookStockQuantity <= 0) {
-      alert("Sách này đã hết hàng!");
+      openModal("Sách này đã hết hàng!");
       return;
     }
-
     try {
       await addToCartService(accountId, book, quantity);
-      alert("Sách đã được thêm vào giỏ hàng!");
+      trackAddToCart(book.bookId, accountId).catch(analyticsError => {
+        console.warn("Lỗi khi tracking analytics (add-to-cart):", analyticsError);
+      });
+      openModal("Sách đã được thêm vào giỏ hàng!");
       navigate("/cart");
     } catch (err) {
       console.error("Lỗi khi thêm vào giỏ hàng:", err.response?.data || err.message);
-      alert("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
+      openModal("Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại!");
     }
   };
 
   const handlePolicyClick = (policy) => {
     const messages = {
-      "Thời gian giao hàng":
-        "Thông tin đóng gói, vận chuyển hàng\n\nVới đa phần đơn hàng, bookstore cần vài giờ làm việc để kiểm tra thông tin và đóng gói hàng.",
-      "Chính sách đổi trả":
-        "Đổi trả miễn phí toàn quốc\n\nSản phẩm có thể được đổi trả miễn phí nếu có lỗi từ nhà sản xuất.",
-      "Chính sách khách sỉ":
-        "Ưu đãi khi mua số lượng lớn\n\nbookstore cung cấp ưu đãi đặc biệt cho khách hàng mua hàng số lượng lớn.",
+      "Thời gian giao hàng": "Thông tin đóng gói, vận chuyển hàng...",
+      "Chính sách đổi trả": "Đổi trả miễn phí toàn quốc...",
+      "Chính sách khách sỉ": "Ưu đãi khi mua số lượng lớn...",
     };
     if (messages[policy]) openModal(messages[policy]);
   };
 
   const handleImageNav = (direction) => {
-    if (!book?.bookImages?.length || book.bookImages.length <= 1) return;
+    const bookImages = book.bookImages?.length > 0 ? book.bookImages : [book.bookImage];
+    if (bookImages.length <= 1) return;
     setMainImageIndex((prev) => {
-      const len = book.bookImages.length;
+      const len = bookImages.length;
       return direction === "next" ? (prev + 1) % len : (prev - 1 + len) % len;
     });
   };
 
-  const averageRating =
+  const averageRating = useMemo(() => (
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-      : 0;
+      : 0
+  ), [reviews]);
 
   const calculateRatingPercentage = useCallback(
     (starLevel) => {
@@ -180,24 +252,30 @@ export const useBookDetail = (id, navigate) => {
     [reviews]
   );
   
-  // Hàm mới để lấy tóm tắt sách
   const fetchBookSummary = async () => {
-    if (!book || !book.bookName || !book.bookAuthor) {
-      return "Không đủ thông tin để tạo tóm tắt sách.";
+    if (book) {
+      const accountId = localStorage.getItem("accountId");
+      trackClickSummary(book.bookId, accountId).catch(err => {
+        console.warn("Lỗi khi tracking summary click:", err);
+      });
     }
-    
+    if (!book || !book.bookName || !book.bookAuthor) {
+      return { summary: "Không đủ thông tin để tạo tóm tắt sách." };
+    }
     try {
       const summary = await fetchSummaryService(book.bookName, book.bookAuthor);
       return summary;
     } catch (err) {
       console.error("Lỗi khi lấy tóm tắt sách:", err);
-      return "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau.";
+       return { summary: "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau." };
     }
   };
 
   return {
     book,
     recommendedBooks,
+    collaborativeBooks, // ⬅️ TRẢ STATE MỚI RA
+    booksByAuthor,
     reviews,
     reviewsWithUserData,
     loading,
@@ -207,7 +285,6 @@ export const useBookDetail = (id, navigate) => {
     isModalOpen,
     modalContent,
     isImageModalOpen,
-    selectedImage,
     mainImageIndex,
     openModal,
     closeModal,
@@ -221,6 +298,6 @@ export const useBookDetail = (id, navigate) => {
     setMainImageIndex,
     averageRating,
     calculateRatingPercentage,
-    fetchBookSummary, // Thêm hàm này vào return
+    fetchBookSummary,
   };
 };

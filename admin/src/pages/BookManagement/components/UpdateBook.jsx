@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import {
-  TextField, Button, Typography, Box,
-  MenuItem, Select, FormControl, InputLabel, Grid, Divider, IconButton
+  TextField, Button, Typography, Box,
+  MenuItem, Select, FormControl, InputLabel, Grid, Divider, IconButton
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useUpdateBook } from "../hooks/useUpdateBook";
@@ -10,52 +10,52 @@ import "./UpdateBook.css";
 // Giữ nguyên các hằng số: mainCategories, publishers, suppliers, languages
 
 const mainCategories = {
-  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
-  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
-  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
-  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
-  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
-  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
-  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Truyện chữ", "Sách giáo dục trẻ em"],
-  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
-  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"]
+  "Văn Học": ["Tiểu thuyết", "Truyện ngắn", "Thơ ca", "Kịch", "Ngụ ngôn"],
+  "Giáo Dục & Học Thuật": ["Sách giáo khoa", "Sách tham khảo", "Ngoại ngữ", "Sách khoa học"],
+  "Kinh Doanh & Phát Triển Bản Thân": ["Quản trị", "Tài chính", "Khởi nghiệp", "Lãnh đạo", "Kỹ năng sống"],
+  "Khoa Học & Công Nghệ": ["Vật lý", "Hóa học", "Sinh học", "Công nghệ", "Lập trình"],
+  "Lịch Sử & Địa Lý": ["Lịch sử thế giới", "Lịch sử Việt Nam", "Địa lý"],
+  "Tôn Giáo & Triết Học": ["Phật giáo", "Thiên Chúa giáo", "Hồi giáo", "Triết học"],
+  "Sách Thiếu Nhi": ["Truyện cổ tích", "Truyện tranh", "Truyện chữ", "Sách giáo dục trẻ em"],
+  "Văn Hóa & Xã Hội": ["Du lịch", "Nghệ thuật", "Tâm lý - xã hội"],
+  "Sức Khỏe & Ẩm Thực": ["Nấu ăn", "Dinh dưỡng", "Thể dục - thể thao"]
 };
 
 const publishers = [
-  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật",
-  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động",
-  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội", "NXB Thế Giới"
+  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật","NXB Kinh Tế TP.Hồ Chí Minh",
+  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động","NXB Mỹ Thuật","NXB Hồng Đức",
+  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội", "NXB Thế Giới","NXB Văn Hóa Văn Nghệ"
 ];
 const suppliers = [
-  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya",
-  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt"
+  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya","CÔNG TY CỔ PHẦN SÁCH TRÍ THỨC VIỆT","Công ty TNHH Ecoblader",
+  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt","Tổng Hợp TPHCM","Đông A","Nhà xuất bản Giáo Dục"
 ];
 const languages = ["Tiếng Việt", "Tiếng Anh", "Tiếng Nhật", "Tiếng Trung", "Tiếng Hàn"];
 
 const UpdateBook = ({ book, onUpdate, onClose }) => {
-  const formRef = useRef(null);
+  const formRef = useRef(null);
 
-  const {
-    formData,
-    imagePreviewUrls,
-    isLoading,
-    error,
-    handleChange,
-    handleUpdate,
-    handleDeleteImage, // Lấy hàm xóa ảnh từ hook
-  } = useUpdateBook(book, onClose, onUpdate);
+  const {
+    formData,
+    imagePreviewUrls,
+    isLoading,
+    error,
+    handleChange,
+    handleUpdate,
+    handleDeleteImage, // Lấy hàm xóa ảnh từ hook
+  } = useUpdateBook(book, onClose, onUpdate);
 
-  // Thêm hiệu ứng click ra ngoài để đóng modal
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      const menu = document.querySelector(".MuiMenu-paper");
-      if (formRef.current && !formRef.current.contains(event.target) && (!menu || !menu.contains(event.target))) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  // Thêm hiệu ứng click ra ngoài để đóng modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const menu = document.querySelector(".MuiMenu-paper");
+      if (formRef.current && !formRef.current.contains(event.target) && (!menu || !menu.contains(event.target))) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   return (
     <Box className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 overflow-auto">
@@ -66,7 +66,7 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
 
         <form onSubmit={handleUpdate}>
           <Grid container spacing={4}>
-            {/* LEFT COLUMN - GIỮ NGUYÊN */}
+            {/* LEFT COLUMN */}
             <Grid item xs={12} md={8}>
               <Grid container spacing={2}>
                 {/* Book Name */}
@@ -183,7 +183,8 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
                     </Select>
                   </FormControl>
                 </Grid>
-                {/* Main Category */}
+
+                {/* Main Category -- ĐÃ CẬP NHẬT */}
                 <Grid item xs={6}>
                   <FormControl fullWidth>
                     <InputLabel shrink>Danh mục chính</InputLabel>
@@ -194,13 +195,28 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
                       required
                     >
                       <MenuItem value=""><em>Chọn danh mục</em></MenuItem>
+                      
+                      {/* 1. Render các danh mục hợp lệ như cũ */}
                       {Object.keys(mainCategories).map((c) => (
                         <MenuItem key={c} value={c}>{c}</MenuItem>
                       ))}
+
+                      {/* 2. Kiểm tra và render giá trị cũ nếu không hợp lệ */}
+                      {formData.mainCategory && !mainCategories[formData.mainCategory] && (
+                        <MenuItem 
+                          key={formData.mainCategory} 
+                          value={formData.mainCategory} 
+                          sx={{ color: 'red', fontStyle: 'italic' }}
+                        >
+                          {formData.mainCategory} (Dữ liệu cũ)
+                        </MenuItem>
+                      )}
+
                     </Select>
                   </FormControl>
                 </Grid>
-                {/* Book Category */}
+
+                {/* Book Category -- ĐÃ CẬP NHẬT */}
                 <Grid item xs={6}>
                   <FormControl fullWidth>
                     <InputLabel shrink>Thể loại</InputLabel>
@@ -212,12 +228,28 @@ const UpdateBook = ({ book, onUpdate, onClose }) => {
                       disabled={!formData.mainCategory}
                     >
                       <MenuItem value=""><em>Chọn thể loại</em></MenuItem>
-                      {formData.mainCategory && mainCategories[formData.mainCategory].map((sub) => (
+
+                      {/* 1. Dùng (mainCategories[formData.mainCategory] || []) để tránh lỗi */}
+                      {(mainCategories[formData.mainCategory] || []).map((sub) => (
                         <MenuItem key={sub} value={sub}>{sub}</MenuItem>
                       ))}
+
+                      {/* 2. Kiểm tra và render giá trị cũ (của thể loại con) nếu không hợp lệ */}
+                      {formData.bookCategory && 
+                       !(mainCategories[formData.mainCategory] || []).includes(formData.bookCategory) && (
+                        <MenuItem 
+                          key={formData.bookCategory} 
+                          value={formData.bookCategory}
+                          sx={{ color: 'red', fontStyle: 'italic' }}
+                        >
+                          {formData.bookCategory} (Dữ liệu cũ)
+                        </MenuItem>
+                      )}
+
                     </Select>
                   </FormControl>
                 </Grid>
+                
                 {/* Description */}
                 <Grid item xs={12}>
                   <TextField
