@@ -10,7 +10,7 @@ const API_URLS = {
 };
 
 export const fetchBookDetail = (id) => axios.get(`${API_URLS.BOOK}/${id}`);
-export const fetchRecommendations = (id) => axios.get(`${API_URLS.BOOK}/${id}/recommendations`);
+export const fetchRecommendations = (id, accountId) => axios.get(`${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`);
 export const fetchReviews = (id) => axios.get(`${API_URLS.REVIEW}/book/${id}`);
 export const fetchAnalytics = (id) => axios.get(`${API_URLS.ANALYTICS}/${id}`);
 export const fetchAccount = (accountId) =>
