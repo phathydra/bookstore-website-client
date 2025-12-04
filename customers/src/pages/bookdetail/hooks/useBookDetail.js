@@ -32,6 +32,8 @@ export const useBookDetail = (id, navigate) => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [mainImageIndex, setMainImageIndex] = useState(0);
 
+  const accountId = localStorage.getItem("accountId");
+
   const openModal = useCallback((content) => {
     setModalContent(content);
     setIsModalOpen(true);
@@ -101,6 +103,7 @@ export const useBookDetail = (id, navigate) => {
           { data: analyticsData },
         ] = await Promise.all([
           fetchBookDetail(id),
+          fetchRecommendations(id, accountId),
           fetchReviews(id),
           fetchAnalytics(id),
         ]);

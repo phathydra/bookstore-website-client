@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaSearch, FaShoppingCart } from "react-icons/fa"
@@ -10,17 +8,24 @@ import { trackSearch } from "../../pages/bookdetail/services/bookService"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [rankMenuOpen, setRankMenuOpen] = useState(false)
   const [user, setUser] = useState({ name: "", avatar: "" })
   const [input, setInput] = useState("")
   const [isLogin, setIsLogin] = useState(false)
+  const menuRef = useRef(null)
+  const navigate = useNavigate()
   const [searchResults, setSearchResults] = useState([])
   const [showSearchResults, setShowSearchResults] = useState(false)
-  const [isSuggestionSelected, setIsSuggestionSelected] = useState(false)
-
-  const menuRef = useRef(null)
   const searchResultsRef = useRef(null)
-  const navigate = useNavigate()
+  const rankRef = useRef(null)
+  const [rankData, setRankData] = useState(null)
+  const [isSuggestionSelected, setIsSuggestionSelected] = useState(false)
   const debouncedInput = useDebounce(input, 500)
+
+  const rankImages = import.meta.glob('../../assets/ranks/*-removebg.png', {
+    eager: true,
+    import: 'default'
+  });
 
   useEffect(() => {
     const checkLoginStatus = () => {
@@ -50,9 +55,45 @@ const Header = () => {
     }
   }, [])
 
-  const handleChange = e => {
-    setInput(e.target.value)
+  useEffect(() => {
+    const fetchRank = async () => {
+      const accountId = localStorage.getItem("accountId")
+      if (!accountId) return
+
+      try {
+        const res = await fetch(`http://localhost:8082/api/ranks?accountId=${accountId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setRankData(data)
+        }
+      } catch (err) {
+        console.error("Error fetching rank:", err)
+      }
+    }
+
+    if (isLogin) fetchRank()
+  }, [isLogin])
+
+  const rankText = (rank) => {
+    switch (rank) {
+      case 1: return "Copper"
+      case 2: return "Silver"
+      case 3: return "Golden"
+      case 4: return "Diamond"
+      default: return "Unranked"
+    }
+  }
+  const handleChange = (e) => {
+    const value = e.target.value
+    setInput(value)
     setIsSuggestionSelected(false)
+    if (value.trim() !== "") {
+      fetchSearchResults(value)
+      setShowSearchResults(true)
+    } else {
+      setSearchResults([])
+      setShowSearchResults(false)
+    }
   }
 
   const fetchSearchResults = async searchTerm => {
@@ -62,6 +103,7 @@ const Header = () => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `input=${encodeURIComponent(searchTerm)}`,
       })
+      
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.content || [])
@@ -83,7 +125,6 @@ const Header = () => {
       setShowSearchResults(false)
     }
   }, [debouncedInput])
-
   const handleSearch = () => {
     if (isSuggestionSelected) {
       setIsSuggestionSelected(false)
@@ -96,17 +137,26 @@ const Header = () => {
 
   const toggleMenu = () => setIsMenuOpen(prev => !prev)
 
-  const handleClickOutside = event => {
+  const handleClickOutside = (event) => {
     if (
       menuRef.current &&
-      !menuRef.current.contains(event.target) &&
+      !menuRef.current.contains(event.target)
+    ) {
+      setIsMenuOpen(false)
+    }
+
+    if (
       searchResultsRef.current &&
       !searchResultsRef.current.contains(event.target)
     ) {
-      setIsMenuOpen(false)
       setShowSearchResults(false)
-    } else if (searchResultsRef.current && !searchResultsRef.current.contains(event.target)) {
-      setShowSearchResults(false)
+    }
+
+    if (
+      rankRef.current &&
+      !rankRef.current.contains(event.target)
+    ) {
+      setRankMenuOpen(false)
     }
   }
 
@@ -130,6 +180,8 @@ const Header = () => {
 
   return (
     <header className="h-16 flex items-center justify-between px-5 bg-cyan-100 shadow-md relative">
+      
+      {/* LEFT */}
       <div className="flex items-center space-x-6">
         <div className="cursor-pointer" onClick={() => navigate("/")}>
           <img src={logo || "/placeholder.svg"} alt="Logo" className="w-24" />
@@ -147,7 +199,10 @@ const Header = () => {
         </nav>
       </div>
 
+      {/* RIGHT */}
       <div className="flex items-center gap-x-6 pr-10">
+
+        {/* SEARCH */}
         <div className="relative flex items-center w-full max-w-lg" ref={searchResultsRef}>
           <input
             type="text"
@@ -200,6 +255,7 @@ const Header = () => {
           )}
         </div>
 
+        {/* CART ICON */}
         <button
           className="relative text-gray-700 hover:text-blue-500"
           onClick={() => navigate("/cart")}
@@ -207,19 +263,26 @@ const Header = () => {
           <FaShoppingCart className="text-2xl" />
         </button>
 
+        {/* RANK + AVATAR */}
         <div className="relative flex items-center gap-x-4" ref={menuRef}>
+
+          {/* USER NAME */}
           {isLogin && <span className="text-gray-700 font-medium">{user.name}</span>}
+
+          {/* AVATAR */}
           <img
             className="w-10 h-10 rounded-full cursor-pointer"
             src={isLogin ? user.avatar : GUEST}
             alt="Profile"
             onClick={toggleMenu}
           />
+
+          {/* USER MENU */}
           {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+            <div className="absolute right-0 top-full mt-2 w-40 bg-white border rounded-md shadow-lg z-50">
               <button
                 className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(localStorage.getItem("accountId") ? "/profile" : "/login")}
+                onClick={() => navigate(isLogin ? "/profile" : "/login")}
               >
                 Trang cá nhân
               </button>
@@ -241,6 +304,33 @@ const Header = () => {
               >
                 {isLogin ? "Đăng xuất" : "Đăng nhập"}
               </button>
+            </div>
+          )}
+
+          {/* RANK ICON */}
+          {isLogin && rankData && (
+            <div
+              ref={rankRef}
+              className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer"
+              onClick={() => setRankMenuOpen((prev) => !prev)}
+            >
+              <img
+                src={rankImages[`../../assets/ranks/${rankText(rankData.rank)}-removebg.png`]}
+                className="w-7 h-7 object-cover"
+                alt="rank"
+              />
+            </div>
+          )}
+
+          {/* RANK PANEL */}
+          {rankMenuOpen && rankData && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border rounded-md shadow-lg z-50 p-3">
+              <div className="font-semibold text-gray-700 text-lg">
+                {rankText(rankData.rank)}
+              </div>
+              <div className="text-gray-600 text-sm mt-1">
+                Điểm tích lũy: <span className="font-medium">{rankData.points}</span>
+              </div>
             </div>
           )}
         </div>

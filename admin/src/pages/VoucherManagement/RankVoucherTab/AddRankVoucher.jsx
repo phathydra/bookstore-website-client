@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,12 +8,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  FormControlLabel,
-  Checkbox,
+  Grid
 } from '@mui/material';
 import axios from 'axios';
 
-const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
+const AddRankVoucher = ({ onClose }) => {
   const [formData, setFormData] = useState({
     code: '',
     voucherType: '',
@@ -22,50 +21,33 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
     highestDiscountValue: '',
     minOrderValue: '',
     usageLimit: '',
-    userUsageLimit: '',
     startDate: '',
     endDate: '',
-    publish: false,
+    rank: '',
   });
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (selectedVoucher) {
-      setFormData({
-        code: selectedVoucher.code,
-        voucherType: selectedVoucher.voucherType,
-        percentageDiscount: selectedVoucher.percentageDiscount,
-        valueDiscount: selectedVoucher.valueDiscount,
-        highestDiscountValue: selectedVoucher.highestDiscountValue,
-        minOrderValue: selectedVoucher.minOrderValue,
-        usageLimit: selectedVoucher.usageLimit,
-        userUsageLimit: selectedVoucher.userUsageLimit || '',
-        startDate: new Date(selectedVoucher.startDate).toISOString().split('T')[0],
-        endDate: new Date(selectedVoucher.endDate).toISOString().split('T')[0],
-        publish: selectedVoucher.publish || false,
-      });
-    }
-  }, [selectedVoucher]);
-
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const val = type === 'checkbox' ? checked : (name.includes("Discount") || name.includes("Value") || name.includes("Limit") ? Number(value) || '' : value);
-    setFormData({ ...formData, [name]: val });
+    const { name, value } = e.target;
+    const parsedValue = name.includes("Discount") || name.includes("Value") || name === "usageLimit" || name === "rank" ? Number(value) || '' : value;
+    setFormData({
+      ...formData,
+      [name]: parsedValue,
+    });
     setError('');
   };
 
-  const handleUpdate = async (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     try {
-      await axios.put(`http://localhost:8082/api/vouchers/${selectedVoucher.id}`, formData);
-      onSuccess();
+      await axios.post('http://localhost:8082/api/vouchers/rank', formData);
       onClose();
     } catch (error) {
-      console.error('Error updating voucher:', error);
-      setError('Error updating voucher.');
+      console.error('Error adding rank voucher:', error);
+      setError('Error adding rank voucher.');
     } finally {
       setIsLoading(false);
     }
@@ -77,11 +59,11 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
         className="bg-white p-6 rounded-lg w-full max-w-3xl"
         style={{ maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <Typography variant="h6" mb={2}>Update Voucher</Typography>
+        <Typography variant="h6" mb={2}>Add New Rank Voucher</Typography>
         {error && <Typography color="error">{error}</Typography>}
-        <form onSubmit={handleUpdate}>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Box flex={1} minWidth="300px">
+        <form onSubmit={handleAdd}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="Code"
                 name="code"
@@ -133,9 +115,6 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
                 onChange={handleChange}
                 margin="normal"
               />
-            </Box>
-
-            <Box flex={1} minWidth="300px">
               <TextField
                 label="Min Order Value"
                 name="minOrderValue"
@@ -145,6 +124,9 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
                 onChange={handleChange}
                 margin="normal"
               />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="Usage Limit"
                 name="usageLimit"
@@ -155,11 +137,11 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
                 margin="normal"
               />
               <TextField
-                label="User Usage Limit"
-                name="userUsageLimit"
+                label="Rank"
+                name="rank"
                 type="number"
                 fullWidth
-                value={formData.userUsageLimit}
+                value={formData.rank}
                 onChange={handleChange}
                 margin="normal"
               />
@@ -185,23 +167,13 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
                 margin="normal"
                 InputLabelProps={{ shrink: true }}
               />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="publish"
-                    checked={formData.publish}
-                    onChange={handleChange}
-                  />
-                }
-                label="Publish"
-              />
-            </Box>
-          </Box>
+            </Grid>
+          </Grid>
 
-          <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
+          <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
             <Button onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update'}
+              {isLoading ? 'Adding...' : 'Add'}
             </Button>
           </Box>
         </form>
@@ -210,4 +182,4 @@ const UpdateVoucher = ({ selectedVoucher, onClose, onSuccess }) => {
   );
 };
 
-export default UpdateVoucher;
+export default AddRankVoucher;
