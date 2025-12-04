@@ -34,7 +34,7 @@ const ImportModal = ({ onClose }) => {
           <Box className="max-h-60 overflow-y-auto pr-2">
             {books.map((book, index) => (
               <Grid container spacing={2} key={index} alignItems="center" sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={5}>
+                <Grid item xs={12} sm={3}> {/* ĐÃ SỬA: sm={5} -> sm={3} */}
                   <TextField
                     label="Tên sách"
                     name="bookName"
@@ -44,7 +44,7 @@ const ImportModal = ({ onClose }) => {
                     required
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}> {/* ĐÃ SỬA: sm={4} -> sm={3} */}
                   <TextField
                     label="Tác giả"
                     name="bookAuthor"
@@ -54,6 +54,18 @@ const ImportModal = ({ onClose }) => {
                     required
                   />
                 </Grid>
+                {/* TRƯỜNG MỚI ĐƯỢC THÊM */}
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Nhà cung cấp"
+                    name="supplier" // Giả định tên state là 'supplier'
+                    fullWidth
+                    value={book.bookSupplier || ''} // Thêm '|| ''' để tránh lỗi uncontrolled
+                    onChange={(e) => handleInputChange(e, index)}
+                    required
+                  />
+                </Grid>
+                {/* -------------------- */}
                 <Grid item xs={8} sm={2}>
                   <TextField
                     label="Số lượng"

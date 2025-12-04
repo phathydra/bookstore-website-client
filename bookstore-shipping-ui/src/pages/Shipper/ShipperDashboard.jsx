@@ -240,7 +240,7 @@ const ShipperDashboard = () => {
             const currentLon = position.coords.longitude;
             const currentLat = position.coords.latitude;
 
-            const customerAddressDisplay = `${order.address || ""}, ${order.ward || ""}, ${order.district || ""}, ${order.city || ""}`
+            const customerAddressDisplay = `${order.note || ""}, ${order.address || ""}, ${order.ward || ""}, ${order.district || ""}, ${order.city || ""}`
                 .replace(/,(\s*,){1,}/g, ",")
                 .replace(/,$/g, "")
                 .trim();
@@ -381,7 +381,7 @@ const ShipperDashboard = () => {
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {orders.map((order) => {
-                                        const fullAddress = `${order.address || ""}, ${order.ward || ""}, ${order.district || ""}, ${order.city || ""}`.replace(/,(\s*,){1,}/g, ", ").replace(/, $/, "").trim();
+                                        const fullAddress = `${order.note || ""}, ${order.address || ""}, ${order.ward || ""}, ${order.district || ""}, ${order.city || ""}`.replace(/,(\s*,){1,}/g, ", ").replace(/, $/, "").trim();
                                         const deliveryUnitId = order.deliveryUnitId;
                                         const isRouteLoading = routeLoadingId === order.orderId;
                                         const isConfirmLoading = confirmLoadingId === order.orderId;

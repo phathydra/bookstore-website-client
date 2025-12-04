@@ -19,13 +19,13 @@ const mainCategories = {
 };
 
 const publishers = [
-  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật",
-  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động",
-  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội","NXB Thế Giới"
+  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật","NXB Kinh Tế TP.Hồ Chí Minh",
+  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động",,"NXB Mỹ Thuật","NXB Hồng Đức",
+  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội","NXB Thế Giới","NXB Văn Hóa Văn Nghệ"
 ];
 const suppliers = [
-  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya",
-  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt"
+  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya","CÔNG TY CỔ PHẦN SÁCH TRÍ THỨC VIỆT","Công ty TNHH Ecoblader",
+  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt","Tổng Hợp TPHCM","Đông A","Nhà xuất bản Giáo Dục"
 ];
 const languages = ["Tiếng Việt", "Tiếng Anh", "Tiếng Nhật", "Tiếng Trung", "Tiếng Hàn"];
 

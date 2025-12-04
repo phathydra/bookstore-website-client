@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { FaSearch, FaShoppingCart } from "react-icons/fa"
 import logo from "../../assets/logo.png"
 import GUEST from "../../assets/GUEST.jpg"
+import { useDebounce } from "./hooks/useDebounce"
+import { trackSearch } from "../../pages/bookdetail/services/bookService"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -18,6 +20,7 @@ const Header = () => {
   const rankRef = useRef(null)
   const [rankData, setRankData] = useState(null)
   const [isSuggestionSelected, setIsSuggestionSelected] = useState(false)
+  const debouncedInput = useDebounce(input, 500)
 
   const rankImages = import.meta.glob('../../assets/ranks/*-removebg.png', {
     eager: true,
@@ -26,32 +29,31 @@ const Header = () => {
 
   useEffect(() => {
     const checkLoginStatus = () => {
-      const accountId = localStorage.getItem("accountId");
+      const accountId = localStorage.getItem("accountId")
       if (accountId) {
         fetch(`http://localhost:8080/api/account/fetch?accountId=${accountId}`)
-          .then((res) => res.json())
-          .then((data) => {
+          .then(res => res.json())
+          .then(data => {
             setUser({
               name: data.name || "Username",
               avatar: data.avatar || "https://via.placeholder.com/40",
-            });
-            setIsLogin(true);
+            })
+            setIsLogin(true)
           })
-          .catch((error) => console.error("Error fetching user data:", error));
+          .catch(err => console.error("Error fetching user data:", err))
       } else {
-        setIsLogin(false);
-        setUser({ name: "", avatar: "" });
+        setIsLogin(false)
+        setUser({ name: "", avatar: "" })
       }
-    };
+    }
 
-    checkLoginStatus();
-    window.addEventListener('storage', checkLoginStatus);
-
+    checkLoginStatus()
+    window.addEventListener("storage", checkLoginStatus)
     return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      window.removeEventListener("storage", checkLoginStatus)
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchRank = async () => {
@@ -81,7 +83,6 @@ const Header = () => {
       default: return "Unranked"
     }
   }
-
   const handleChange = (e) => {
     const value = e.target.value
     setInput(value)
@@ -95,43 +96,46 @@ const Header = () => {
     }
   }
 
-  const fetchSearchResults = async (searchTerm) => {
+  const fetchSearchResults = async searchTerm => {
     try {
       const response = await fetch(`http://localhost:8081/api/book/search?page=0&size=5`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `input=${encodeURIComponent(searchTerm)}`,
       })
+      
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.content || [])
-      } else {
-        console.error("Failed to fetch search results")
-        setSearchResults([])
-      }
+        setShowSearchResults(true)
+      } else setSearchResults([])
     } catch (error) {
       console.error("Error fetching search results:", error)
       setSearchResults([])
     }
   }
 
+  useEffect(() => {
+    if (debouncedInput.trim() !== "") {
+      fetchSearchResults(debouncedInput)
+      const accountId = localStorage.getItem("accountId")
+      trackSearch(debouncedInput, accountId).catch(() => {})
+    } else {
+      setSearchResults([])
+      setShowSearchResults(false)
+    }
+  }, [debouncedInput])
   const handleSearch = () => {
     if (isSuggestionSelected) {
       setIsSuggestionSelected(false)
       return
     }
-    if (input.trim() !== "") {
-      navigate(`/products?searchParam=${encodeURIComponent(input)}`)
-      setShowSearchResults(false)
-    } else {
-      navigate(`/products`)
-      setShowSearchResults(false)
-    }
+    if (input.trim() !== "") navigate(`/products?searchParam=${encodeURIComponent(input)}`)
+    else navigate(`/products`)
+    setShowSearchResults(false)
   }
 
-  const toggleMenu = () => setIsMenuOpen((prev) => !prev)
+  const toggleMenu = () => setIsMenuOpen(prev => !prev)
 
   const handleClickOutside = (event) => {
     if (
@@ -158,9 +162,7 @@ const Header = () => {
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const handleLogout = () => {
@@ -169,13 +171,10 @@ const Header = () => {
     navigate("/login")
   }
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = event => {
     if (event.key === "Enter") {
-      if (!isSuggestionSelected) {
-        handleSearch()
-      } else {
-        setIsSuggestionSelected(false)
-      }
+      if (!isSuggestionSelected) handleSearch()
+      else setIsSuggestionSelected(false)
     }
   }
 
@@ -187,8 +186,7 @@ const Header = () => {
         <div className="cursor-pointer" onClick={() => navigate("/")}>
           <img src={logo || "/placeholder.svg"} alt="Logo" className="w-24" />
         </div>
-
-        <nav className="flex" style={{ gap: "20px" }}>
+        <nav className="flex gap-5">
           <button className="text-gray-700 hover:text-blue-500" onClick={() => navigate("/")}>
             Trang chủ
           </button>
@@ -212,7 +210,7 @@ const Header = () => {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             value={input}
-            className="px-6 py-3 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-300 border-none bg-gray-100 w-500 h-12"
+            className="px-6 py-3 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-100 w-500 h-12"
           />
           <button
             onClick={handleSearch}
@@ -222,9 +220,9 @@ const Header = () => {
           </button>
 
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-white border rounded-md shadow-lg z-50">
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-lg z-50">
               <ul>
-                {searchResults.map((book) => (
+                {searchResults.map(book => (
                   <li
                     key={book.bookId}
                     className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -242,7 +240,7 @@ const Header = () => {
                     />
                     <span className="text-gray-800">
                       {book.bookName}
-                      {book.bookAuthor && <span className="text-gray-600 ml-1"> ({book.bookAuthor})</span>}
+                      {book.bookAuthor && <span className="text-gray-600 ml-1">({book.bookAuthor})</span>}
                     </span>
                   </li>
                 ))}
@@ -251,7 +249,7 @@ const Header = () => {
           )}
 
           {showSearchResults && searchResults.length === 0 && input.trim() !== "" && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-white border rounded-md shadow-lg z-50">
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-lg z-50">
               <div className="px-4 py-2 text-gray-500">Không tìm thấy sách nào.</div>
             </div>
           )}
@@ -290,13 +288,13 @@ const Header = () => {
               </button>
               <button
                 className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(isLogin ? "/orderHistory" : "/login")}
+                onClick={() => navigate(localStorage.getItem("accountId") ? "/orderHistory" : "/login")}
               >
                 Lịch sử mua hàng
               </button>
               <button
                 className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(isLogin ? "/address" : "/login")}
+                onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}
               >
                 Địa chỉ nhận hàng
               </button>
