@@ -11,7 +11,11 @@ const API_URLS = {
 };
 
 export const fetchBookDetail = (id) => axios.get(`${API_URLS.BOOK}/${id}`);
-export const fetchRecommendations = (id, accountId) => axios.get(`${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`);
+
+// Gợi ý cũ (Content-based hoặc simple logic từ Java)
+export const fetchRecommendations = (id, accountId) => 
+  axios.get(`${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`);
+
 export const fetchReviews = (id) => axios.get(`${API_URLS.REVIEW}/book/${id}`);
 export const fetchAnalytics = (id) => axios.get(`${API_URLS.ANALYTICS}/${id}`);
 export const fetchAccount = (accountId) =>
@@ -76,5 +80,15 @@ export const trackSearch = (searchTerm, accountId) => {
 export const trackClickSummary = (bookId, accountId) => {
   return axios.post(`${API_URLS.ANALYTICS}/${bookId}/click-summary`, {
     accountId: accountId,
+  });
+};
+
+// --- PHẦN MỚI THÊM VÀO ---
+// Hàm gọi AI Python để lấy gợi ý (Collaborative Filtering/Hybrid)
+export const fetchCollaborativeRecs = (bookId, accountId) => {
+  return axios.post(API_URLS.AI_RECOMMEND, {
+    book_id: bookId,      // Khớp với backend Python
+    user_id: accountId,   // Khớp với backend Python (thường dùng user_id thay vì accountId)
+    k: 10                 // Số lượng gợi ý
   });
 };
