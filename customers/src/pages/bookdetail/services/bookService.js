@@ -12,15 +12,17 @@ const API_URLS = {
 
 export const fetchBookDetail = (id) => axios.get(`${API_URLS.BOOK}/${id}`);
 
-// API 1: "Sản phẩm tương tự" (Content-Based) -> ĐÃ ĐÚNG
+// API 1: "Sản phẩm tương tự" (Content-Based) -> Đã ĐÚNG
 export const fetchRecommendations = (id) =>
   axios.get(`${API_URLS.AI_RECOMMEND}/similar-to/${id}`);
 
-// ⬇️ SỬA ĐỔI Ở ĐÂY ⬇️
-// API 2: "Gợi ý cho bạn" (giờ dùng Profile-Based)
-export const fetchCollaborativeRecs = (accountId) =>
-  axios.get(`${API_URLS.AI_RECOMMEND}/profile-based/${accountId}`);
-// ⬆️ KẾT THÚC SỬA ĐỔI ⬆️
+// -----------------------------------------------------------------
+// ⬇️ THAY ĐỔI: Đổi tên hàm và trỏ đến API "also-bought"
+//    API này chỉ cần bookId, không cần accountId
+// -----------------------------------------------------------------
+export const fetchAlsoBought = (bookId) =>
+  axios.get(`${API_URLS.AI_RECOMMEND}/also-bought/${bookId}`);
+// -----------------------------------------------------------------
 
 export const fetchReviews = (id) => axios.get(`${API_URLS.REVIEW}/book/${id}`);
 export const fetchAnalytics = (id) => axios.get(`${API_URLS.ANALYTICS}/${id}`);

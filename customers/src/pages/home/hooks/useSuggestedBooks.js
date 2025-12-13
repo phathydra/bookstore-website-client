@@ -1,50 +1,44 @@
 import { useState, useEffect } from "react";
-import axios from 'axios';
+import axiosClient, { AI_API_URL } from "../../../api/axiosClient";
+import axios from "axios";
 
-const AI_API_URL = "http://127.0.0.1:8000";
-const BACKEND_API_URL = "http://localhost:8081/api";
-
-export const useSuggestedBooks = (userId) => {
+export const useSuggestedBooks = (userId, recentBookIds) => {
     const [suggestedBooks, setSuggestedBooks] = useState([]);
 
     useEffect(() => {
-        if (!userId) {
+        if (!userId || !recentBookIds) {
             setSuggestedBooks([]);
             return;
         }
 
-        const fetchSuggestions = async (id) => {
+        const fetchSuggestions = async () => {
             try {
-                const aiRes = await axios.get(`${AI_API_URL}/api/recommend/profile-based/${id}`);
-                
-                const recommendations = aiRes.data;
-
-                if (!recommendations || recommendations.length === 0) {
-                    setSuggestedBooks([]);
-                    return;
-                }
-
-                const bookDetailPromises = recommendations.map(rec => 
-                    axios.get(`${BACKEND_API_URL}/book/${rec.bookId}`)
+                // Gọi AI Service
+                const { data: recommendations } = await axios.post(
+                    `${AI_API_URL}/api/recommend/hybrid-for-user/${userId}`, 
+                    { recent_book_ids: recentBookIds }
                 );
 
-                const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
+                if (!recommendations?.length) return;
 
-                const fullBookObjects = bookDetailResponses
-                    .filter(res => res.status === 'fulfilled' && res.value.data)
-                    .map(res => res.value.data);
+                // Lấy chi tiết sách từ Backend
+                const detailPromises = recommendations.map(rec => 
+                    axiosClient.get(`/book/${rec.bookId}`).catch(() => null)
+                );
+                
+                const responses = await Promise.all(detailPromises);
+                const validBooks = responses
+                    .filter(res => res && res.data)
+                    .map(res => res.data);
 
-                setSuggestedBooks(fullBookObjects);
-
+                setSuggestedBooks(validBooks);
             } catch (error) {
-                console.error("Lỗi khi lấy gợi ý 'Có thể bạn sẽ thích' (AI Service):", error.message);
-                setSuggestedBooks([]);
+                console.error("⚠️ Lỗi gợi ý AI:", error.message);
             }
         };
 
-        fetchSuggestions(userId);
-
-    }, [userId]);
+        fetchSuggestions();
+    }, [userId, recentBookIds]); // Dependency chuẩn
 
     return { suggestedBooks };
 }

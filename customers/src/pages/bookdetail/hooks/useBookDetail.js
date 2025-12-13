@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   fetchBookDetail,
   fetchRecommendations,
-  fetchCollaborativeRecs, // ⬅️ THÊM HÀM MỚI
+  fetchAlsoBought, // ⬅️ THAY ĐỔI: Import hàm mới
   fetchReviews,
   fetchAnalytics,
   fetchAccount,
@@ -18,7 +18,11 @@ const BACKEND_BOOK_API = "http://localhost:8081/api/book";
 export const useBookDetail = (id, navigate) => {
   const [book, setBook] = useState(null);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
-  const [collaborativeBooks, setCollaborativeBooks] = useState([]); // ⬅️ THÊM STATE MỚI
+  // -----------------------------------------------------------------
+  // ⬇️ THAY ĐỔI: Đổi tên state cho rõ ràng
+  // -----------------------------------------------------------------
+  const [alsoBoughtBooks, setAlsoBoughtBooks] = useState([]); 
+  // -----------------------------------------------------------------
   const [booksByAuthor, setBooksByAuthor] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [reviewsWithUserData, setReviewsWithUserData] = useState([]);
@@ -90,7 +94,11 @@ export const useBookDetail = (id, navigate) => {
       setError(null);
       setBooksByAuthor([]);
       setRecommendedBooks([]);
-      setCollaborativeBooks([]); // ⬅️ RESET STATE MỚI
+      // -----------------------------------------------------------------
+      // ⬇️ THAY ĐỔI: Reset state mới
+      // -----------------------------------------------------------------
+      setAlsoBoughtBooks([]);
+      // -----------------------------------------------------------------
       setMainImageIndex(0);
       setQuantity(1);
 
@@ -110,7 +118,7 @@ export const useBookDetail = (id, navigate) => {
         if (reviewsData?.length) fetchUserDataForReviews(reviewsData);
         setPurchaseCount(analyticsData.purchaseCount || 0);
 
-        // LOGIC 1: "Sản phẩm tương tự" (Content-Based)
+        // LOGIC 1: "Sản phẩm tương tự" (Content-Based) -> Giữ nguyên
         try {
           const { data: aiRecs } = await fetchRecommendations(id);
           
@@ -129,33 +137,35 @@ export const useBookDetail = (id, navigate) => {
           setRecommendedBooks([]);
         }
 
-        // ⬇️ LOGIC MỚI: "NGƯỜI KHÁC CŨNG MUA" (Collaborative) ⬇️
-        const accountId = localStorage.getItem("accountId");
-        if (accountId) { // Chỉ chạy nếu user đã đăng nhập
-            try {
-                const { data: aiCollabRecs } = await fetchCollaborativeRecs(accountId);
-                
-                if (aiCollabRecs && aiCollabRecs.length > 0) {
-                    const bookDetailPromises = aiCollabRecs.map(rec => 
-                        axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
-                    );
-                    
-                    const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
-                    
-                    const fullBookObjects = bookDetailResponses
-                        .filter(res => res.status === 'fulfilled' && res.value.data)
-                        .map(res => res.value.data)
-                        // Lọc bỏ cuốn sách đang xem ra khỏi danh sách
-                        .filter(book => book.bookId !== id); 
-                        
-                    setCollaborativeBooks(fullBookObjects); // ⬅️ SET STATE MỚI
-                }
-            } catch (collabErr) {
-                console.error("Lỗi khi lấy gợi ý AI (for-user):", collabErr);
-                setCollaborativeBooks([]);
-            }
+        // -----------------------------------------------------------------
+        // ⬇️ THAY ĐỔI: LOGIC MỚI "NGƯỜI KHÁC CŨNG MUA" (Also-Bought)
+        // -----------------------------------------------------------------
+        try {
+          // Chỉ cần 'id' của sách hiện tại
+          const { data: aiAlsoBoughtRecs } = await fetchAlsoBought(id);
+            
+          if (aiAlsoBoughtRecs && aiAlsoBoughtRecs.length > 0) {
+              const bookDetailPromises = aiAlsoBoughtRecs.map(rec => 
+                  axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
+              );
+              
+              const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
+              
+              const fullBookObjects = bookDetailResponses
+                  .filter(res => res.status === 'fulfilled' && res.value.data)
+                  .map(res => res.value.data)
+                  // Lọc bỏ cuốn sách đang xem ra khỏi danh sách
+                  .filter(book => book.bookId !== id); 
+                  
+              setAlsoBoughtBooks(fullBookObjects); // ⬅️ SET STATE MỚI
+          }
+        } catch (collabErr) {
+            console.error("Lỗi khi lấy gợi ý AI (also-bought):", collabErr);
+            setAlsoBoughtBooks([]);
         }
+        // -----------------------------------------------------------------
         // ⬆️ KẾT THÚC LOGIC MỚI ⬆️
+        // -----------------------------------------------------------------
 
         // Logic Sách cùng tác giả (giữ nguyên)
         if (bookData && bookData.bookAuthor) {
@@ -267,14 +277,18 @@ export const useBookDetail = (id, navigate) => {
       return summary;
     } catch (err) {
       console.error("Lỗi khi lấy tóm tắt sách:", err);
-       return { summary: "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau." };
+      return { summary: "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau." };
     }
   };
 
   return {
     book,
     recommendedBooks,
-    collaborativeBooks, // ⬅️ TRẢ STATE MỚI RA
+    // -----------------------------------------------------------------
+    // ⬇️ THAY ĐỔI: Trả state mới ra
+    // -----------------------------------------------------------------
+    alsoBoughtBooks,
+    // -----------------------------------------------------------------
     booksByAuthor,
     reviews,
     reviewsWithUserData,

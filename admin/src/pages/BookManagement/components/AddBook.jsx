@@ -19,13 +19,15 @@ const mainCategories = {
 };
 
 const publishers = [
-  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật","NXB Kinh Tế TP.Hồ Chí Minh",
-  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động",,"NXB Mỹ Thuật","NXB Hồng Đức",
-  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội","NXB Thế Giới","NXB Văn Hóa Văn Nghệ"
+  "NXB Trẻ", "NXB Kim Đồng", "NXB Giáo dục Việt Nam", "NXB Chính trị quốc gia Sự thật","NXB Kinh Tế TP.Hồ Chí Minh","NXB Thanh Niên",
+  "NXB Tổng hợp TP.HCM", "NXB Phụ nữ Việt Nam", "NXB Hội Nhà văn", "NXB Lao động",,"NXB Mỹ Thuật","NXB Hồng Đức", "NXB Công Thương",
+  "NXB Dân trí", "NXB Văn học", "NXB Khoa học xã hội", "NXB ĐHQG Hà Nội","NXB Thế Giới","NXB Văn Hóa Văn Nghệ", "NXB Tri thức", "NXB Bách khoa Hà Nội",
+  "NXN ĐHQG TP.Hồ Chí Minh", "NXB Hà Nội", "NXB Tôn Giáo"
 ];
 const suppliers = [
-  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya","CÔNG TY CỔ PHẦN SÁCH TRÍ THỨC VIỆT","Công ty TNHH Ecoblader",
-  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt","Tổng Hợp TPHCM","Đông A","Nhà xuất bản Giáo Dục"
+  "Nhã Nam", "Alpha Books", "Megabooks", "Kim Đồng", "Kinokuniya","CÔNG TY CỔ PHẦN SÁCH TRÍ THỨC VIỆT","Công ty TNHH Ecoblader", "Viện Quản lý PACE",
+  "NXB Trẻ", "Đinh Tị", "AZ Việt Nam", "Tân Việt","Tổng Hợp TPHCM","Đông A","Nhà xuất bản Giáo Dục", "NXB Chính trị quốc gia", "CÔNG TY CỔ PHẦN SÁCH VÀ VĂN HÓA PHẨM MIỀN NAM",
+    "1980 Books", "Cty Quốc Tế Á Châu", "MCBooks", "Nhà Sách Minh Thắng", "Cty Văn Hóa Hương Trang"
 ];
 const languages = ["Tiếng Việt", "Tiếng Anh", "Tiếng Nhật", "Tiếng Trung", "Tiếng Hàn"];
 
