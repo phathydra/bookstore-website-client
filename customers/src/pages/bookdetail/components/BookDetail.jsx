@@ -1,5 +1,3 @@
-// Thay thế toàn bộ file BookDetail.jsx của bạn bằng code này
-
 "use client";
 
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -23,7 +21,11 @@ const BookDetail = () => {
   const {
     book,
     recommendedBooks,
-    collaborativeBooks,
+    // -----------------------------------------------------------------
+    // ⬇️ THAY ĐỔI: Nhận state mới từ hook
+    // -----------------------------------------------------------------
+    alsoBoughtBooks,
+    // -----------------------------------------------------------------
     reviews,
     reviewsWithUserData,
     loading,
@@ -439,11 +441,10 @@ const BookDetail = () => {
       {/* === KẾT THÚC KHỐI 1 === */}
 
 
-      {/* ⬇️ SỬA ĐỔI: BẮT ĐẦU KHỐI 2 (LAYOUT 2x2) ⬇️ */}
-      {/* Đổi `lg:grid-cols-3` thành `lg:grid-cols-2` */}
+      {/* === KHỐI 2 (LAYOUT 2x2) === */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* === CELL 1 (Top-Left): Mô tả sản phẩm === */}
+        {/* === CELL 1 (Top-Left): Mô tả sản phẩm (Giữ nguyên) === */}
         <div className="bg-white p-6 !rounded-2xl shadow-lg">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
             Mô tả sản phẩm
@@ -461,7 +462,7 @@ const BookDetail = () => {
           </div>
         </div>
 
-        {/* === CELL 2 (Top-Right): Sản phẩm tương tự === */}
+        {/* === CELL 2 (Top-Right): Sản phẩm tương tự (Giữ nguyên) === */}
         <div className="bg-white p-6 !rounded-2xl shadow-lg">
           <h3 className="text-2xl font-bold text-gray-900 mb-6">
             Sản phẩm tương tự
@@ -508,15 +509,15 @@ const BookDetail = () => {
         </div>
 
         {/* === CELL 3 (Bottom-Left): Đánh giá sản phẩm === */}
-        {/* Logic conditional: 
-          - Nếu CÓ 'Người khác cũng mua' (cell 4), cell này chiếm 1 cột.
-          - Nếu KHÔNG CÓ 'Người khác cũng mua', cell này chiếm 2 cột (full width).
-        */}
+        {/* ----------------------------------------------------------------- */}
+        {/* ⬇️ THAY ĐỔI: Cập nhật logic hiển thị cột */}
+        {/* ----------------------------------------------------------------- */}
         <div 
           className={`bg-white p-6 !rounded-2xl shadow-lg ${
-            collaborativeBooks.length > 0 ? "lg:col-span-1" : "lg:col-span-2"
+            alsoBoughtBooks.length > 0 ? "lg:col-span-1" : "lg:col-span-2"
           }`}
         >
+        {/* ----------------------------------------------------------------- */}
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
             Đánh giá sản phẩm
           </h3>
@@ -639,14 +640,17 @@ const BookDetail = () => {
           </div>
         </div>
 
+        {/* ----------------------------------------------------------------- */}
+        {/* ⬇️ THAY ĐỔI: Dùng state 'alsoBoughtBooks' */}
+        {/* ----------------------------------------------------------------- */}
         {/* === CELL 4 (Bottom-Right): Người khác cũng mua === */}
-        {collaborativeBooks.length > 0 && (
+        {alsoBoughtBooks.length > 0 && (
           <div className="bg-white p-6 !rounded-2xl shadow-lg">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">
               Người khác cũng mua
             </h3>
             <div className="space-y-4 max-h-[30rem] overflow-y-auto pr-2">
-              {collaborativeBooks.map((recBook) => (
+              {alsoBoughtBooks.map((recBook) => (
                 <Link
                   key={recBook.bookId}
                   to={`/productdetail/${recBook.bookId}`}
@@ -680,8 +684,11 @@ const BookDetail = () => {
             </div>
           </div>
         )}
+        {/* ----------------------------------------------------------------- */}
+        {/* ⬆️ KẾT THÚC THAY ĐỔI ⬆️ */}
+        {/* ----------------------------------------------------------------- */}
       </div>
-      {/* ⬆️ KẾT THÚC SỬA ĐỔI ⬆️ */}
+      {/* === KẾT THÚC KHỐI 2 === */}
 
 
       {/* Modals Section (Giữ nguyên) */}
