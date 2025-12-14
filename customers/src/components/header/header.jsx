@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaSearch, FaShoppingCart, FaThLarge, FaChevronDown } from "react-icons/fa"
@@ -11,17 +9,24 @@ import SideNav from "../SideNav/SideNav"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [rankMenuOpen, setRankMenuOpen] = useState(false)
   const [user, setUser] = useState({ name: "", avatar: "" })
   const [input, setInput] = useState("")
   const [isLogin, setIsLogin] = useState(false)
+  const menuRef = useRef(null)
+  const navigate = useNavigate()
   const [searchResults, setSearchResults] = useState([])
   const [showSearchResults, setShowSearchResults] = useState(false)
-  const [isSuggestionSelected, setIsSuggestionSelected] = useState(false)
-
-  const menuRef = useRef(null)
   const searchResultsRef = useRef(null)
-  const navigate = useNavigate()
+  const rankRef = useRef(null)
+  const [rankData, setRankData] = useState(null)
+  const [isSuggestionSelected, setIsSuggestionSelected] = useState(false)
   const debouncedInput = useDebounce(input, 500)
+
+  const rankImages = import.meta.glob('../../assets/ranks/*-removebg.png', {
+    eager: true,
+    import: 'default'
+  });
 
   useEffect(() => {
     const checkLoginStatus = () => {
@@ -51,9 +56,45 @@ const Header = () => {
     }
   }, [])
 
-  const handleChange = e => {
-    setInput(e.target.value)
+  useEffect(() => {
+    const fetchRank = async () => {
+      const accountId = localStorage.getItem("accountId")
+      if (!accountId) return
+
+      try {
+        const res = await fetch(`http://localhost:8082/api/ranks?accountId=${accountId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setRankData(data)
+        }
+      } catch (err) {
+        console.error("Error fetching rank:", err)
+      }
+    }
+
+    if (isLogin) fetchRank()
+  }, [isLogin])
+
+  const rankText = (rank) => {
+    switch (rank) {
+      case 1: return "Copper"
+      case 2: return "Silver"
+      case 3: return "Golden"
+      case 4: return "Diamond"
+      default: return "Unranked"
+    }
+  }
+  const handleChange = (e) => {
+    const value = e.target.value
+    setInput(value)
     setIsSuggestionSelected(false)
+    if (value.trim() !== "") {
+      fetchSearchResults(value)
+      setShowSearchResults(true)
+    } else {
+      setSearchResults([])
+      setShowSearchResults(false)
+    }
   }
 
   const fetchSearchResults = async searchTerm => {
@@ -63,6 +104,7 @@ const Header = () => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `input=${encodeURIComponent(searchTerm)}`,
       })
+      
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.content || [])
@@ -84,7 +126,6 @@ const Header = () => {
       setShowSearchResults(false)
     }
   }, [debouncedInput])
-
   const handleSearch = () => {
     if (isSuggestionSelected) {
       setIsSuggestionSelected(false)
@@ -97,17 +138,26 @@ const Header = () => {
 
   const toggleMenu = () => setIsMenuOpen(prev => !prev)
 
-  const handleClickOutside = event => {
+  const handleClickOutside = (event) => {
     if (
       menuRef.current &&
-      !menuRef.current.contains(event.target) &&
+      !menuRef.current.contains(event.target)
+    ) {
+      setIsMenuOpen(false)
+    }
+
+    if (
       searchResultsRef.current &&
       !searchResultsRef.current.contains(event.target)
     ) {
-      setIsMenuOpen(false)
       setShowSearchResults(false)
-    } else if (searchResultsRef.current && !searchResultsRef.current.contains(event.target)) {
-      setShowSearchResults(false)
+    }
+
+    if (
+      rankRef.current &&
+      !rankRef.current.contains(event.target)
+    ) {
+      setRankMenuOpen(false)
     }
   }
 
@@ -224,8 +274,10 @@ const Header = () => {
           )}
         </div>
 
-        {/* 4. ICON GIỎ HÀNG & TÀI KHOẢN */}
+        {/* 4. ICON GIỎ HÀNG & TÀI KHOẢN + RANK */}
         <div className="flex items-center gap-6 flex-shrink-0">
+
+            {/* CART */}
             <button
                 className="relative text-gray-600 hover:text-cyan-700 transition-colors flex flex-col items-center justify-center"
                 onClick={() => navigate("/cart")}
@@ -234,37 +286,65 @@ const Header = () => {
                 <span className="text-xs mt-1 hidden lg:block">Giỏ hàng</span>
             </button>
 
-            <div className="relative flex items-center gap-2 cursor-pointer group" onClick={toggleMenu} ref={menuRef}>
-                <img
-                    className="w-8 h-8 rounded-full border border-gray-200 object-cover"
-                    src={isLogin ? user.avatar : GUEST}
-                    alt="Profile"
-                />
-                <div className="hidden lg:flex flex-col">
-                    <span className="text-xs text-gray-500">Tài khoản</span>
-                    <span className="text-sm font-medium text-gray-700 truncate max-w-[100px]">
-                        {isLogin ? user.name : "Khách"}
-                    </span>
-                    <FaChevronDown className="text-xs ml-1 absolute right-[-15px] top-1/2 -translate-y-1/2 text-gray-400"/>
+            {/* AVATAR + USER MENU + RANK */}
+            <div className="relative flex items-center gap-4" ref={menuRef}>
+
+              {/* USER NAME (khi login) */}
+              {isLogin && <span className="hidden lg:block text-gray-700 font-medium truncate max-w-[120px]">{user.name}</span>}
+
+              {/* AVATAR (click để mở menu) */}
+              <img
+                  className="w-10 h-10 rounded-full border border-gray-200 object-cover cursor-pointer"
+                  src={isLogin ? user.avatar : GUEST}
+                  alt="Profile"
+                  onClick={toggleMenu}
+              />
+
+              {/* USER MENU */}
+              {isMenuOpen && (
+                  <div className="absolute right-0 top-full mt-3 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 py-2">
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(isLogin ? "/profile" : "/login")}>
+                          Trang cá nhân
+                      </button>
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/orderHistory" : "/login")}>
+                          Lịch sử mua hàng
+                      </button>
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}>
+                          Địa chỉ nhận hàng
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 text-sm" onClick={handleLogout}>
+                          {isLogin ? "Đăng xuất" : "Đăng nhập"}
+                      </button>
+                  </div>
+              )}
+
+              {/* RANK ICON (chỉ hiển thị khi login) */}
+              {isLogin && rankData && (
+                <div
+                  ref={rankRef}
+                  className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setRankMenuOpen(prev => !prev)}
+                >
+                  <img
+                    src={rankImages[`../../assets/ranks/${rankText(rankData.rank)}-removebg.png`]}
+                    className="w-8 h-8 object-contain"
+                    alt="rank"
+                  />
                 </div>
-                
-                {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-3 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 py-2">
-                        <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/profile" : "/login")}>
-                            Trang cá nhân
-                        </button>
-                        <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/orderHistory" : "/login")}>
-                            Lịch sử mua hàng
-                        </button>
-                        <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}>
-                            Địa chỉ nhận hàng
-                        </button>
-                        <div className="border-t border-gray-100 my-1"></div>
-                        <button className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 text-sm" onClick={handleLogout}>
-                            {isLogin ? "Đăng xuất" : "Đăng nhập"}
-                        </button>
-                    </div>
-                )}
+              )}
+
+              {/* RANK PANEL */}
+              {rankMenuOpen && rankData && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-xl z-50 p-4">
+                  <div className="font-bold text-xl text-gray-800">
+                    Hạng: {rankText(rankData.rank)}
+                  </div>
+                  <div className="text-gray-600 mt-2">
+                    Điểm tích lũy: <span className="font-semibold text-lg">{rankData.points}</span>
+                  </div>
+                </div>
+              )}
             </div>
         </div>
       </div>

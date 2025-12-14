@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   fetchBookDetail,
   fetchRecommendations,
-  fetchAlsoBought, // ⬅️ THAY ĐỔI: Import hàm mới
+  fetchCollaborativeRecs,
   fetchReviews,
   fetchAnalytics,
   fetchAccount,
@@ -18,11 +18,7 @@ const BACKEND_BOOK_API = "http://localhost:8081/api/book";
 export const useBookDetail = (id, navigate) => {
   const [book, setBook] = useState(null);
   const [recommendedBooks, setRecommendedBooks] = useState([]);
-  // -----------------------------------------------------------------
-  // ⬇️ THAY ĐỔI: Đổi tên state cho rõ ràng
-  // -----------------------------------------------------------------
-  const [alsoBoughtBooks, setAlsoBoughtBooks] = useState([]); 
-  // -----------------------------------------------------------------
+  const [collaborativeBooks, setCollaborativeBooks] = useState([]);
   const [booksByAuthor, setBooksByAuthor] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [reviewsWithUserData, setReviewsWithUserData] = useState([]);
@@ -35,6 +31,9 @@ export const useBookDetail = (id, navigate) => {
   const [modalContent, setModalContent] = useState("");
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [mainImageIndex, setMainImageIndex] = useState(0);
+
+  // ✅ Biến accountId này đã được lấy ở đây rồi
+  const accountId = localStorage.getItem("accountId");
 
   const openModal = useCallback((content) => {
     setModalContent(content);
@@ -50,6 +49,7 @@ export const useBookDetail = (id, navigate) => {
   };
 
   const fetchUserDataForReviews = async (reviewsData) => {
+    // ... (giữ nguyên code cũ) ...
     try {
       const data = await Promise.all(
         reviewsData.map(async (review) => {
@@ -94,11 +94,7 @@ export const useBookDetail = (id, navigate) => {
       setError(null);
       setBooksByAuthor([]);
       setRecommendedBooks([]);
-      // -----------------------------------------------------------------
-      // ⬇️ THAY ĐỔI: Reset state mới
-      // -----------------------------------------------------------------
-      setAlsoBoughtBooks([]);
-      // -----------------------------------------------------------------
+      setCollaborativeBooks([]);
       setMainImageIndex(0);
       setQuantity(1);
 
@@ -109,6 +105,8 @@ export const useBookDetail = (id, navigate) => {
           { data: analyticsData },
         ] = await Promise.all([
           fetchBookDetail(id),
+          // ✅ Ở đây dùng accountId lấy từ dòng 35, không bị lỗi nữa
+          fetchRecommendations(id, accountId), 
           fetchReviews(id),
           fetchAnalytics(id),
         ]);
@@ -136,38 +134,40 @@ export const useBookDetail = (id, navigate) => {
           console.error("Lỗi khi lấy gợi ý AI (similar-to):", recErr);
           setRecommendedBooks([]);
         }
+        // ⬇️ LOGIC MỚI: "NGƯỜI KHÁC CŨNG MUA" (Collaborative) ⬇️
+        
+        // ❌ XÓA DÒNG NÀY ĐI (đây là nguyên nhân gây lỗi)
+        // const accountId = localStorage.getItem("accountId"); 
 
-        // -----------------------------------------------------------------
-        // ⬇️ THAY ĐỔI: LOGIC MỚI "NGƯỜI KHÁC CŨNG MUA" (Also-Bought)
-        // -----------------------------------------------------------------
-        try {
-          // Chỉ cần 'id' của sách hiện tại
-          const { data: aiAlsoBoughtRecs } = await fetchAlsoBought(id);
-            
-          if (aiAlsoBoughtRecs && aiAlsoBoughtRecs.length > 0) {
-              const bookDetailPromises = aiAlsoBoughtRecs.map(rec => 
-                  axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
-              );
-              
-              const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
-              
-              const fullBookObjects = bookDetailResponses
-                  .filter(res => res.status === 'fulfilled' && res.value.data)
-                  .map(res => res.value.data)
-                  // Lọc bỏ cuốn sách đang xem ra khỏi danh sách
-                  .filter(book => book.bookId !== id); 
-                  
-              setAlsoBoughtBooks(fullBookObjects); // ⬅️ SET STATE MỚI
-          }
-        } catch (collabErr) {
-            console.error("Lỗi khi lấy gợi ý AI (also-bought):", collabErr);
-            setAlsoBoughtBooks([]);
+        // ✅ Code ở dưới sẽ tự động dùng biến accountId ở dòng 35
+        if (accountId) { 
+            try {
+                const { data: aiCollabRecs } = await fetchCollaborativeRecs(accountId);
+                
+                if (aiCollabRecs && aiCollabRecs.length > 0) {
+                    const bookDetailPromises = aiCollabRecs.map(rec => 
+                        axios.get(`${BACKEND_BOOK_API}/${rec.bookId}`)
+                    );
+                    
+                    const bookDetailResponses = await Promise.allSettled(bookDetailPromises);
+                    
+                    const fullBookObjects = bookDetailResponses
+                        .filter(res => res.status === 'fulfilled' && res.value.data)
+                        .map(res => res.value.data)
+                        .filter(book => book.bookId !== id); 
+                        
+                    setCollaborativeBooks(fullBookObjects);
+                }
+            } catch (collabErr) {
+                console.error("Lỗi khi lấy gợi ý AI (for-user):", collabErr);
+                setCollaborativeBooks([]);
+            }
         }
         // -----------------------------------------------------------------
         // ⬆️ KẾT THÚC LOGIC MỚI ⬆️
         // -----------------------------------------------------------------
 
-        // Logic Sách cùng tác giả (giữ nguyên)
+        // ... (Phần còn lại giữ nguyên) ...
         if (bookData && bookData.bookAuthor) {
           try {
             const { data: authorBooksPage } = await fetchBooksByAuthorService(
@@ -194,7 +194,13 @@ export const useBookDetail = (id, navigate) => {
     };
 
     fetchData();
-  }, [id, openModal]);
+  }, [id, openModal, accountId]); // Thêm accountId vào dependency array cho chuẩn
+
+  // ... (Các hàm increaseQty, decreaseQty, addToCart... giữ nguyên) ...
+  // Lưu ý: Trong hàm addToCart cũng có khai báo lại accountId, 
+  // nhưng ở đó nó nằm trong hàm riêng biệt nên không sao.
+  // Tuy nhiên tốt nhất là xóa luôn dòng `const accountId...` trong addToCart 
+  // và dùng biến chung ở trên cùng.
 
   const increaseQty = useCallback(() => {
     if (book && quantity < book.bookStockQuantity) setQuantity((q) => q + 1);
@@ -206,12 +212,13 @@ export const useBookDetail = (id, navigate) => {
 
   const addToCart = async () => {
     if (!book) return;
-    const accountId = localStorage.getItem("accountId");
+    // const accountId = localStorage.getItem("accountId"); // Có thể xóa dòng này luôn cũng được
     if (!accountId) {
       openModal("Bạn cần đăng nhập để thêm vào giỏ hàng!");
       navigate("/login");
       return;
     }
+    // ... code còn lại ...
     if (book.bookStockQuantity <= 0) {
       openModal("Sách này đã hết hàng!");
       return;
@@ -264,7 +271,7 @@ export const useBookDetail = (id, navigate) => {
   
   const fetchBookSummary = async () => {
     if (book) {
-      const accountId = localStorage.getItem("accountId");
+      // trackClickSummary dùng accountId global OK
       trackClickSummary(book.bookId, accountId).catch(err => {
         console.warn("Lỗi khi tracking summary click:", err);
       });
@@ -284,11 +291,7 @@ export const useBookDetail = (id, navigate) => {
   return {
     book,
     recommendedBooks,
-    // -----------------------------------------------------------------
-    // ⬇️ THAY ĐỔI: Trả state mới ra
-    // -----------------------------------------------------------------
-    alsoBoughtBooks,
-    // -----------------------------------------------------------------
+    collaborativeBooks,
     booksByAuthor,
     reviews,
     reviewsWithUserData,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -8,13 +8,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Grid,
-  FormControlLabel,
-  Checkbox
 } from '@mui/material';
 import axios from 'axios';
 
-const AddVoucher = ({ onClose }) => {
+const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
   const [formData, setFormData] = useState({
     code: '',
     voucherType: '',
@@ -23,46 +20,46 @@ const AddVoucher = ({ onClose }) => {
     highestDiscountValue: '',
     minOrderValue: '',
     usageLimit: '',
-    userUsageLimit: '',
     startDate: '',
     endDate: '',
-    publish: false,
+    rank: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (selectedVoucher) {
+      setFormData({
+        code: selectedVoucher.code,
+        voucherType: selectedVoucher.voucherType,
+        percentageDiscount: selectedVoucher.percentageDiscount,
+        valueDiscount: selectedVoucher.valueDiscount,
+        highestDiscountValue: selectedVoucher.highestDiscountValue,
+        minOrderValue: selectedVoucher.minOrderValue,
+        usageLimit: selectedVoucher.usageLimit,
+        startDate: new Date(selectedVoucher.startDate).toISOString().split('T')[0],
+        endDate: new Date(selectedVoucher.endDate).toISOString().split('T')[0],
+        rank: selectedVoucher.rank,
+      });
+    }
+  }, [selectedVoucher]);
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const parsedValue = name.includes("Value") || name.includes("Limit") ? Number(value) || '' : value;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : parsedValue,
-    });
+    const { name, value } = e.target;
+    const val = name.includes("Discount") || name.includes("Value") || name === "usageLimit" || name === "rank" ? Number(value) || '' : value;
+    setFormData({ ...formData, [name]: val });
     setError('');
   };
 
-  const handleAdd = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     try {
-      const response = await axios.post('http://localhost:8082/api/vouchers', formData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log('Voucher added successfully:', response.data); // Log response for debugging
-      onClose(); // Call onClose to close the modal
+      await axios.put(`http://localhost:8082/api/vouchers/rank/${selectedVoucher.id}`, formData);
+      onClose();
     } catch (error) {
-      console.error('Error adding voucher:', {
-        message: error.message,
-        response: error.response ? {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers,
-        } : 'No response received',
-      });
-      setError(error.response?.data?.message || error.message || 'Error adding voucher. Please check the console for details.');
+      console.error('Error updating rank voucher:', error);
+      setError('Error updating rank voucher.');
     } finally {
       setIsLoading(false);
     }
@@ -74,11 +71,11 @@ const AddVoucher = ({ onClose }) => {
         className="bg-white p-6 rounded-lg w-full max-w-3xl"
         style={{ maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <Typography variant="h6" mb={2}>Add New Voucher</Typography>
+        <Typography variant="h6" mb={2}>Update Rank Voucher</Typography>
         {error && <Typography color="error">{error}</Typography>}
-        <form onSubmit={handleAdd}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+        <form onSubmit={handleUpdate}>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <Box flex={1} minWidth="300px">
               <TextField
                 label="Code"
                 name="code"
@@ -130,6 +127,9 @@ const AddVoucher = ({ onClose }) => {
                 onChange={handleChange}
                 margin="normal"
               />
+            </Box>
+
+            <Box flex={1} minWidth="300px">
               <TextField
                 label="Min Order Value"
                 name="minOrderValue"
@@ -139,9 +139,6 @@ const AddVoucher = ({ onClose }) => {
                 onChange={handleChange}
                 margin="normal"
               />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
               <TextField
                 label="Usage Limit"
                 name="usageLimit"
@@ -152,11 +149,11 @@ const AddVoucher = ({ onClose }) => {
                 margin="normal"
               />
               <TextField
-                label="User Usage Limit"
-                name="userUsageLimit"
+                label="Rank"
+                name="rank"
                 type="number"
                 fullWidth
-                value={formData.userUsageLimit}
+                value={formData.rank}
                 onChange={handleChange}
                 margin="normal"
               />
@@ -182,23 +179,13 @@ const AddVoucher = ({ onClose }) => {
                 margin="normal"
                 InputLabelProps={{ shrink: true }}
               />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="publish"
-                    checked={formData.publish}
-                    onChange={handleChange}
-                  />
-                }
-                label="Publish"
-              />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
-          <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+          <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
             <Button onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-              {isLoading ? 'Adding...' : 'Add'}
+              {isLoading ? 'Updating...' : 'Update'}
             </Button>
           </Box>
         </form>
@@ -207,4 +194,4 @@ const AddVoucher = ({ onClose }) => {
   );
 };
 
-export default AddVoucher;
+export default UpdateRankVoucher;
