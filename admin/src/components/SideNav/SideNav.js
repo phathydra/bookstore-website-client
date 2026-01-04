@@ -49,6 +49,9 @@ const SideNav = ({ onToggleCollapse }) => {
           <a href="/combo-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
             <FaTicketAlt /> {!isCollapsed && <span>Quản lý combo</span>}
           </a>
+          <a href="/banner-management" className="flex items-center space-x-3 py-2 hover:bg-gray-700 rounded">
+            <FaTicketAlt /> {!isCollapsed && <span>Quản lý banner</span>}
+          </a>
         </nav>
       </div>
     </aside>

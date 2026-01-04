@@ -21,7 +21,9 @@ import ChangePassword from "../pages/profile/changePassword";
 import VouchersWallet from "../pages/profile/vouchersWallet";
 import ChatPage from "../pages/ChatPage/ChatPage";
 import ComboDetailsPage from '../pages/ComboDetailsPage/ComboDetailsPage';
-
+import ComboPage from '../pages/combo/ComboPage';
+import PromotionPage from "../pages/PromotionPage/PromotionPage";
+import FlashSalePage from "../pages/flash-sale/FlashSalePage";
 
 const Layout = ({ children }) => (
   <>
@@ -56,6 +58,9 @@ const App = () => {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/map-view" element={<MapView />} />
           <Route path="/combo/:comboId" element={<ComboDetailsPage />} />
+          <Route path="/combos" element={<ComboPage />} />
+          <Route path="/banner" element={<PromotionPage />} />
+          <Route path="/flash-sale" element={<FlashSalePage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

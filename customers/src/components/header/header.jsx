@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaSearch, FaShoppingCart } from "react-icons/fa"
+import { FaSearch, FaShoppingCart, FaThLarge, FaChevronDown } from "react-icons/fa"
 import logo from "../../assets/logo.png"
 import GUEST from "../../assets/GUEST.jpg"
 import { useDebounce } from "./hooks/useDebounce"
 import { trackSearch } from "../../pages/bookdetail/services/bookService"
+import SideNav from "../SideNav/SideNav"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -179,53 +180,72 @@ const Header = () => {
   }
 
   return (
-    <header className="h-16 flex items-center justify-between px-5 bg-cyan-100 shadow-md relative">
-      
-      {/* LEFT */}
-      <div className="flex items-center space-x-6">
-        <div className="cursor-pointer" onClick={() => navigate("/")}>
-          <img src={logo || "/placeholder.svg"} alt="Logo" className="w-24" />
+    <header className="h-20 bg-white shadow-md relative z-40">
+      <div className="container mx-auto h-full px-4 flex items-center justify-between gap-4">
+        
+        {/* 1. LOGO */}
+        <div className="cursor-pointer flex-shrink-0" onClick={() => navigate("/")}>
+          <img src={logo || "/placeholder.svg"} alt="Logo" className="w-24 md:w-32 object-contain" />
         </div>
-        <nav className="flex gap-5">
-          <button className="text-gray-700 hover:text-blue-500" onClick={() => navigate("/")}>
-            Trang chủ
-          </button>
-          <button className="text-gray-700 hover:text-blue-500" onClick={() => navigate("/products?searchParam=")}>
-            Sản phẩm
-          </button>
-          <button className="text-gray-700 hover:text-blue-500" onClick={() => navigate("/category/someCategory")}>
-            Danh mục
-          </button>
-        </nav>
-      </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-x-6 pr-10">
+        {/* 2. GROUP: DANH MỤC + NAVIGATION LINKS */}
+        <div className="flex items-center gap-6">
+            {/* Danh mục Dropdown */}
+            <div className="relative group h-10 hidden md:block z-50">
+                <button className="flex items-center gap-2 px-2 py-2 text-gray-700 hover:text-cyan-700 font-bold transition-colors h-full cursor-pointer">
+                    <FaThLarge className="text-xl" />
+                    <span className="text-sm lg:text-base">Danh mục</span>
+                    <FaChevronDown className="text-xs mt-1 transition-transform group-hover:rotate-180"/>
+                </button>
 
-        {/* SEARCH */}
-        <div className="relative flex items-center w-full max-w-lg" ref={searchResultsRef}>
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            value={input}
-            className="px-6 py-3 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-100 w-500 h-12"
-          />
-          <button
-            onClick={handleSearch}
-            className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500"
-          >
-            <FaSearch />
-          </button>
+                <div className="absolute top-full left-0 pt-0 hidden group-hover:block transition-all duration-200 w-64">
+                    <SideNav />
+                </div>
+            </div>
+
+            {/* --- MỚI THÊM: CÁC NÚT ĐIỀU HƯỚNG (Trang chủ, Sản phẩm) --- */}
+            <nav className="hidden xl:flex items-center gap-5 font-medium text-gray-600">
+                <button 
+                    onClick={() => navigate("/")} 
+                    className="hover:text-cyan-700 transition-colors"
+                >
+                    Trang chủ
+                </button>
+                <button 
+                    onClick={() => navigate("/products?searchParam=")} 
+                    className="hover:text-cyan-700 transition-colors"
+                >
+                    Sản phẩm
+                </button>
+            </nav>
+        </div>
+
+        {/* 3. THANH TÌM KIẾM */}
+        <div className="relative flex-grow max-w-lg mx-4" ref={searchResultsRef}>
+          <div className="flex items-center border-2 border-cyan-700 rounded-lg overflow-hidden h-10 bg-white">
+            <input
+                type="text"
+                placeholder="Tìm kiếm sách, tác giả..."
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                value={input}
+                className="flex-grow px-4 py-2 outline-none text-gray-700 bg-transparent"
+            />
+            <button
+                onClick={handleSearch}
+                className="bg-cyan-700 text-white px-6 py-2 hover:bg-cyan-800 transition-colors h-full flex items-center justify-center"
+            >
+                <FaSearch />
+            </button>
+          </div>
 
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-[60]">
               <ul>
                 {searchResults.map(book => (
                   <li
                     key={book.bookId}
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
                     onClick={() => {
                       setInput(book.bookName)
                       setShowSearchResults(false)
@@ -236,103 +256,96 @@ const Header = () => {
                     <img
                       src={book.bookImage || "https://via.placeholder.com/40"}
                       alt={book.bookName}
-                      className="w-10 h-14 object-cover rounded-md"
+                      className="w-10 h-14 object-cover rounded shadow-sm"
                     />
-                    <span className="text-gray-800">
-                      {book.bookName}
-                      {book.bookAuthor && <span className="text-gray-600 ml-1">({book.bookAuthor})</span>}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-gray-800 font-medium text-sm line-clamp-1">{book.bookName}</span>
+                        {book.bookAuthor && <span className="text-gray-500 text-xs">({book.bookAuthor})</span>}
+                    </div>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-
-          {showSearchResults && searchResults.length === 0 && input.trim() !== "" && (
+            {showSearchResults && searchResults.length === 0 && input.trim() !== "" && (
             <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-lg z-50">
               <div className="px-4 py-2 text-gray-500">Không tìm thấy sách nào.</div>
             </div>
           )}
         </div>
 
-        {/* CART ICON */}
-        <button
-          className="relative text-gray-700 hover:text-blue-500"
-          onClick={() => navigate("/cart")}
-        >
-          <FaShoppingCart className="text-2xl" />
-        </button>
+        {/* 4. ICON GIỎ HÀNG & TÀI KHOẢN + RANK */}
+        <div className="flex items-center gap-6 flex-shrink-0">
 
-        {/* RANK + AVATAR */}
-        <div className="relative flex items-center gap-x-4" ref={menuRef}>
-
-          {/* USER NAME */}
-          {isLogin && <span className="text-gray-700 font-medium">{user.name}</span>}
-
-          {/* AVATAR */}
-          <img
-            className="w-10 h-10 rounded-full cursor-pointer"
-            src={isLogin ? user.avatar : GUEST}
-            alt="Profile"
-            onClick={toggleMenu}
-          />
-
-          {/* USER MENU */}
-          {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-40 bg-white border rounded-md shadow-lg z-50">
-              <button
-                className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(isLogin ? "/profile" : "/login")}
-              >
-                Trang cá nhân
-              </button>
-              <button
-                className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(localStorage.getItem("accountId") ? "/orderHistory" : "/login")}
-              >
-                Lịch sử mua hàng
-              </button>
-              <button
-                className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}
-              >
-                Địa chỉ nhận hàng
-              </button>
-              <button
-                className="block w-full px-4 py-2 text-left bg-red-500 text-white hover:bg-red-600"
-                onClick={handleLogout}
-              >
-                {isLogin ? "Đăng xuất" : "Đăng nhập"}
-              </button>
-            </div>
-          )}
-
-          {/* RANK ICON */}
-          {isLogin && rankData && (
-            <div
-              ref={rankRef}
-              className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer"
-              onClick={() => setRankMenuOpen((prev) => !prev)}
+            {/* CART */}
+            <button
+                className="relative text-gray-600 hover:text-cyan-700 transition-colors flex flex-col items-center justify-center"
+                onClick={() => navigate("/cart")}
             >
-              <img
-                src={rankImages[`../../assets/ranks/${rankText(rankData.rank)}-removebg.png`]}
-                className="w-7 h-7 object-cover"
-                alt="rank"
-              />
-            </div>
-          )}
+                <FaShoppingCart className="text-2xl" />
+                <span className="text-xs mt-1 hidden lg:block">Giỏ hàng</span>
+            </button>
 
-          {/* RANK PANEL */}
-          {rankMenuOpen && rankData && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border rounded-md shadow-lg z-50 p-3">
-              <div className="font-semibold text-gray-700 text-lg">
-                {rankText(rankData.rank)}
-              </div>
-              <div className="text-gray-600 text-sm mt-1">
-                Điểm tích lũy: <span className="font-medium">{rankData.points}</span>
-              </div>
+            {/* AVATAR + USER MENU + RANK */}
+            <div className="relative flex items-center gap-4" ref={menuRef}>
+
+              {/* USER NAME (khi login) */}
+              {isLogin && <span className="hidden lg:block text-gray-700 font-medium truncate max-w-[120px]">{user.name}</span>}
+
+              {/* AVATAR (click để mở menu) */}
+              <img
+                  className="w-10 h-10 rounded-full border border-gray-200 object-cover cursor-pointer"
+                  src={isLogin ? user.avatar : GUEST}
+                  alt="Profile"
+                  onClick={toggleMenu}
+              />
+
+              {/* USER MENU */}
+              {isMenuOpen && (
+                  <div className="absolute right-0 top-full mt-3 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 py-2">
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(isLogin ? "/profile" : "/login")}>
+                          Trang cá nhân
+                      </button>
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/orderHistory" : "/login")}>
+                          Lịch sử mua hàng
+                      </button>
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}>
+                          Địa chỉ nhận hàng
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 text-sm" onClick={handleLogout}>
+                          {isLogin ? "Đăng xuất" : "Đăng nhập"}
+                      </button>
+                  </div>
+              )}
+
+              {/* RANK ICON (chỉ hiển thị khi login) */}
+              {isLogin && rankData && (
+                <div
+                  ref={rankRef}
+                  className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setRankMenuOpen(prev => !prev)}
+                >
+                  <img
+                    src={rankImages[`../../assets/ranks/${rankText(rankData.rank)}-removebg.png`]}
+                    className="w-8 h-8 object-contain"
+                    alt="rank"
+                  />
+                </div>
+              )}
+
+              {/* RANK PANEL */}
+              {rankMenuOpen && rankData && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-xl z-50 p-4">
+                  <div className="font-bold text-xl text-gray-800">
+                    Hạng: {rankText(rankData.rank)}
+                  </div>
+                  <div className="text-gray-600 mt-2">
+                    Điểm tích lũy: <span className="font-semibold text-lg">{rankData.points}</span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
         </div>
       </div>
     </header>

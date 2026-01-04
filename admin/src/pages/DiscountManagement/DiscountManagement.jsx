@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination,
-    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper, Select, MenuItem, FormControl, InputLabel
+    Button, Box, TextField, List, ListItem, ListItemText, IconButton, Drawer, Popper, Select, MenuItem, FormControl, InputLabel, Chip
 } from '@mui/material';
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
@@ -15,6 +15,7 @@ import { useFetchDiscount } from './hooks/useFetchDiscount';
 import { useFetchExpiredDiscount } from './hooks/useFetchExpiredDiscount';
 import { useFetchActiveDiscount } from './hooks/useFetchActiveDiscount';
 import { useFetchUpcomingDiscount } from './hooks/useFetchUpcomingDiscount';
+import FlashOnIcon from '@mui/icons-material/FlashOn'; // Icon tia sét cho Flash Sale
 
 const DiscountManagement = () => {
     const [discounts, setDiscounts] = useState({});
@@ -42,6 +43,16 @@ const DiscountManagement = () => {
     const activeDiscounts = useFetchActiveDiscount(status, page, rowsPerPage);
     const upcomingDiscounts = useFetchUpcomingDiscount(status, page, rowsPerPage);
 
+    // Fetch Flash Sales riêng lẻ (hoặc bạn có thể tạo hook tương tự các cái kia)
+    const fetchFlashSales = useCallback(async () => {
+        try {
+            const response = await axios.get(`http://localhost:8081/api/discounts/flash-sales?page=${page}&size=${rowsPerPage}`);
+            setDiscounts(response.data);
+        } catch (err) {
+            console.error(err);
+        }
+    }, [page, rowsPerPage]);
+
     useEffect(() => {
         if (status === 'ALL') {
             setDiscounts(allDiscounts);
@@ -51,9 +62,11 @@ const DiscountManagement = () => {
             setDiscounts(activeDiscounts);
         } else if (status === 'UPCOMING') {
             setDiscounts(upcomingDiscounts);
+        } else if (status === 'FLASH_SALE') {
+            fetchFlashSales();
         }
         setError('');
-    }, [allDiscounts, expiredDiscounts, activeDiscounts, upcomingDiscounts, status]);
+    }, [allDiscounts, expiredDiscounts, activeDiscounts, upcomingDiscounts, status, fetchFlashSales]);
 
     const fetchRecommendedBooks = useCallback(async (query) => {
         if (!query) {
@@ -223,6 +236,8 @@ const DiscountManagement = () => {
                 await axios.delete(`http://localhost:8081/api/discounts/${id}`);
                 setIsDetailDrawerOpen(false);
                 setSelectedDiscount(null);
+                // Refresh list logic here (e.g. reload or refetch)
+                window.location.reload(); 
             } catch (error) {
                 console.error('Error deleting discount:', error);
                 setError('Failed to delete discount. Please try again.');
@@ -245,6 +260,15 @@ const DiscountManagement = () => {
         setPage(0);
     };
 
+    // Helper format date
+    const formatDate = (dateString, type) => {
+        const date = new Date(dateString);
+        if (type === 'FLASH_SALE') {
+            return date.toLocaleString(); // Hiển thị cả giờ phút
+        }
+        return date.toLocaleDateString(); // Chỉ hiển thị ngày
+    };
+
     return (
         <div className="flex h-screen">
             <div
@@ -264,7 +288,7 @@ const DiscountManagement = () => {
                                 Discount List
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 2 }}>
-                                <FormControl sx={{ minWidth: 120 }}>
+                                <FormControl sx={{ minWidth: 150 }}>
                                     <InputLabel>Status</InputLabel>
                                     <Select
                                         value={status}
@@ -275,6 +299,9 @@ const DiscountManagement = () => {
                                         <MenuItem value="EXPIRED">Expired</MenuItem>
                                         <MenuItem value="ACTIVE">Active</MenuItem>
                                         <MenuItem value="UPCOMING">Upcoming</MenuItem>
+                                        <MenuItem value="FLASH_SALE" sx={{ color: 'orange', fontWeight: 'bold' }}>
+                                            <FlashOnIcon fontSize="small" /> Flash Sale
+                                        </MenuItem>
                                     </Select>
                                 </FormControl>
                                 <Button
@@ -297,6 +324,7 @@ const DiscountManagement = () => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>ID</TableCell>
+                                        <TableCell>Type</TableCell> {/* New Column */}
                                         <TableCell>Phần trăm</TableCell>
                                         <TableCell>Ngày bắt đầu</TableCell>
                                         <TableCell>Ngày kết thúc</TableCell>
@@ -312,9 +340,16 @@ const DiscountManagement = () => {
                                             style={{ cursor: 'pointer' }}
                                         >
                                             <TableCell>{discount.id}</TableCell>
+                                            <TableCell>
+                                                {discount.type === 'FLASH_SALE' ? (
+                                                    <Chip icon={<FlashOnIcon />} label="Flash Sale" color="warning" size="small" />
+                                                ) : (
+                                                    <Chip label="Normal" color="default" size="small" />
+                                                )}
+                                            </TableCell>
                                             <TableCell>{discount.percentage}%</TableCell>
-                                            <TableCell>{new Date(discount.startDate).toLocaleDateString()}</TableCell>
-                                            <TableCell>{new Date(discount.endDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>{formatDate(discount.startDate, discount.type)}</TableCell>
+                                            <TableCell>{formatDate(discount.endDate, discount.type)}</TableCell>
                                             <TableCell>
                                                 <Button
                                                     variant="contained"
@@ -345,6 +380,7 @@ const DiscountManagement = () => {
                     </Box>
                 </div>
 
+                {/* Keep existing Drawers (Apply, Detail) here... */}
                 {/* Drawer for applying discount */}
                 <Drawer
                     anchor="right"
@@ -356,10 +392,11 @@ const DiscountManagement = () => {
                         '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' },
                     }}
                 >
+                    {/* ... (Giữ nguyên nội dung Drawer Apply như cũ) ... */}
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Apply {selectedDiscount?.percentage}% Discount
                     </Typography>
-                    <div>
+                     <div>
                         <TextField
                             fullWidth
                             label="Search Books"
@@ -377,7 +414,7 @@ const DiscountManagement = () => {
                         </Button>
                     </div>
 
-                    {/* Popper for Recommended Books */}
+                    {/* Popper for Recommended Books - Giữ nguyên */}
                     <Popper
                         open={recommendedBooks.length > 0}
                         anchorEl={anchorRef.current}
@@ -394,34 +431,10 @@ const DiscountManagement = () => {
                         ]}
                         sx={{ zIndex: 1300 }}
                     >
-                        <Paper
-                            elevation={4}
-                            sx={{
-                                backgroundColor: '#fff',
-                                marginTop: 1,
-                                border: '1px solid #ccc',
-                                width: 360,
-                            }}
-                        >
-                            <List
-                                sx={{
-                                    maxHeight: 200,
-                                    overflowY: 'auto',
-                                    borderRadius: 2,
-                                }}
-                            >
+                         <Paper elevation={4} sx={{ backgroundColor: '#fff', marginTop: 1, border: '1px solid #ccc', width: 360 }}>
+                            <List sx={{ maxHeight: 200, overflowY: 'auto', borderRadius: 2 }}>
                                 {recommendedBooks.map((book) => (
-                                    <ListItem
-                                        key={book.bookId}
-                                        button
-                                        onClick={() => handleBookSelect(book)}
-                                        sx={{
-                                            transition: 'background-color 0.2s ease',
-                                            '&:hover': {
-                                                backgroundColor: '#f5f5f5',
-                                            },
-                                        }}
-                                    >
+                                    <ListItem key={book.bookId} button onClick={() => handleBookSelect(book)} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                         <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
                                     </ListItem>
                                 ))}
@@ -435,10 +448,7 @@ const DiscountManagement = () => {
                                 <Typography variant="subtitle1">Selected Books:</Typography>
                                 <List>
                                     {selectedBooks.map((book) => (
-                                        <ListItem
-                                            key={book.bookId}
-                                            sx={{ border: '1px solid #ddd', borderRadius: 1, marginBottom: 1 }}
-                                        >
+                                        <ListItem key={book.bookId} sx={{ border: '1px solid #ddd', borderRadius: 1, marginBottom: 1 }}>
                                             <ListItemText primary={book.bookName} secondary={book.bookAuthor} />
                                             <IconButton onClick={() => handleRemoveBook(book.bookId)}>
                                                 <CloseIcon />
@@ -450,12 +460,7 @@ const DiscountManagement = () => {
                         )}
                     </Box>
 
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        sx={{ marginTop: 2 }}
-                        onClick={handleConfirmApplyDiscount}
-                    >
+                    <Button variant="contained" color="secondary" sx={{ marginTop: 2 }} onClick={handleConfirmApplyDiscount}>
                         Confirm
                     </Button>
                 </Drawer>
@@ -468,11 +473,7 @@ const DiscountManagement = () => {
                     sx={{
                         width: 400,
                         flexShrink: 0,
-                        '& .MuiDrawer-paper': {
-                            width: 400,
-                            boxSizing: 'border-box',
-                            padding: '20px'
-                        },
+                        '& .MuiDrawer-paper': { width: 400, boxSizing: 'border-box', padding: '20px' },
                     }}
                 >
                     <DiscountDetail

@@ -29,9 +29,11 @@ import {
     Checkbox,
 } from "@mui/material";
 
-// ĐỊNH NGHĨA CHUỖI TRẠNG THÁI MỚI VÀ CŨ
+// ĐỊNH NGHĨA CHUỖI TRẠNG THÁI
 const SHIPPING_STATUS_NEW = "Đã bàn giao cho ĐVVC";
-const SHIPPING_STATUS_OLD_SHIPPING = "Đang giao"; // Trạng thái này vẫn có thể tồn tại nếu không được gán ĐVVC
+const SHIPPING_STATUS_OLD_SHIPPING = "Đang giao";
+const STATUS_PENDING = "Chờ xử lý"; // Trạng thái chờ xác nhận
+const STATUS_CONFIRMED = "Đã nhận đơn"; // Trạng thái sau khi xác nhận
 
 const InvoiceManagement = () => {
     const [invoices, setInvoices] = useState([]);
@@ -50,12 +52,17 @@ const InvoiceManagement = () => {
     // --- CÁC STATE cho chức năng Đơn vị vận chuyển ---
     const [deliveryUnits, setDeliveryUnits] = useState([]);
     const [isDeliveryUnitDialogOpen, setIsDeliveryUnitDialogOpen] = useState(false);
-    const [selectedDeliveryUnitId, setSelectedDeliveryUnitId] = useState(null); // ID của đơn vị vận chuyển được chọn
-    const [selectedOrderIds, setSelectedOrderIds] = useState([]); // IDs của các đơn hàng được chọn
-    const [deliveryUnitMap, setDeliveryUnitMap] = useState({}); // Map: { id: name }
+    const [selectedDeliveryUnitId, setSelectedDeliveryUnitId] = useState(null);
+    const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+    const [deliveryUnitMap, setDeliveryUnitMap] = useState({});
     
-    // Biến cờ chỉ khi filterStatus là "Đã nhận đơn" (chờ gán ĐVVC)
-    const isAssignmentMode = filterStatus === "Đã nhận đơn";
+    // --- LOGIC MỚI: CHẾ ĐỘ HIỂN THỊ ---
+    // Chế độ gán vận chuyển (khi đang ở tab Đã nhận đơn)
+    const isAssignmentMode = filterStatus === STATUS_CONFIRMED;
+    // Chế độ xác nhận đơn (khi đang ở tab Chờ xử lý)
+    const isPendingMode = filterStatus === STATUS_PENDING;
+    // Cho phép hiện checkbox khi ở 1 trong 2 chế độ này
+    const showCheckboxes = isAssignmentMode || isPendingMode;
     // --------------------------------------------------
 
     const fetchInvoices = useCallback(async () => {
@@ -79,25 +86,21 @@ const InvoiceManagement = () => {
             setInvoices([]);
             setTotalInvoices(0);
         }
-    }, [page, rowsPerPage, filterStatus, searchQuery]); // Thêm dependencies
+    }, [page, rowsPerPage, filterStatus, searchQuery]);
 
-    // --- Hàm: Lấy danh sách đơn vị vận chuyển và tạo Map (Giữ nguyên) ---
     const fetchDeliveryUnits = async () => {
         try {
-            // Lấy danh sách các tài khoản Shipping có Role là DeliveryUnit
             const response = await axios.get("http://localhost:8084/api/shipping/delivery-units");
             const units = response.data || [];
 
-            // 1. Tạo Map: { id: name } (LƯU Ý: id ở đây là accountId)
             const unitMap = units.reduce((map, unit) => {
-                map[unit.accountId] = unit.email; // Hoặc sử dụng unit.name
+                map[unit.accountId] = unit.email;
                 return map;
             }, {});
             setDeliveryUnitMap(unitMap);
 
-            // 2. Lưu danh sách đơn vị để hiển thị trong Dialog
             setDeliveryUnits(units.map(unit => ({
-                id: unit.accountId, // SỬ DỤNG accountId LÀM ID CHÍNH XÁC
+                id: unit.accountId,
                 name: unit.email,
                 phoneNumber: unit.phone || 'N/A', 
             })) || []);
@@ -108,7 +111,6 @@ const InvoiceManagement = () => {
             setDeliveryUnitMap({});
         }
     };
-    // ----------------------------------------------------
 
     const fetchCancelRequests = async () => {
         try {
@@ -120,24 +122,49 @@ const InvoiceManagement = () => {
         }
     };
 
-
     useEffect(() => {
         fetchInvoices();
         fetchDeliveryUnits(); 
-
-        // Reset lựa chọn khi thay đổi trạng thái lọc
-        setSelectedOrderIds([]); 
-    }, [fetchInvoices]); // Sử dụng fetchInvoices đã được bọc trong useCallback
+        setSelectedOrderIds([]); // Reset lựa chọn khi load lại
+    }, [fetchInvoices]);
 
     useEffect(() => {
         fetchCancelRequests();
     }, []);
 
-    // Hàm mở chi tiết hóa đơn (chỉ được gọi khi click vào row)
     const handleSelectInvoice = (invoice) => {
         setSelectedInvoice(invoice);
         setIsDrawerOpen(true);
     };
+
+    // --- HÀM MỚI: XÁC NHẬN ĐƠN HÀNG HÀNG LOẠT ---
+    const handleBulkConfirmOrders = async () => {
+        if (selectedOrderIds.length === 0) {
+            alert("Vui lòng chọn ít nhất một đơn hàng để xác nhận.");
+            return;
+        }
+
+        const confirmMessage = `Bạn có chắc chắn muốn xác nhận ${selectedOrderIds.length} đơn hàng này không?`;
+        if (!window.confirm(confirmMessage)) return;
+
+        try {
+            // Duyệt qua danh sách ID đã chọn và gọi API update cho từng đơn
+            // Giả định API update trạng thái là shippingStatus="Đã nhận đơn"
+            const updatePromises = selectedOrderIds.map(orderId =>
+                axios.put(`http://localhost:8082/api/orders/update-shipping-status/${orderId}?shippingStatus=${STATUS_CONFIRMED}`)
+            );
+
+            await Promise.all(updatePromises);
+
+            alert(`Đã xác nhận thành công ${selectedOrderIds.length} đơn hàng.`);
+            setSelectedOrderIds([]); // Reset selection
+            fetchInvoices(); // Reload data
+        } catch (error) {
+            console.error("Lỗi khi xác nhận hàng loạt:", error);
+            alert("Có lỗi xảy ra khi xác nhận đơn hàng. Vui lòng thử lại.");
+        }
+    };
+    // ---------------------------------------------
 
     const handleUpdateStatus = async (updatedInvoice, newStatus) => {
         try {
@@ -150,27 +177,21 @@ const InvoiceManagement = () => {
         }
     };
 
-    // --- Hàm Xử lý chọn/bỏ chọn đơn hàng (Checkbox) (Giữ nguyên) ---
     const handleToggleOrderSelect = (orderId) => {
         setSelectedOrderIds(prev =>
             prev.includes(orderId)
-                ? prev.filter(id => id !== orderId) // Bỏ chọn
-                : [...prev, orderId] // Chọn
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId]
         );
     };
 
-    // --- Hàm Xử lý mở Dialog chọn Đơn vị vận chuyển (Giữ nguyên) ---
     const handleOpenDeliveryUnitDialog = (e) => {
         if (e) e.stopPropagation();
-
         if (selectedOrderIds.length === 0) {
             alert("Vui lòng chọn ít nhất một đơn hàng để gán đơn vị vận chuyển.");
             return;
         }
-
-        // Reset selectedDeliveryUnitId khi mở dialog gán hàng loạt
         setSelectedDeliveryUnitId(null);
-        
         fetchDeliveryUnits(); 
         setIsDeliveryUnitDialogOpen(true);
     };
@@ -179,11 +200,6 @@ const InvoiceManagement = () => {
         setIsDeliveryUnitDialogOpen(false);
     };
 
-    /**
-     * HÀM QUAN TRỌNG ĐÃ CHỈNH SỬA
-     * 1. Gán đơn vị vận chuyển (assign-delivery-unit)
-     * 2. Cập nhật trạng thái giao hàng thành "Đã bàn giao cho ĐVVC"
-     */
     const handleSaveDeliveryUnit = async () => {
         if (!selectedDeliveryUnitId || selectedOrderIds.length === 0) {
             alert("Vui lòng chọn đơn hàng và một đơn vị vận chuyển.");
@@ -191,42 +207,32 @@ const InvoiceManagement = () => {
         }
 
         try {
-            // 1. Gán đơn vị vận chuyển
             const assignmentPromises = selectedOrderIds.map(orderId =>
                 axios.put(
                     `http://localhost:8082/api/orders/assign-delivery-unit/${orderId}`,
                     null,
-                    {
-                        params: {
-                            deliveryUnitId: selectedDeliveryUnitId 
-                        }
-                    }
+                    { params: { deliveryUnitId: selectedDeliveryUnitId } }
                 )
             );
-
             await Promise.all(assignmentPromises);
 
-            // 2. Cập nhật trạng thái thành "Đã bàn giao cho ĐVVC"
             const updateStatusPromises = selectedOrderIds.map(orderId =>
                 axios.put(`http://localhost:8082/api/orders/update-shipping-status/${orderId}?shippingStatus=${SHIPPING_STATUS_NEW}`)
             );
-            
             await Promise.all(updateStatusPromises);
 
             const assignedUnitName = deliveryUnitMap[selectedDeliveryUnitId] || selectedDeliveryUnitId;
-            alert(`Đã gán thành công đơn vị vận chuyển ${assignedUnitName} và chuyển trạng thái thành "${SHIPPING_STATUS_NEW}" cho ${selectedOrderIds.length} đơn hàng.`);
+            alert(`Đã gán ĐVVC ${assignedUnitName} cho ${selectedOrderIds.length} đơn hàng.`);
             
-            // Reset state sau khi thành công
             setSelectedOrderIds([]); 
             setSelectedDeliveryUnitId(null); 
             handleCloseDeliveryUnitDialog();
-            fetchInvoices(); // Load lại danh sách hóa đơn
+            fetchInvoices(); 
         } catch (error) {
-            console.error("Lỗi khi gán đơn vị vận chuyển và cập nhật trạng thái:", error);
-            alert("Lỗi khi gán đơn vị vận chuyển và cập nhật trạng thái. Vui lòng thử lại.");
+            console.error("Lỗi khi gán đơn vị vận chuyển:", error);
+            alert("Lỗi khi gán đơn vị vận chuyển. Vui lòng thử lại.");
         }
     };
-    // ---------------------------------------------------------
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -247,8 +253,6 @@ const InvoiceManagement = () => {
         setSearchQuery(e.target.value);
         setPage(0); 
     };
-    
-    // Giữ nguyên các hàm xử lý Yêu cầu hủy và Toggle Collapse
 
     const handleOpenCancelRequests = () => {
         setIsCancelRequestsOpen(true);
@@ -292,19 +296,11 @@ const InvoiceManagement = () => {
         setIsCollapsed(!isCollapsed);
     };
 
-    // Biến tính toán cho Checkbox "chọn tất cả"
-    // Chỉ tính các đơn trên trang hiện tại
     const isAllSelected = invoices.length > 0 && selectedOrderIds.length === invoices.length;
     
-    /**
-     * Hàm helper để hiển thị tên trạng thái giao hàng đúng trên UI
-     * @param {string} statusFromApi Trạng thái từ API
-     * @returns {string} Trạng thái hiển thị
-     */
     const getDisplayShippingStatus = (statusFromApi) => {
-        // Nếu trạng thái từ API là 'Đang giao' (trạng thái cũ) hoặc trạng thái mới
         if (statusFromApi === SHIPPING_STATUS_OLD_SHIPPING || statusFromApi === SHIPPING_STATUS_NEW) {
-            return SHIPPING_STATUS_NEW; // Hiển thị chung là "Đã bàn giao cho ĐVVC"
+            return SHIPPING_STATUS_NEW;
         }
         return statusFromApi;
     };
@@ -312,7 +308,6 @@ const InvoiceManagement = () => {
 
     return (
         <div className="flex h-screen overflow-hidden">
-            {/* Sidebar (Giữ nguyên) */}
             <div
                 className={`bg-white shadow-lg fixed h-full transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-1/6'}`}
             >
@@ -326,9 +321,8 @@ const InvoiceManagement = () => {
                 <Header title="QUẢN LÝ HÓA ĐƠN" isCollapsed={isCollapsed} />
 
                 <div className="flex flex-col flex-1 p-4 overflow-y-auto">
-                    {/* Thanh filter + tìm kiếm + Gán ĐVVC (ĐÃ SỬA TÊN HIỂN THỊ) */}
                     <div className="flex flex-wrap justify-center items-center gap-4 mt-14 mb-4 bg-white p-4 rounded-lg shadow-md">
-                        {["", "Chờ xử lý", "Đã nhận đơn", SHIPPING_STATUS_NEW, "Đã giao", "Đã hủy"].map((status, index) => (
+                        {["", STATUS_PENDING, STATUS_CONFIRMED, SHIPPING_STATUS_NEW, "Đã giao", "Đã hủy"].map((status, index) => (
                             <Button
                                 key={index}
                                 variant={filterStatus === status ? "contained" : "outlined"}
@@ -345,7 +339,26 @@ const InvoiceManagement = () => {
                             </Button>
                         ))}
 
-                        {/* Nút Gán đơn vị vận chuyển */}
+                        {/* --- NÚT MỚI: XÁC NHẬN ĐƠN HÀNG (Hiện khi ở tab Chờ xử lý) --- */}
+                        {isPendingMode && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleBulkConfirmOrders}
+                                disabled={selectedOrderIds.length === 0}
+                                sx={{
+                                    fontSize: "1rem",
+                                    padding: "10px 24px",
+                                    minWidth: "200px",
+                                    height: "46px",
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Xác nhận đơn ({selectedOrderIds.length})
+                            </Button>
+                        )}
+
+                        {/* Nút Gán đơn vị vận chuyển (Hiện khi ở tab Đã nhận đơn) */}
                         {isAssignmentMode && (
                             <Button
                                 variant="contained"
@@ -364,7 +377,6 @@ const InvoiceManagement = () => {
                             </Button>
                         )}
 
-                        {/* Ô tìm kiếm (Giữ nguyên) */}
                         <TextField
                             label="Tìm kiếm hóa đơn"
                             variant="outlined"
@@ -374,7 +386,6 @@ const InvoiceManagement = () => {
                             className="!min-w-[250px] h-12"
                         />
 
-                        {/* Nút xem yêu cầu hủy (Giữ nguyên) */}
                         <Button
                             variant="outlined"
                             onClick={handleOpenCancelRequests}
@@ -389,14 +400,13 @@ const InvoiceManagement = () => {
                         </Button>
                     </div>
 
-                    {/* Bảng hóa đơn */}
                     <TableContainer component={Paper} className="flex-1 overflow-y-auto rounded-lg bg-white shadow-md">
                         <Table stickyHeader>
                             <TableHead>
                                 <TableRow>
                                     <TableCell padding="checkbox">
-                                        {/* Checkbox chọn tất cả */}
-                                        {isAssignmentMode && invoices.length > 0 && (
+                                        {/* Hiển thị checkbox select all nếu showCheckboxes = true */}
+                                        {showCheckboxes && invoices.length > 0 && (
                                             <Checkbox
                                                 checked={isAllSelected}
                                                 indeterminate={selectedOrderIds.length > 0 && !isAllSelected}
@@ -404,7 +414,6 @@ const InvoiceManagement = () => {
                                                     if (isAllSelected) {
                                                         setSelectedOrderIds([]);
                                                     } else {
-                                                        // Chọn tất cả các đơn trên trang hiện tại
                                                         setSelectedOrderIds(invoices.map(i => i.orderId));
                                                     }
                                                 }}
@@ -431,23 +440,20 @@ const InvoiceManagement = () => {
                                     return (
                                         <TableRow 
                                             key={invoice.orderId} 
-                                            // Luôn gọi handleSelectInvoice khi click vào hàng
                                             onClick={() => handleSelectInvoice(invoice)} 
                                             hover
                                             className={isItemSelected ? 'bg-blue-50' : ''}
                                             sx={{ cursor: 'pointer' }}
                                         >
-                                            {/* Cột Checkbox */}
                                             <TableCell padding="checkbox">
-                                                {isAssignmentMode ? (
+                                                {/* Hiển thị checkbox dòng nếu showCheckboxes = true */}
+                                                {showCheckboxes ? (
                                                     <Checkbox
                                                         checked={isItemSelected}
                                                         onChange={() => handleToggleOrderSelect(invoice.orderId)}
-                                                        // NGĂN CHẶN sự kiện này lan truyền lên sự kiện click hàng
                                                         onClick={(e) => e.stopPropagation()} 
                                                     />
                                                 ) : (
-                                                    // Placeholder rỗng nếu không phải tab "Đã nhận đơn"
                                                     <Box sx={{ width: 18 }} />
                                                 )}
                                             </TableCell>
@@ -459,14 +465,9 @@ const InvoiceManagement = () => {
                                             <TableCell>{invoice.paymentMethod}</TableCell>
                                             <TableCell>{new Date(invoice.dateOrder).toLocaleString()}</TableCell>
                                             <TableCell>{invoice.orderStatus}</TableCell>
-                                            
-                                            {/* SỬ DỤNG HÀM HIỂN THỊ TRẠNG THÁI MỚI */}
                                             <TableCell>{getDisplayShippingStatus(invoice.shippingStatus)}</TableCell> 
-                                            
-                                            {/* Cột cho ĐV Vận Chuyển */}
                                             <TableCell>
                                                 <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
-                                                    {/* Hiển thị tên (từ Map) hoặc ID nếu không tìm thấy tên */}
                                                     {deliveryUnitName || (invoice.deliveryUnitId ? invoice.deliveryUnitId : "-")} 
                                                 </Typography>
                                             </TableCell>
@@ -484,7 +485,7 @@ const InvoiceManagement = () => {
                         </Table>
                     </TableContainer>
 
-                    {/* Pagination (Giữ nguyên) */}
+                    {/* Pagination */}
                     <div className="flex justify-end pr-6 pb-4 bg-white rounded-b-lg shadow-md mt-4">
                         <TablePagination
                             rowsPerPageOptions={[5, 10, 25]}
@@ -498,7 +499,7 @@ const InvoiceManagement = () => {
                     </div>
                 </div>
 
-                {/* Drawer hiển thị chi tiết hóa đơn (Giữ nguyên) */}
+                {/* Drawer Chi tiết */}
                 <Drawer
                     anchor="right"
                     open={isDrawerOpen}
@@ -512,7 +513,7 @@ const InvoiceManagement = () => {
                     />
                 </Drawer>
 
-                {/* Dialog CHỌN Đơn vị vận chuyển (ĐÃ SỬA NÚT LƯU) */}
+                {/* Dialog Chọn ĐVVC */}
                 <Dialog open={isDeliveryUnitDialogOpen} onClose={handleCloseDeliveryUnitDialog} fullWidth maxWidth="sm">
                     <DialogTitle>
                         Gán Đơn Vị Vận Chuyển cho {selectedOrderIds.length} Đơn hàng
@@ -523,7 +524,6 @@ const InvoiceManagement = () => {
                                 {deliveryUnits.map((unit) => (
                                     <ListItem key={unit.id} disablePadding>
                                         <FormControlLabel
-                                            // value là ID chính xác (accountId) để truyền đi
                                             value={unit.id} 
                                             control={<Radio />}
                                             label={
@@ -532,9 +532,7 @@ const InvoiceManagement = () => {
                                                     secondary={`SĐT: ${unit.phoneNumber}`}
                                                 />
                                             }
-                                            // KIỂM TRA ĐÚNG ID ĐÃ CHỌN
                                             checked={selectedDeliveryUnitId === unit.id} 
-                                            // LƯU ID VÀO STATE
                                             onChange={() => setSelectedDeliveryUnitId(unit.id)} 
                                             sx={{ width: '100%', m: 0, p: 1 }}
                                         />
@@ -551,7 +549,6 @@ const InvoiceManagement = () => {
                             onClick={handleSaveDeliveryUnit}
                             color="primary"
                             variant="contained"
-                            // Chỉ cần kiểm tra selectedDeliveryUnitId có giá trị (ID) hay chưa
                             disabled={!selectedDeliveryUnitId} 
                         >
                             Lưu và Chuyển **Đã bàn giao cho ĐVVC** ({selectedOrderIds.length} đơn)
@@ -559,7 +556,7 @@ const InvoiceManagement = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* Drawer hiển thị danh sách yêu cầu hủy (Giữ nguyên) */}
+                {/* Drawer Yêu cầu hủy */}
                 <Drawer
                     anchor="right"
                     open={isCancelRequestsOpen}
@@ -579,17 +576,13 @@ const InvoiceManagement = () => {
                                             request.status === 'Chờ xử lý' && (
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Button 
-                                                        variant="contained" 
-                                                        color="success" 
-                                                        size="small"
+                                                        variant="contained" color="success" size="small"
                                                         onClick={(e) => { e.stopPropagation(); handleApproveCancellation(request.id, request.orderId); }}
                                                     >
                                                         Duyệt
                                                     </Button>
                                                     <Button 
-                                                        variant="contained" 
-                                                        color="error" 
-                                                        size="small"
+                                                        variant="contained" color="error" size="small"
                                                         onClick={(e) => { e.stopPropagation(); handleRejectCancellation(request.id, request.orderId); }}
                                                     >
                                                         Từ chối

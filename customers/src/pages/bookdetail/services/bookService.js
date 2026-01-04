@@ -11,8 +11,6 @@ const API_URLS = {
 };
 
 export const fetchBookDetail = (id) => axios.get(`${API_URLS.BOOK}/${id}`);
-
-// Gợi ý cũ (Content-based hoặc simple logic từ Java)
 export const fetchRecommendations = (id, accountId) => 
   axios.get(`${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`);
 

@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, TablePagination, Button, Box
+  Paper, Typography, TablePagination, Button, Box, Avatar
 } from '@mui/material';
-// Bỏ import 'IconButton' và 'Icons'
 import SideNav from '../../components/SideNav/SideNav';
 import Header from '../../components/Header/Header';
-import { getCombos, deleteCombo } from './services/comboService';
+import { getCombos, deleteCombo } from './services/comboService'; // Nhớ trỏ đúng đường dẫn
 import ComboForm from './components/ComboForm'; 
-import ComboDetail from './components/ComboDetail'; // <-- THÊM MỚI
+import ComboDetail from './components/ComboDetail'; 
 
 const ComboManagement = () => {
   const [combos, setCombos] = useState({ content: [], totalElements: 0 });
-  
-  // State quản lý form modal (Sửa/Thêm)
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // State quản lý drawer chi tiết
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // <-- THÊM MỚI
-
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState(null); 
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -38,60 +32,48 @@ const ComboManagement = () => {
     }
   };
 
-  // ----- CẬP NHẬT CÁC HÀM XỬ LÝ -----
-  
-  // Mở form để TẠO MỚI (Nút "Tạo Combo Mới")
   const handleOpenAddForm = () => {
-    setSelectedCombo(null); // Không có dữ liệu ban đầu
+    setSelectedCombo(null);
     setIsFormOpen(true);
-    setIsDrawerOpen(false); // Đảm bảo drawer chi tiết đã đóng
+    setIsDrawerOpen(false);
   };
 
-  // Mở drawer CHI TIẾT (Khi click vào 1 hàng)
   const handleRowClick = (combo) => {
-    setSelectedCombo(combo); // Lưu combo được chọn
-    setIsDrawerOpen(true); // Mở drawer
-    setIsFormOpen(false); // Đảm bảo form modal đã đóng
+    setSelectedCombo(combo);
+    setIsDrawerOpen(true);
+    setIsFormOpen(false);
   };
 
-  // Mở form để SỬA (Từ nút "Sửa" trên drawer)
   const handleOpenEditForm = () => {
-    // selectedCombo đã được set khi click vào hàng
-    setIsDrawerOpen(false); // Đóng drawer
-    setIsFormOpen(true);  // Mở form modal
+    setIsDrawerOpen(false);
+    setIsFormOpen(true); 
   };
 
-  // Đóng drawer chi tiết
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
     setSelectedCombo(null);
   };
   
-  // Đóng form modal (Sửa/Thêm)
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setSelectedCombo(null); 
   };
 
-  // Callback khi lưu (Thêm/Sửa) thành công
   const handleSaveCombo = () => {
     fetchCombos(); 
     handleCloseForm();
   };
   
-  // Xử lý XÓA (Từ nút "Xóa" trên drawer)
   const handleDeleteCombo = async (comboId) => {
-    // 'window.confirm' đã được xử lý bên trong ComboDetail
     try {
       await deleteCombo(comboId);
       fetchCombos();
-      handleCloseDrawer(); // Đóng drawer sau khi xóa
+      handleCloseDrawer();
     } catch (error) {
       console.error('Error deleting combo:', error);
       alert("Lỗi khi xóa combo.");
     }
   };
-  // ------------------------------------------
 
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
@@ -99,16 +81,14 @@ const ComboManagement = () => {
     setPage(0);
   };
 
-  // Helper hiển thị trạng thái (giữ nguyên)
   const getComboStatus = (combo) => {
-    if (!combo.startDate || !combo.endDate) return 'Chưa thiết lập';
+    if (!combo.startDate || !combo.endDate) return <Typography color="textSecondary" variant="body2">Chưa thiết lập</Typography>;
     const now = new Date();
     const start = new Date(combo.startDate);
     const end = new Date(combo.endDate);
-
-    if (now < start) return <Typography color="blue">Chưa bắt đầu</Typography>;
-    if (now > end) return <Typography color="error">Đã kết thúc</Typography>;
-    return <Typography color="green">Đang hoạt động</Typography>;
+    if (now < start) return <Typography color="blue" variant="body2" fontWeight="bold">Chưa bắt đầu</Typography>;
+    if (now > end) return <Typography color="error" variant="body2" fontWeight="bold">Đã kết thúc</Typography>;
+    return <Typography color="success.main" variant="body2" fontWeight="bold">Đang hoạt động</Typography>;
   };
 
   return (
@@ -122,13 +102,10 @@ const ComboManagement = () => {
       >
         <Header title="QUẢN LÝ COMBO" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
         <Box className="sticky top-[64px] z-40 bg-gray-100 shadow-md p-4 flex items-center border-b justify-between">
-          <Box className="flex-1 flex items-center justify-center"></Box>
-          <Box className="flex gap-2">
-            {/* Nút này vẫn gọi hàm mở form TẠO MỚI */}
-            <Button variant="contained" style={{ backgroundColor: 'green' }} onClick={handleOpenAddForm}>
-              TẠO COMBO MỚI
-            </Button>
-          </Box>
+          <Box className="flex-1"></Box>
+          <Button variant="contained" color="success" onClick={handleOpenAddForm}>
+            TẠO COMBO MỚI
+          </Button>
         </Box>
 
         <div className="flex-1 overflow-auto pt-[72px] px-2">
@@ -136,36 +113,49 @@ const ComboManagement = () => {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {/* Bỏ cột "Hành động" */}
-                  {['Tên Combo', 'Loại Giảm Giá', 'Giá Trị Giảm', 'Sách Áp Dụng', 'Trạng thái'].map((header) => (
-                    <TableCell key={header} sx={{ fontWeight: 'bold' }}>{header}</TableCell>
-                  ))}
+                  {/* CỘT ẢNH MỚI */}
+                  <TableCell sx={{ fontWeight: 'bold' }}>Ảnh</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Tên Combo</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Loại Giảm Giá</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Giá Trị Giảm</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Sách Áp Dụng</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {combos?.content?.map((combo) => (
-                  // Thêm onClick vào Row
                   <TableRow 
                     key={combo.comboId} 
                     hover 
-                    onClick={() => handleRowClick(combo)} // <-- THÊM MỚI
-                    sx={{ cursor: 'pointer' }} // Thêm cursor
+                    onClick={() => handleRowClick(combo)} 
+                    sx={{ cursor: 'pointer' }}
                   >
+                    {/* HIỂN THỊ ẢNH NHỎ */}
+                    <TableCell>
+                      <Avatar 
+                        variant="rounded" 
+                        src={combo.image} 
+                        alt={combo.name}
+                        sx={{ width: 60, height: 40, bgcolor: '#eee', color: '#999' }}
+                      >
+                         {!combo.image && 'N/A'}
+                      </Avatar>
+                    </TableCell>
+
                     <TableCell>
                       <Typography variant="body1" fontWeight="bold">{combo.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">{combo.description}</Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {combo.description}
+                      </Typography>
                     </TableCell>
-                    <TableCell>{combo.discountType}</TableCell>
+                    <TableCell>{combo.discountType === 'PERCENT' ? 'Phần trăm' : 'Tiền mặt'}</TableCell>
                     <TableCell>
                       {combo.discountType === 'PERCENT'
-                        ? `${combo.discountValue}%`
-                        : `${combo.discountValue.toLocaleString()}₫`}
+                        ? <Typography fontWeight="bold" color="primary">{combo.discountValue}%</Typography>
+                        : <Typography fontWeight="bold" color="primary">{combo.discountValue.toLocaleString()}₫</Typography>}
                     </TableCell>
-                    <TableCell>{combo.bookIds.length} sách</TableCell>
-                    <TableCell>
-                      {getComboStatus(combo)}
-                    </TableCell>
-                    {/* Bỏ cột "Hành động" ở đây */}
+                    <TableCell>{combo.bookIds?.length || 0} sách</TableCell>
+                    <TableCell>{getComboStatus(combo)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -185,18 +175,16 @@ const ComboManagement = () => {
           </Box>
         </div>
 
-        {/* Form Modal (cho Thêm/Sửa) */}
         {isFormOpen && (
           <ComboForm 
             onClose={handleCloseForm} 
             onSave={handleSaveCombo}
-            initialData={selectedCombo} // Sẽ là null (Thêm) hoặc có data (Sửa)
+            initialData={selectedCombo}
           />
         )}
 
-        {/* Drawer Chi Tiết (MỚI) */}
         <ComboDetail
-            selectedCombo={isDrawerOpen ? selectedCombo : null} // Chỉ truyền data khi drawer mở
+            selectedCombo={isDrawerOpen ? selectedCombo : null}
             onClose={handleCloseDrawer}
             onEdit={handleOpenEditForm}
             onDelete={handleDeleteCombo}

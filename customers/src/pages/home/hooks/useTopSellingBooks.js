@@ -1,48 +1,38 @@
 import { useState, useEffect } from "react";
+import axiosClient, { ORDER_API_URL } from "../../../api/axiosClient";
 import axios from "axios";
 
 export const useTopSellingBooks = () => {
   const [topSellingBooks, setTopSellingBooks] = useState([]);
 
   useEffect(() => {
-    fetchTopSellingBooks();
-  }, []);
+    const fetchTopSelling = async () => {
+      try {
+        // 1. Lấy danh sách ID bán chạy từ Order Service
+        const { data: topSellingData } = await axios.get(`${ORDER_API_URL}/orders/top-selling`);
+        const top5 = topSellingData.slice(0, 5);
 
-  const fetchTopSellingBooks = async () => {
-    try {
-      const topSellingResponse = await axios.get(
-        "http://localhost:8082/api/orders/top-selling"
-      );
-      const topSellingData = topSellingResponse.data.slice(0, 5);
-
-      const detailedTopSellingBooks = await Promise.all(
-        topSellingData.map(async (book) => {
-          try {
-            const detailResponse = await axios.get(
-              `http://localhost:8081/api/book/${book.bookId}`
-            );
-            return { ...detailResponse.data, totalSold: book.totalSold };
-          } catch (error) {
-            if (error.response && error.response.status === 404) {
-              console.warn(
-                `⚠️ Sách với ID ${book.bookId} không tồn tại, bỏ qua.`
-              );
-              return null; // bỏ qua sách đã xoá
+        // 2. Lấy chi tiết sách từ Main Service (Song song)
+        const details = await Promise.all(
+          top5.map(async (item) => {
+            try {
+              const res = await axiosClient.get(`/book/${item.bookId}`);
+              // Gộp thông tin: Data sách + Số lượng đã bán
+              return { ...res.data, totalSold: item.totalSold };
+            } catch {
+              return null; // Bỏ qua nếu sách bị lỗi/xóa
             }
-            console.error(
-              `❌ Lỗi khi lấy chi tiết sách ${book.bookId}:`,
-              error
-            );
-            return null;
-          }
-        })
-      );
+          })
+        );
 
-      setTopSellingBooks(detailedTopSellingBooks.filter(Boolean));
-    } catch (error) {
-      console.error("❌ Lỗi khi lấy danh sách sách bán chạy:", error);
-    }
-  };
+        setTopSellingBooks(details.filter(Boolean));
+      } catch (error) {
+        console.error("❌ Lỗi lấy sách bán chạy:", error);
+      }
+    };
+
+    fetchTopSelling();
+  }, []);
 
   return { topSellingBooks };
 };

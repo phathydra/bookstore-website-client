@@ -116,7 +116,7 @@ export const useBookDetail = (id, navigate) => {
         if (reviewsData?.length) fetchUserDataForReviews(reviewsData);
         setPurchaseCount(analyticsData.purchaseCount || 0);
 
-        // LOGIC 1: "Sản phẩm tương tự" (Content-Based)
+        // LOGIC 1: "Sản phẩm tương tự" (Content-Based) -> Giữ nguyên
         try {
           const { data: aiRecs } = await fetchRecommendations(id);
           
@@ -134,7 +134,6 @@ export const useBookDetail = (id, navigate) => {
           console.error("Lỗi khi lấy gợi ý AI (similar-to):", recErr);
           setRecommendedBooks([]);
         }
-
         // ⬇️ LOGIC MỚI: "NGƯỜI KHÁC CŨNG MUA" (Collaborative) ⬇️
         
         // ❌ XÓA DÒNG NÀY ĐI (đây là nguyên nhân gây lỗi)
@@ -164,7 +163,9 @@ export const useBookDetail = (id, navigate) => {
                 setCollaborativeBooks([]);
             }
         }
+        // -----------------------------------------------------------------
         // ⬆️ KẾT THÚC LOGIC MỚI ⬆️
+        // -----------------------------------------------------------------
 
         // ... (Phần còn lại giữ nguyên) ...
         if (bookData && bookData.bookAuthor) {
@@ -283,7 +284,7 @@ export const useBookDetail = (id, navigate) => {
       return summary;
     } catch (err) {
       console.error("Lỗi khi lấy tóm tắt sách:", err);
-       return { summary: "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau." };
+      return { summary: "Đã xảy ra lỗi khi tạo tóm tắt sách. Vui lòng thử lại sau." };
     }
   };
 
