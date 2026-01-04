@@ -1,8 +1,8 @@
 @echo off
 
-cd admin
-npm start
 cd ..
+cd admin
+npm install
 
 exit
 
