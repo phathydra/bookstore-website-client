@@ -121,7 +121,6 @@ const Home = () => {
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                     <div className="bg-[#F4F8FA] p-2 rounded-lg">
-                        {/* Thay màu icon bằng prop color truyền vào */}
                         <span className={`text-2xl ${color}`}>{icon}</span>
                     </div>
                     <h2 className="text-xl md:text-2xl font-bold text-[#2A5D76] uppercase tracking-wide">{title}</h2>
@@ -141,7 +140,7 @@ const Home = () => {
                     <Slider />
                 </div>
 
-                {/* 2. FLASH SALE (Gradient Xanh) */}
+                {/* 2. FLASH SALE */}
                 {flashSaleBooks.length > 0 && flashSaleEndTime && (
                     <div className="rounded-2xl shadow-lg overflow-hidden relative z-10 shrink-0 bg-gradient-to-r from-[#2A5D76] to-[#4A89A8]">
                         <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between border-b border-white/10">
@@ -180,32 +179,30 @@ const Home = () => {
                     </div>
                 )}
 
-                {/* 3. SÁCH GIẢM GIÁ THƯỜNG */}
-                <SectionContainer 
-                    title="Ưu Đãi Mỗi Ngày" 
-                    icon={<FaTags />} 
-                    color="text-[#E67E22]" // Màu cam đất làm điểm nhấn
-                    headerRight={
-                        <div className="flex gap-2">
-                            {renderNavButton('prev', () => setDiscountedPage(p => Math.max(0, p-1)), discountedPage === 0, 'd-prev')}
-                            {renderNavButton('next', () => setDiscountedPage(p => Math.min(discountedTotalPages-1, p+1)), discountedPage === discountedTotalPages - 1, 'd-next')}
-                        </div>
-                    }
-                >
-                    <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-4">
-                        {validNormalDiscountBooks.length > 0 ? (
-                            validNormalDiscountBooks.map(book => (
+                {/* 3. SÁCH GIẢM GIÁ THƯỜNG - Ẩn nếu không có */}
+                {validNormalDiscountBooks.length > 0 && (
+                    <SectionContainer 
+                        title="Ưu Đãi Mỗi Ngày" 
+                        icon={<FaTags />} 
+                        color="text-[#E67E22]"
+                        headerRight={
+                            <div className="flex gap-2">
+                                {renderNavButton('prev', () => setDiscountedPage(p => Math.max(0, p-1)), discountedPage === 0, 'd-prev')}
+                                {renderNavButton('next', () => setDiscountedPage(p => Math.min(discountedTotalPages-1, p+1)), discountedPage === discountedTotalPages - 1, 'd-next')}
+                            </div>
+                        }
+                    >
+                        <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-4">
+                            {validNormalDiscountBooks.map(book => (
                                 <div key={book.bookId} className="min-w-[180px]">
                                     <Book book={book} />
                                 </div>
-                            ))
-                        ) : (
-                            <div className="w-full text-center py-10 text-gray-400">Không có ưu đãi nào khác.</div>
-                        )}
-                    </div>
-                </SectionContainer>
+                            ))}
+                        </div>
+                    </SectionContainer>
+                )}
 
-                {/* 4. COMBO (Đổi màu viền và nền cho hợp tông) */}
+                {/* 4. COMBO */}
                 <SectionContainer 
                     title="Combo Tiết Kiệm" 
                     icon={<FaGift />} 
@@ -219,21 +216,45 @@ const Home = () => {
                         </button>
                     }
                 >
-                    <div className="flex overflow-x-auto gap-6 pb-4">
+                    <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
                         {loadingCombos ? (
                             <div className="text-center w-full text-gray-400">Đang tải...</div> 
                         ) : activeCombos?.length > 0 ? (
                             activeCombos.map(combo => (
-                                <div key={combo.comboId} onClick={() => navigate(`/combo/${combo.comboId}`)} className="min-w-[280px] bg-white border border-gray-100 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all hover:border-[#2A5D76]/50">
-                                    <div className="h-40 bg-[#F4F8FA] flex items-center justify-center relative overflow-hidden rounded-t-xl">
-                                        {combo.image ? <img src={combo.image} className="w-full h-full object-cover" alt={combo.name}/> : <span className="text-[#2A5D76] font-bold">Combo Hot</span>}
-                                        <div className="absolute top-0 right-0 bg-[#E67E22] text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
-                                            {combo.discountType === "PERCENT" ? `-${combo.discountValue}%` : 'Giảm sốc'}
+                                <div 
+                                    key={combo.comboId} 
+                                    onClick={() => navigate(`/combo/${combo.comboId}`)} 
+                                    className="min-w-[280px] max-w-[280px] bg-white border border-gray-100 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all hover:border-[#2A5D76]/50 flex flex-col overflow-hidden"
+                                >
+                                    <div className="relative w-full h-48 bg-[#F8FAFC] flex items-center justify-center overflow-hidden border-b border-gray-50">
+                                        {combo.image ? (
+                                            <img 
+                                                src={combo.image} 
+                                                alt={combo.name}
+                                                className="w-full h-full object-contain p-2 transition-transform duration-300 hover:scale-105" 
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 text-[#2A5D76]/40">
+                                                <FaBookOpen size={40} />
+                                                <span className="font-bold text-sm">Combo Hot</span>
+                                            </div>
+                                        )}
+                                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[11px] font-extrabold px-2 py-1 rounded shadow-sm">
+                                            {combo.discountType === "PERCENT" ? `GIẢM ${combo.discountValue}%` : 'GIÁ SỐC'}
                                         </div>
                                     </div>
-                                    <div className="p-4">
-                                        <h3 className="font-bold text-[#2A5D76] truncate text-lg">{combo.name}</h3>
-                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{combo.description}</p>
+
+                                    <div className="p-4 flex flex-col flex-grow">
+                                        <h3 className="font-bold text-[#2A5D76] truncate text-base mb-1" title={combo.name}>
+                                            {combo.name}
+                                        </h3>
+                                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed h-8">
+                                            {combo.description || "Ưu đãi đặc biệt khi mua theo bộ sách."}
+                                        </p>
+                                        <div className="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center">
+                                            <span className="text-[#E67E22] font-bold text-sm">Xem chi tiết</span>
+                                            <FaChevronRight className="text-[#E67E22] text-[10px]"/>
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -246,7 +267,7 @@ const Home = () => {
                 {/* 5. SÁCH BÁN CHẠY */}
                 <SectionContainer 
                     title="Sách Bán Chạy Nhất" 
-                    icon={<FaChartLine />} // Icon biểu đồ hợp với "Bán chạy"
+                    icon={<FaChartLine />} 
                     color="text-[#E67E22]" 
                     headerRight={
                         <div className="flex gap-2">
@@ -268,36 +289,35 @@ const Home = () => {
                     </div>
                 </SectionContainer>
 
-                {/* 6. GỢI Ý (Nền Gradient nhẹ nhàng) */}
-                <div className="rounded-xl shadow-sm p-6 border border-gray-100 bg-gradient-to-r from-[#F4F8FA] to-white relative">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white p-2 rounded-lg shadow-sm">
-                                <span className="text-2xl text-[#2A5D76]"><FaStar /></span>
+                {/* 6. GỢI Ý (Nền Gradient nhẹ nhàng) - ẨN NẾU KHÔNG CÓ */}
+                {suggestedBooks?.length > 0 && (
+                    <div className="rounded-xl shadow-sm p-6 border border-gray-100 bg-gradient-to-r from-[#F4F8FA] to-white relative">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white p-2 rounded-lg shadow-sm">
+                                    <span className="text-2xl text-[#2A5D76]"><FaStar /></span>
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-[#2A5D76] uppercase tracking-wide">Gợi Ý Hôm Nay</h2>
                             </div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#2A5D76] uppercase tracking-wide">Gợi Ý Hôm Nay</h2>
+                        </div>
+
+                        <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2 relative z-10">
+                            {paginate(suggestedBooks, suggestedPage).map(book => (
+                                <div key={book.bookId} className="min-w-[190px]">
+                                    <Book book={book} />
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* Nút điều hướng */}
+                        <div className="absolute top-1/2 -translate-y-1/2 left-2 z-20">
+                            {renderNavButton('prev', () => setSuggestedPage(p => Math.max(0, p-1)), suggestedPage === 0, 's-prev')}
+                        </div>
+                        <div className="absolute top-1/2 -translate-y-1/2 right-2 z-20">
+                            {renderNavButton('next', () => setSuggestedPage(p => p+1), (suggestedPage + 1) * BOOKS_PER_PAGE >= suggestedBooks.length, 's-next')}
                         </div>
                     </div>
-
-                    <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2 relative z-10">
-                         {suggestedBooks?.length > 0 ? (
-                             paginate(suggestedBooks, suggestedPage).map(book => (
-                                 <div key={book.bookId} className="min-w-[190px]">
-                                     <Book book={book} />
-                                 </div>
-                             ))
-                         ) : (
-                             <p className="p-4 text-gray-500 w-full text-center">Chúng tôi đang tìm những cuốn sách phù hợp nhất với bạn...</p>
-                         )}
-                    </div>
-                    {/* Nút điều hướng */}
-                    <div className="absolute top-1/2 -translate-y-1/2 left-2 z-20">
-                        {renderNavButton('prev', () => setSuggestedPage(p => Math.max(0, p-1)), suggestedPage === 0, 's-prev')}
-                    </div>
-                    <div className="absolute top-1/2 -translate-y-1/2 right-2 z-20">
-                         {renderNavButton('next', () => setSuggestedPage(p => p+1), (suggestedPage + 1) * BOOKS_PER_PAGE >= suggestedBooks.length, 's-next')}
-                    </div>
-                </div>
+                )}
 
                 {/* 7. DANH MỤC */}
                 <div className="mt-4">

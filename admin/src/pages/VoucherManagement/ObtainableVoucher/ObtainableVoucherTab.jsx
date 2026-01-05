@@ -61,21 +61,25 @@ const ObtainableVoucherTab = () => {
     setPage(0);
   }, [status, searchTerm]);
 
-  // event handlers
+  // Handlers
   const handleStatusChange = (e) => setStatus(e.target.value);
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
   const handleOpenAdd = () => setIsAddModalOpen(true);
   const handleCloseAdd = () => setIsAddModalOpen(false);
 
+  // Logic mở form Update
   const handleOpenUpdate = (voucher) => {
+    console.log("Mở form update cho voucher:", voucher);
     setSelectedVoucher(voucher);
     setIsUpdateModalOpen(true);
   };
 
   const handleCloseUpdate = () => {
     setIsUpdateModalOpen(false);
-    setSelectedVoucher(null);
+    // Lưu ý: Không set selectedVoucher = null ở đây ngay nếu muốn giữ UX mượt
+    // hoặc nếu logic Detail Drawer phụ thuộc vào nó.
+    // Tuy nhiên ở logic này, form Update đè lên tất cả nên OK.
   };
 
   const handleSelect = (voucher) => {
@@ -90,11 +94,10 @@ const ObtainableVoucherTab = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa Obtainable Voucher này?')) return;
-
     try {
       await axios.delete(`http://localhost:8082/api/vouchers/obtainable/${id}`);
-      handleCloseDetail();
-      fetchVouchers();
+      handleCloseDetail(); // Đóng drawer
+      fetchVouchers();     // Reload list
     } catch (err) {
       setError('Xóa thất bại');
     }
@@ -126,19 +129,19 @@ const ObtainableVoucherTab = () => {
           <FormControl sx={{ minWidth: 180 }}>
             <InputLabel>Trạng thái</InputLabel>
             <Select value={status} onChange={handleStatusChange} label="Trạng thái">
-              <MenuItem value="ALL">ALL</MenuItem>
-              <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-              <MenuItem value="EXPIRED">EXPIRED</MenuItem>
-              <MenuItem value="UPCOMING">UPCOMING</MenuItem>
+              <MenuItem value="ALL">Tất cả</MenuItem>
+              <MenuItem value="ACTIVE">Đang hoạt động</MenuItem>
+              <MenuItem value="EXPIRED">Đã hết hạn</MenuItem>
+              <MenuItem value="UPCOMING">Sắp diễn ra</MenuItem>
             </Select>
           </FormControl>
 
           <Button
             variant="contained"
-            sx={{ bgcolor: 'green', '&:hover': { bgcolor: 'darkgreen' } }}
+            color="success"
             onClick={handleOpenAdd}
           >
-            Add
+            + Thêm Mới
           </Button>
         </Box>
       </Box>
@@ -174,10 +177,10 @@ const ObtainableVoucherTab = () => {
                   onClick={() => handleSelect(v)}
                   sx={{ cursor: 'pointer' }}
                 >
-                  <TableCell>{v.id}</TableCell>
-                  <TableCell>{v.code}</TableCell>
+                  <TableCell>{v.id.substring(0, 8)}...</TableCell>
+                  <TableCell sx={{color: 'primary.main', fontWeight: 'bold'}}>{v.code}</TableCell>
                   <TableCell>{v.voucherType || '—'}</TableCell>
-                  <TableCell>{v.valueRequirement?.toLocaleString() || 0} đ</TableCell>
+                  <TableCell>{v.valueRequirement ? v.valueRequirement.toLocaleString() : 0} đ</TableCell>
                   <TableCell>{v.publicClaimable ? 'Có' : 'Không'}</TableCell>
                   <TableCell>{v.startDate ? new Date(v.startDate).toLocaleDateString('vi-VN') : '—'}</TableCell>
                   <TableCell>{v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '—'}</TableCell>
@@ -200,10 +203,7 @@ const ObtainableVoucherTab = () => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
-        labelRowsPerPage="Số dòng mỗi trang:"
-        labelDisplayedRows={({ from, to, count }) =>
-          `${from}–${to} trong ${count !== -1 ? count : `nhiều hơn ${to}`}`
-        }
+        labelRowsPerPage="Số dòng:"
       />
 
       {/* Modals */}
@@ -211,16 +211,16 @@ const ObtainableVoucherTab = () => {
         <AddObtainableVoucher open={isAddModalOpen} onClose={handleCloseAdd} onSuccess={fetchVouchers} />
       )}
 
-      {isUpdateModalOpen && (
+      {/* --- FORM UPDATE ĐÃ SỬA --- */}
+      {isUpdateModalOpen && selectedVoucher && (
         <UpdateObtainableVoucher
-          open={isUpdateModalOpen}
+          voucher={selectedVoucher}     // Truyền đúng prop 'voucher'
           onClose={handleCloseUpdate}
-          voucher={selectedVoucher}
-          onSuccess={fetchVouchers}
+          onSuccess={fetchVouchers}     // Truyền hàm reload data
         />
       )}
 
-      {/* Drawer */}
+      {/* Drawer Detail */}
       <Drawer
         anchor="right"
         open={isDetailDrawerOpen}
@@ -232,10 +232,11 @@ const ObtainableVoucherTab = () => {
             voucher={selectedVoucher}
             onClose={handleCloseDetail}
             onEdit={() => {
-              handleOpenUpdate(selectedVoucher);
+              // Quy trình: Đóng Drawer Detail -> Mở Modal Update
               handleCloseDetail();
+              handleOpenUpdate(selectedVoucher);
             }}
-            onDelete={handleDelete}
+            onDelete={() => handleDelete(selectedVoucher.id)}
           />
         )}
       </Drawer>

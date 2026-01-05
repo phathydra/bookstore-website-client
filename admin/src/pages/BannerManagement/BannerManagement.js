@@ -3,8 +3,11 @@ import axios from "axios";
 import { 
   FaPlus, FaPencilAlt, FaTrash, FaImages, FaLayerGroup, 
   FaLink, FaToggleOn, FaToggleOff, FaTimes, FaCloudUploadAlt,
-  FaChevronLeft, FaChevronRight // <--- Import thêm icon cho phân trang
+  FaChevronLeft, FaChevronRight 
 } from "react-icons/fa";
+
+// Import MUI Components
+import { Snackbar, Alert } from "@mui/material"; // <--- 1. Import Snackbar & Alert
 
 // Import Components
 import SideNav from "../../components/SideNav/SideNav";
@@ -19,17 +22,23 @@ const BannerManagement = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  // --- STATE PHÂN TRANG (MỚI) ---
-  const [currentPage, setCurrentPage] = useState(0); // Spring Boot bắt đầu từ 0
+  // --- STATE PHÂN TRANG ---
+  const [currentPage, setCurrentPage] = useState(0); 
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const pageSize = 5; // Số lượng banner trên 1 trang
+  const pageSize = 5; 
 
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [filterType, setFilterType] = useState("ALL"); 
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // --- 2. STATE CHO SNACKBAR (THAY THẾ TOAST CŨ) ---
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" // 'success' | 'error' | 'warning' | 'info'
+  });
 
   // State Form
   const [currentBanner, setCurrentBanner] = useState({
@@ -46,44 +55,36 @@ const BannerManagement = () => {
   const [deleteId, setDeleteId] = useState(null);
 
   // --- API CALLS ---
-  // Gọi lại API mỗi khi currentPage thay đổi
   useEffect(() => {
     fetchBanners(currentPage);
   }, [currentPage]);
 
-  useEffect(() => {
-    if (toast.show) {
-      const timer = setTimeout(() => setToast({ ...toast, show: false }), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  // Sửa hàm fetchBanners để nhận tham số page
   const fetchBanners = async (page) => {
     setLoading(true);
     try {
-      // Truyền param page và size vào URL
       const res = await axios.get(`http://localhost:8081/api/banners?page=${page}&size=${pageSize}`);
-      
-      // Spring Boot trả về Page object: { content: [], totalPages: int, number: int, ... }
       setBanners(res.data.content); 
       setTotalPages(res.data.totalPages);
-      setTotalElements(res.data.totalElements); // Tùy chọn, nếu backend trả về
+      setTotalElements(res.data.totalElements); 
     } catch (error) {
       console.error(error);
-      showToast("Lỗi tải danh sách banner!", "danger");
+      showSnackbar("Lỗi tải danh sách banner!", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const showToast = (message, type) => {
-    setToast({ show: true, message, type });
+  // Hàm helper để hiện Snackbar
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
   };
 
   // --- HANDLERS ---
-  
-  // Hàm chuyển trang
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
       setCurrentPage(newPage);
@@ -138,7 +139,7 @@ const BannerManagement = () => {
 
   const handleSave = async () => {
     if (!currentBanner.title) {
-        showToast("Vui lòng nhập tiêu đề!", "warning");
+        showSnackbar("Vui lòng nhập tiêu đề!", "warning");
         return;
     }
 
@@ -156,11 +157,13 @@ const BannerManagement = () => {
             await axios.put(`http://localhost:8081/api/banners/${currentBanner.id}`, backendFormData, {
                 headers: { "Content-Type": "multipart/form-data" }
             });
-            showToast("Cập nhật thành công!", "success");
+            
+            // --- 3. THÔNG BÁO THÀNH CÔNG ---
+            showSnackbar("Cập nhật banner thành công!", "success");
 
         } else {
             if (selectedFiles.length === 0) {
-                showToast("Vui lòng chọn ít nhất 1 ảnh!", "warning");
+                showSnackbar("Vui lòng chọn ít nhất 1 ảnh!", "warning");
                 setSaving(false);
                 return;
             }
@@ -180,14 +183,14 @@ const BannerManagement = () => {
             });
 
             await Promise.all(createBannerPromises);
-            showToast(`Đã thêm thành công ${uploadedUrls.length} banner!`, "success");
+            // --- 3. THÔNG BÁO THÀNH CÔNG ---
+            showSnackbar(`Đã thêm thành công ${uploadedUrls.length} banner!`, "success");
         }
         setShowModal(false);
-        // Load lại trang hiện tại sau khi lưu
         fetchBanners(currentPage);
     } catch (error) {
         console.error(error);
-        showToast("Có lỗi xảy ra! Vui lòng thử lại.", "danger");
+        showSnackbar("Có lỗi xảy ra! Vui lòng thử lại.", "error");
     } finally {
         setSaving(false);
     }
@@ -201,19 +204,16 @@ const BannerManagement = () => {
   const handleDelete = async () => {
     try {
       await axios.delete(`http://localhost:8081/api/banners/${deleteId}`);
-      showToast("Đã xóa banner!", "success");
-      // Load lại trang hiện tại hoặc về trang 0 nếu xóa hết item trang đó
+      showSnackbar("Đã xóa banner thành công!", "success");
       fetchBanners(currentPage); 
     } catch (error) {
-      showToast("Lỗi khi xóa banner!", "danger");
+      showSnackbar("Lỗi khi xóa banner!", "error");
     } finally {
       setShowDeleteModal(false);
     }
   };
 
   // --- RENDER HELPERS ---
-  // Lưu ý: Vì đã phân trang Server-side, việc Filter ở Client chỉ có tác dụng trên trang hiện tại.
-  // Nếu muốn filter toàn bộ DB, bạn cần gửi filterType lên API (Backend cần hỗ trợ).
   const filteredBanners = banners.filter(b => 
     filterType === "ALL" ? true : b.position === filterType
   );
@@ -227,31 +227,25 @@ const BannerManagement = () => {
     }
   };
 
-  // ==================== RETURN GIAO DIỆN CHÍNH ====================
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 font-sans text-gray-800">
       
-      {/* 1. TOAST NOTIFICATION */}
-      {toast.show && (
-        <div className={`fixed top-5 right-5 z-[9999] flex items-center w-full max-w-xs p-4 space-x-3 text-gray-500 bg-white rounded-lg shadow-lg border-l-4 animate-fade-in-down ${
-          toast.type === 'success' ? 'border-green-500' : toast.type === 'danger' ? 'border-red-500' : 'border-yellow-500'
-        }`} role="alert">
-           <div className={`inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${
-             toast.type === 'success' ? 'text-green-500 bg-green-100' : toast.type === 'danger' ? 'text-red-500 bg-red-100' : 'text-yellow-500 bg-yellow-100'
-           }`}>
-              {toast.type === 'success' ? <FaToggleOn/> : <FaTrash/>}
-           </div>
-           <div className="ml-3 text-sm font-normal">{toast.message}</div>
-           <button type="button" className="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" onClick={() => setToast({...toast, show: false})}>
-              <FaTimes />
-           </button>
-        </div>
-      )}
+      {/* 4. COMPONENT SNACKBAR THAY THẾ TOAST CŨ */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={3000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
-      {/* 2. SIDEBAR */}
+      {/* SIDEBAR */}
       <SideNav onToggleCollapse={setIsCollapsed} />
 
-      {/* 3. MAIN CONTENT */}
+      {/* MAIN CONTENT */}
       <main 
         className="flex-1 flex flex-col transition-all duration-300 ease-in-out" 
         style={{ paddingLeft: isCollapsed ? "80px" : "250px" }}
@@ -369,7 +363,7 @@ const BannerManagement = () => {
                     )}
                 </div>
 
-                {/* --- COMPONENT PHÂN TRANG (MỚI) --- */}
+                {/* COMPONENT PHÂN TRANG */}
                 {!loading && totalPages > 0 && (
                   <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl">
                     <div className="text-sm text-gray-500">
@@ -388,10 +382,8 @@ const BannerManagement = () => {
                         <FaChevronLeft size={14} /> Trước
                       </button>
 
-                      {/* Hiển thị số trang (Đơn giản hóa: Hiển thị 5 trang xung quanh trang hiện tại) */}
                       <div className="hidden md:flex gap-1">
                         {[...Array(totalPages)].map((_, index) => {
-                           // Chỉ hiển thị các trang gần trang hiện tại để tránh danh sách quá dài
                            if (index < 2 || index > totalPages - 3 || (index >= currentPage - 1 && index <= currentPage + 1)) {
                              return (
                                <button
@@ -422,7 +414,7 @@ const BannerManagement = () => {
                             : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-sm"
                         }`}
                       >
-                         Sau <FaChevronRight size={14} />
+                          Sau <FaChevronRight size={14} />
                       </button>
                     </div>
                   </div>
@@ -431,104 +423,94 @@ const BannerManagement = () => {
         </div>
       </main>
 
-      {/* --- GIỮ NGUYÊN MODAL CODE CỦA BẠN Ở ĐÂY (KHÔNG THAY ĐỔI) --- */}
+      {/* MODAL THÊM/SỬA (GIỮ NGUYÊN CODE RENDER CŨ CỦA BẠN) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-           {/* ... Code Modal của bạn ... */}
-           {/* Chỉ lưu ý khi đóng Modal, có thể cần reset form */}
-             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
-             {/* ... Nội dung Modal Copy lại từ code cũ ... */}
-             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
-                {/* Header, Body, Footer của Modal giữ nguyên. 
-                    Chỉ cần đảm bảo nút Save gọi hàm handleSave mới ở trên */}
-                    
-                    {/* ... (Tôi rút gọn phần này để code ngắn gọn, bạn dùng lại phần Render Modal cũ) ... */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-                        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        {isEdit ? <FaPencilAlt className="text-blue-500"/> : <FaPlus className="text-blue-500"/>}
-                        {isEdit ? "Cập nhật Banner" : "Thêm Banner Mới"}
-                        </h3>
-                        <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                            <FaTimes size={20} />
-                        </button>
-                    </div>
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
+           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  {isEdit ? <FaPencilAlt className="text-blue-500"/> : <FaPlus className="text-blue-500"/>}
+                  {isEdit ? "Cập nhật Banner" : "Thêm Banner Mới"}
+                  </h3>
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                      <FaTimes size={20} />
+                  </button>
+              </div>
 
-                    <div className="p-6 overflow-y-auto">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                             {/* Copy lại toàn bộ nội dung trong modal từ code cũ của bạn vào đây */}
-                             {/* CỘT TRÁI: UPLOAD và CỘT PHẢI: INPUTS */}
-                             <div className="lg:col-span-5 flex flex-col h-full">
-                                <div className="bg-slate-50 p-5 rounded-2xl border border-dashed border-gray-300 h-full">
-                                   {/* ... Copy ... */}
-                                   <div className="flex justify-between items-center mb-4">
-                                        <label className="font-semibold text-gray-700">{isEdit ? "Hình ảnh hiển thị" : "Ảnh đã chọn"}</label>
-                                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">{previewUrls.length} ảnh</span>
-                                    </div>
-                                    <div className="bg-white p-3 rounded-xl border border-gray-200 min-h-[250px] max-h-[400px] overflow-y-auto mb-4">
-                                        {previewUrls.length > 0 ? (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {previewUrls.map((url, idx) => (
-                                                    <div key={idx} className="relative aspect-video rounded-lg overflow-hidden group shadow-sm border border-gray-100">
-                                                        <img src={url} alt="preview" className="w-full h-full object-cover" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="h-full flex flex-col items-center justify-center text-gray-400 py-10">
-                                                <FaImages size={40} className="mb-2 opacity-50"/><span className="text-sm">Chưa có ảnh nào</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <label htmlFor="file-upload" className="flex items-center justify-center w-full px-4 py-3 bg-white text-blue-600 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 rounded-xl cursor-pointer transition-all font-medium shadow-sm">
-                                        <FaCloudUploadAlt className="mr-2 text-xl" /> Chọn ảnh từ máy tính
-                                    </label>
-                                    <input id="file-upload" type="file" multiple={!isEdit} className="hidden" onChange={handleFileChange} accept="image/*" />
-                                </div>
+              <div className="p-6 overflow-y-auto">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                       {/* Cột Upload */}
+                       <div className="lg:col-span-5 flex flex-col h-full">
+                          <div className="bg-slate-50 p-5 rounded-2xl border border-dashed border-gray-300 h-full">
+                             <div className="flex justify-between items-center mb-4">
+                                  <label className="font-semibold text-gray-700">{isEdit ? "Hình ảnh hiển thị" : "Ảnh đã chọn"}</label>
+                                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">{previewUrls.length} ảnh</span>
                              </div>
-
-                             <div className="lg:col-span-7 space-y-5">
-                                 {/* Inputs Title, Position, Active, LinkUrl giữ nguyên */}
-                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Tiêu đề Banner <span className="text-red-500">*</span></label>
-                                    <input type="text" value={currentBanner.title} onChange={(e) => setCurrentBanner({...currentBanner, title: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none" />
-                                 </div>
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Vị trí</label>
-                                        <select value={currentBanner.position} onChange={(e) => setCurrentBanner({...currentBanner, position: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none">
-                                            <option value="MAIN_SLIDER">Slider Chính</option>
-                                            <option value="RIGHT_TOP">Góc Phải (Trên)</option>
-                                            <option value="RIGHT_BOTTOM">Góc Phải (Dưới)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Trạng thái</label>
-                                        {/* Toggle Active giữ nguyên */}
-                                        <label className="relative inline-flex items-center cursor-pointer mt-2">
-                                            <input type="checkbox" checked={currentBanner.active} onChange={(e) => setCurrentBanner({...currentBanner, active: e.target.checked})} className="sr-only peer" />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 peer-checked:bg-green-500"></div>
-                                        </label>
-                                    </div>
-                                 </div>
-                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Link URL</label>
-                                    <input type="text" value={currentBanner.linkUrl} onChange={(e) => setCurrentBanner({...currentBanner, linkUrl: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none" />
-                                 </div>
+                             <div className="bg-white p-3 rounded-xl border border-gray-200 min-h-[250px] max-h-[400px] overflow-y-auto mb-4">
+                                  {previewUrls.length > 0 ? (
+                                      <div className="grid grid-cols-2 gap-3">
+                                          {previewUrls.map((url, idx) => (
+                                              <div key={idx} className="relative aspect-video rounded-lg overflow-hidden group shadow-sm border border-gray-100">
+                                                  <img src={url} alt="preview" className="w-full h-full object-cover" />
+                                              </div>
+                                          ))}
+                                      </div>
+                                  ) : (
+                                      <div className="h-full flex flex-col items-center justify-center text-gray-400 py-10">
+                                          <FaImages size={40} className="mb-2 opacity-50"/><span className="text-sm">Chưa có ảnh nào</span>
+                                      </div>
+                                  )}
                              </div>
-                        </div>
-                    </div>
+                             <label htmlFor="file-upload" className="flex items-center justify-center w-full px-4 py-3 bg-white text-blue-600 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 rounded-xl cursor-pointer transition-all font-medium shadow-sm">
+                                  <FaCloudUploadAlt className="mr-2 text-xl" /> Chọn ảnh từ máy tính
+                             </label>
+                             <input id="file-upload" type="file" multiple={!isEdit} className="hidden" onChange={handleFileChange} accept="image/*" />
+                          </div>
+                       </div>
 
-                    <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-                        <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-200 font-medium transition-colors">Hủy bỏ</button>
-                        <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md font-medium transition-all flex items-center">
-                            {saving ? "Đang xử lý..." : "Lưu Thay Đổi"}
-                        </button>
-                    </div>
-             </div>
+                       {/* Cột Inputs */}
+                       <div className="lg:col-span-7 space-y-5">
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-1">Tiêu đề Banner <span className="text-red-500">*</span></label>
+                              <input type="text" value={currentBanner.title} onChange={(e) => setCurrentBanner({...currentBanner, title: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none" />
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                               <div>
+                                   <label className="block text-sm font-bold text-gray-700 mb-1">Vị trí</label>
+                                   <select value={currentBanner.position} onChange={(e) => setCurrentBanner({...currentBanner, position: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none">
+                                       <option value="MAIN_SLIDER">Slider Chính</option>
+                                       <option value="RIGHT_TOP">Góc Phải (Trên)</option>
+                                       <option value="RIGHT_BOTTOM">Góc Phải (Dưới)</option>
+                                   </select>
+                               </div>
+                               <div>
+                                   <label className="block text-sm font-bold text-gray-700 mb-1">Trạng thái</label>
+                                   <label className="relative inline-flex items-center cursor-pointer mt-2">
+                                       <input type="checkbox" checked={currentBanner.active} onChange={(e) => setCurrentBanner({...currentBanner, active: e.target.checked})} className="sr-only peer" />
+                                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 peer-checked:bg-green-500"></div>
+                                   </label>
+                               </div>
+                           </div>
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-1">Link URL</label>
+                              <input type="text" value={currentBanner.linkUrl} onChange={(e) => setCurrentBanner({...currentBanner, linkUrl: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none" />
+                           </div>
+                       </div>
+                  </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+                  <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-200 font-medium transition-colors">Hủy bỏ</button>
+                  <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md font-medium transition-all flex items-center">
+                      {saving ? "Đang xử lý..." : "Lưu Thay Đổi"}
+                  </button>
+              </div>
+           </div>
         </div>
       )}
 
-      {/* --- CUSTOM DELETE MODAL (GIỮ NGUYÊN) --- */}
+      {/* DELETE MODAL (GIỮ NGUYÊN) */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)}></div>

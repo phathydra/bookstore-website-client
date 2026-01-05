@@ -6,7 +6,7 @@ const RankVoucherDetail = ({ voucher, onEdit, onDelete, onClose }) => {
   if (!voucher) return null;
 
   return (
-    <Box width="800px" p={3} role="presentation" display="flex" flexDirection="column" sx={{ paddingTop: 1 }}>
+    <Box role="presentation" display="flex" flexDirection="column" sx={{ height: '100%' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">Rank Voucher Details</Typography>
         <IconButton onClick={onClose}>
@@ -14,89 +14,35 @@ const RankVoucherDetail = ({ voucher, onEdit, onDelete, onClose }) => {
         </IconButton>
       </Box>
       <Divider />
-      <Box mt={2}>
+      
+      <Box mt={2} flex={1} overflow="auto">
         <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
 
           {/* ID */}
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              ID:
-            </Typography>
-            <textarea
-              value={voucher.id}
-              readOnly
-              style={{
-                width: "100%", minHeight: "30px", padding: "2px", border: "1px solid #ddd",
-                borderRadius: "6px", fontSize: "14px", backgroundColor: "#f9f9f9", resize: "vertical",
-              }}
-            />
-          </Box>
-
+          <FieldView label="ID" value={voucher.id} />
+          
           {/* CODE */}
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              Code:
-            </Typography>
-            <textarea
-              value={voucher.code}
-              readOnly
-              style={{
-                width: "100%", minHeight: "30px", padding: "2px", border: "1px solid #ddd",
-                borderRadius: "6px", fontSize: "14px", backgroundColor: "#f9f9f9", resize: "vertical",
-              }}
-            />
-          </Box>
-
+          <FieldView label="Code" value={voucher.code} />
+          
           {/* RANK */}
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              Rank yêu cầu:
-            </Typography>
-            <textarea
-              value={voucher.requiredRank}
-              readOnly
-              style={{
-                width: "100%", minHeight: "30px", padding: "2px", border: "1px solid #ddd",
-                borderRadius: "6px", fontSize: "14px", backgroundColor: "#f9f9f9", resize: "vertical",
-              }}
-            />
-          </Box>
+          <FieldView label="Rank yêu cầu" value={voucher.requiredRank || voucher.rank} />
+          
+          {/* LOẠI */}
+          <FieldView label="Loại Voucher" value={voucher.voucherType} />
 
-          {/* START DATE */}
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              Ngày bắt đầu:
-            </Typography>
-            <textarea
-              value={new Date(voucher.startDate).toLocaleString("vi-VN")}
-              readOnly
-              style={{
-                width: "100%", minHeight: "30px", padding: "2px", border: "1px solid #ddd",
-                borderRadius: "6px", fontSize: "14px", backgroundColor: "#f9f9f9", resize: "vertical",
-              }}
-            />
-          </Box>
-
-          {/* END DATE */}
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              Ngày kết thúc:
-            </Typography>
-            <textarea
-              value={new Date(voucher.endDate).toLocaleString("vi-VN")}
-              readOnly
-              style={{
-                width: "100%", minHeight: "30px", padding: "2px", border: "1px solid #ddd",
-                borderRadius: "6px", fontSize: "14px", backgroundColor: "#f9f9f9", resize: "vertical",
-              }}
-            />
-          </Box>
+          {/* GIÁ TRỊ GIẢM */}
+          <FieldView label="Phần trăm giảm" value={voucher.percentageDiscount} />
+          <FieldView label="Giảm theo tiền" value={voucher.valueDiscount} />
+          
+          {/* DATE */}
+          <FieldView label="Ngày bắt đầu" value={voucher.startDate ? new Date(voucher.startDate).toLocaleDateString("vi-VN") : "-"} />
+          <FieldView label="Ngày kết thúc" value={voucher.endDate ? new Date(voucher.endDate).toLocaleDateString("vi-VN") : "-"} />
 
         </Box>
       </Box>
 
       {/* ACTION BUTTONS */}
-      <Box mt={3} display="flex" gap={2} p={2}>
+      <Box mt={3} display="flex" gap={2} pt={2} borderTop="1px solid #eee">
         <Button variant="contained" color="primary" onClick={onEdit} fullWidth>
           Sửa Rank Voucher
         </Button>
@@ -107,5 +53,24 @@ const RankVoucherDetail = ({ voucher, onEdit, onDelete, onClose }) => {
     </Box>
   );
 };
+
+// Component con để hiển thị từng trường cho gọn
+const FieldView = ({ label, value }) => (
+    <Box sx={{ width: "100%" }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: "bold", fontSize: "12px", mb: "4px" }}>
+        {label}:
+    </Typography>
+    <Box
+        sx={{
+        width: "100%", minHeight: "35px", padding: "8px",
+        border: "1px solid #ddd", borderRadius: "6px",
+        fontSize: "14px", backgroundColor: "#f9f9f9",
+        wordBreak: "break-all"
+        }}
+    >
+        {value === null || value === undefined || value === '' ? '—' : value}
+    </Box>
+    </Box>
+);
 
 export default RankVoucherDetail;
