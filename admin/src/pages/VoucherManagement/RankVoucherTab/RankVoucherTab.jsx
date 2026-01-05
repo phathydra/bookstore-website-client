@@ -71,16 +71,19 @@ const RankVoucherTab = () => {
   const handleOpenAdd = () => setIsAddModalOpen(true);
   const handleCloseAdd = () => setIsAddModalOpen(false);
 
+  // Mở form Update
   const handleOpenUpdate = (voucher) => {
+    console.log("Edit voucher:", voucher);
     setSelectedVoucher(voucher);
     setIsUpdateModalOpen(true);
   };
 
   const handleCloseUpdate = () => {
     setIsUpdateModalOpen(false);
-    setSelectedVoucher(null);
+    // Không cần set selectedVoucher = null ở đây để tránh giật UI
   };
 
+  // Mở Detail
   const handleSelect = (voucher) => {
     setSelectedVoucher(voucher);
     setIsDetailDrawerOpen(true);
@@ -95,8 +98,8 @@ const RankVoucherTab = () => {
     if (!window.confirm('Xóa Rank Voucher này?')) return;
     try {
       await axios.delete(`http://localhost:8082/api/vouchers/rank/${id}`);
-      handleCloseDetail();
-      fetchVouchers();
+      handleCloseDetail(); // Đóng Detail nếu đang mở
+      fetchVouchers();     // Refresh list
     } catch (err) {
       setError('Xóa thất bại');
     }
@@ -163,12 +166,12 @@ const RankVoucherTab = () => {
             ) : (
               vouchers.content?.map((v) => (
                 <TableRow key={v.id} hover onClick={() => handleSelect(v)} sx={{ cursor: 'pointer' }}>
-                  <TableCell>{v.id}</TableCell>
-                  <TableCell>{v.code}</TableCell>
+                  <TableCell>{v.id.substring(0, 8)}...</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>{v.code}</TableCell>
                   <TableCell>{v.voucherType}</TableCell>
-                  <TableCell>{v.requiredRank}</TableCell>
-                  <TableCell>{new Date(v.startDate).toLocaleDateString('vi-VN')}</TableCell>
-                  <TableCell>{new Date(v.endDate).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell>{v.requiredRank || v.rank || 'N/A'}</TableCell>
+                  <TableCell>{v.startDate ? new Date(v.startDate).toLocaleDateString('vi-VN') : '-'}</TableCell>
+                  <TableCell>{v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '-'}</TableCell>
                 </TableRow>
               ))
             )}
@@ -188,8 +191,18 @@ const RankVoucherTab = () => {
       />
 
       {/* Modals & Drawer */}
-      {isAddModalOpen && <AddRankVoucher open={isAddModalOpen} onClose={handleCloseAdd} onSuccess={fetchVouchers} />}
-      {isUpdateModalOpen && <UpdateRankVoucher open={isUpdateModalOpen} onClose={handleCloseUpdate} voucher={selectedVoucher} onSuccess={fetchVouchers} />}
+      {isAddModalOpen && (
+        <AddRankVoucher open={isAddModalOpen} onClose={handleCloseAdd} onSuccess={fetchVouchers} />
+      )}
+
+      {/* UPDATE FORM: Truyền đúng props */}
+      {isUpdateModalOpen && selectedVoucher && (
+        <UpdateRankVoucher 
+            voucher={selectedVoucher}     // Quan trọng: Tên prop là voucher
+            onClose={handleCloseUpdate} 
+            onSuccess={fetchVouchers}     // Callback reload list
+        />
+      )}
 
       <Drawer anchor="right" open={isDetailDrawerOpen} onClose={handleCloseDetail}
         sx={{ '& .MuiDrawer-paper': { width: { xs: '100%', sm: 800 }, p: 3 } }}>
@@ -197,7 +210,11 @@ const RankVoucherTab = () => {
           <RankVoucherDetail
             voucher={selectedVoucher}
             onClose={handleCloseDetail}
-            onEdit={() => { handleOpenUpdate(selectedVoucher); handleCloseDetail(); }}
+            onEdit={() => { 
+                // Đóng Detail rồi mới mở Form Update
+                handleCloseDetail(); 
+                handleOpenUpdate(selectedVoucher); 
+            }}
             onDelete={handleDelete}
           />
         )}

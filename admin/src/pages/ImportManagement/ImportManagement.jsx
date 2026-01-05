@@ -276,71 +276,92 @@ const ImportManagement = () => {
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Form nhập sách mới */}
-            <Typography variant="h6" mb={2} className="font-semibold">Nhập sách mới</Typography>
-            <form onSubmit={handleManualImportNewBooks}>
-                <Box className="max-h-96 overflow-y-auto pr-2">
-                    {newBooks.map((book, index) => (
-                        <Grid container spacing={2} key={index} alignItems="center" sx={{ mb: 2 }}>
-                            <Grid item xs={12} sm={3}>
-                                <TextField
-                                    label="Tên sách"
-                                    name="bookName"
-                                    fullWidth
-                                    value={book.bookName}
-                                    onChange={(e) => handleNewInputChange(e, index)}
-                                    required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={3}>
-                                <TextField
-                                    label="Tác giả"
-                                    name="bookAuthor"
-                                    fullWidth
-                                    value={book.bookAuthor}
-                                    onChange={(e) => handleNewInputChange(e, index)}
-                                    required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={2}>
-                                <TextField
-                                    label="Số lượng"
-                                    name="bookStockQuantity"
-                                    type="number"
-                                    fullWidth
-                                    value={book.bookStockQuantity}
-                                    onChange={(e) => handleNewInputChange(e, index)}
-                                    required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={3}>
-                                <TextField
-                                    label="Giá nhập"
-                                    name="importPrice"
-                                    type="number"
-                                    fullWidth
-                                    value={book.importPrice}
-                                    onChange={(e) => handleNewInputChange(e, index)}
-                                    required
-                                />
-                            </Grid>
-                            <Grid item xs={1} sm={1}>
-                                <IconButton onClick={() => handleRemoveNewRow(index)} color="error" disabled={newBooks.length === 1}>
-                                    <Delete />
-                                </IconButton>
-                            </Grid>
-                        </Grid>
-                    ))}
-                </Box>
-                <Button onClick={handleAddNewRow} startIcon={<Add />} variant="outlined" sx={{ my: 2 }}>
-                    Thêm sách mới
-                </Button>
-                <Box className="flex justify-end">
-                    <Button type="submit" variant="contained" className="submit-button" disabled={isLoading}>
-                        {isLoading ? "Đang lưu..." : "Lưu sách mới"}
-                    </Button>
-                </Box>
-            </form>
+{/* Form nhập sách mới */}
+<Typography variant="h6" mb={2} className="font-semibold">Nhập sách mới</Typography>
+<form onSubmit={handleManualImportNewBooks}>
+    <Box className="max-h-96 overflow-y-auto pr-2">
+        {newBooks.map((book, index) => (
+            <Grid container spacing={2} key={index} alignItems="center" sx={{ mb: 2 }}>
+                {/* 1. Tên sách - Giữ nguyên sm=3 */}
+                <Grid item xs={12} sm={3}>
+                    <TextField
+                        label="Tên sách"
+                        name="bookName"
+                        fullWidth
+                        value={book.bookName}
+                        onChange={(e) => handleNewInputChange(e, index)}
+                        required
+                    />
+                </Grid>
+
+                {/* 2. Tác giả - Giảm sm từ 3 xuống 2 */}
+                <Grid item xs={12} sm={2}>
+                    <TextField
+                        label="Tác giả"
+                        name="bookAuthor"
+                        fullWidth
+                        value={book.bookAuthor}
+                        onChange={(e) => handleNewInputChange(e, index)}
+                        required
+                    />
+                </Grid>
+
+                {/* 3. Nhà cung cấp (MỚI THÊM) - sm=2 */}
+                <Grid item xs={12} sm={2}>
+                    <TextField
+                        label="Nhà cung cấp"
+                        name="bookSupplier"
+                        fullWidth
+                        value={book.bookSupplier}
+                        onChange={(e) => handleNewInputChange(e, index)}
+                        required
+                    />
+                </Grid>
+
+                {/* 4. Số lượng - Giữ nguyên sm=2 */}
+                <Grid item xs={12} sm={2}>
+                    <TextField
+                        label="Số lượng"
+                        name="bookStockQuantity"
+                        type="number"
+                        fullWidth
+                        value={book.bookStockQuantity}
+                        onChange={(e) => handleNewInputChange(e, index)}
+                        required
+                    />
+                </Grid>
+
+                {/* 5. Giá nhập - Giảm sm từ 3 xuống 2 */}
+                <Grid item xs={12} sm={2}>
+                    <TextField
+                        label="Giá nhập"
+                        name="importPrice"
+                        type="number"
+                        fullWidth
+                        value={book.importPrice}
+                        onChange={(e) => handleNewInputChange(e, index)}
+                        required
+                    />
+                </Grid>
+
+                {/* 6. Nút xóa - Giữ nguyên sm=1 */}
+                <Grid item xs={1} sm={1}>
+                    <IconButton onClick={() => handleRemoveNewRow(index)} color="error" disabled={newBooks.length === 1}>
+                        <Delete />
+                    </IconButton>
+                </Grid>
+            </Grid>
+        ))}
+    </Box>
+    <Button onClick={handleAddNewRow} startIcon={<Add />} variant="outlined" sx={{ my: 2 }}>
+        Thêm sách mới
+    </Button>
+    <Box className="flex justify-end">
+        <Button type="submit" variant="contained" className="submit-button" disabled={isLoading}>
+            {isLoading ? "Đang lưu..." : "Lưu sách mới"}
+        </Button>
+    </Box>
+</form>
 
             <Divider sx={{ my: 3 }} />
 

@@ -11,10 +11,11 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
+// 1. Nhận đúng prop 'voucher' và 'onSuccess'
+const UpdateRankVoucher = ({ voucher, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     code: '',
-    voucherType: '',
+    voucherType: 'Percentage Discount',
     percentageDiscount: '',
     valueDiscount: '',
     highestDiscountValue: '',
@@ -22,31 +23,46 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
     usageLimit: '',
     startDate: '',
     endDate: '',
-    rank: '',
+    rank: '', // Lưu ý: Backend có thể trả về 'requiredRank' hoặc 'rank'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Hàm helper xử lý ngày tháng an toàn
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+      return new Date(dateString).toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
   useEffect(() => {
-    if (selectedVoucher) {
+    // 2. Kiểm tra biến 'voucher' được truyền vào
+    if (voucher) {
+      console.log("Data loaded into update form (Rank):", voucher); 
       setFormData({
-        code: selectedVoucher.code,
-        voucherType: selectedVoucher.voucherType,
-        percentageDiscount: selectedVoucher.percentageDiscount,
-        valueDiscount: selectedVoucher.valueDiscount,
-        highestDiscountValue: selectedVoucher.highestDiscountValue,
-        minOrderValue: selectedVoucher.minOrderValue,
-        usageLimit: selectedVoucher.usageLimit,
-        startDate: new Date(selectedVoucher.startDate).toISOString().split('T')[0],
-        endDate: new Date(selectedVoucher.endDate).toISOString().split('T')[0],
-        rank: selectedVoucher.rank,
+        code: voucher.code || '',
+        voucherType: voucher.voucherType || 'Percentage Discount',
+        percentageDiscount: voucher.percentageDiscount || '',
+        valueDiscount: voucher.valueDiscount || '',
+        highestDiscountValue: voucher.highestDiscountValue || '',
+        minOrderValue: voucher.minOrderValue || '',
+        usageLimit: voucher.usageLimit || '',
+        // Mapping cả 2 trường hợp tên biến rank
+        rank: voucher.rank || voucher.requiredRank || '', 
+        startDate: formatDateForInput(voucher.startDate),
+        endDate: formatDateForInput(voucher.endDate),
       });
     }
-  }, [selectedVoucher]);
+  }, [voucher]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const val = name.includes("Discount") || name.includes("Value") || name === "usageLimit" || name === "rank" ? Number(value) || '' : value;
+    const val = name.includes("Discount") || name.includes("Value") || name === "usageLimit" || name === "rank" 
+        ? (value === '' ? '' : Number(value)) 
+        : value;
     setFormData({ ...formData, [name]: val });
     setError('');
   };
@@ -55,26 +71,36 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await axios.put(`http://localhost:8082/api/vouchers/rank/${selectedVoucher.id}`, formData);
+      // Gọi API update
+      await axios.put(`http://localhost:8082/api/vouchers/rank/${voucher.id}`, formData);
+      alert("Cập nhật thành công!");
+      if (onSuccess) onSuccess(); // Reload lại danh sách bên ngoài
       onClose();
     } catch (error) {
       console.error('Error updating rank voucher:', error);
-      setError('Error updating rank voucher.');
+      setError('Lỗi khi cập nhật Rank Voucher.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Box className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
+    <Box 
+        sx={{ 
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
+            bgcolor: 'rgba(0,0,0,0.5)', zIndex: 1300,
+            display: 'flex', justifyContent: 'center', alignItems: 'center' 
+        }}
+    >
       <Box
-        className="bg-white p-6 rounded-lg w-full max-w-3xl"
-        style={{ maxHeight: '90vh', overflowY: 'auto' }}
+        sx={{ bgcolor: 'white', p: 4, borderRadius: 2, width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <Typography variant="h6" mb={2}>Update Rank Voucher</Typography>
-        {error && <Typography color="error">{error}</Typography>}
+        <Typography variant="h6" mb={2}>Cập nhật Rank Voucher</Typography>
+        {error && <Typography color="error" mb={2}>{error}</Typography>}
+        
         <form onSubmit={handleUpdate}>
           <Box display="flex" gap={2} flexWrap="wrap">
+            {/* Cột Trái */}
             <Box flex={1} minWidth="300px">
               <TextField
                 label="Code"
@@ -86,20 +112,21 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 margin="normal"
               />
               <FormControl fullWidth margin="normal">
-                <InputLabel id="voucher-type-label">Voucher Type</InputLabel>
+                <InputLabel id="voucher-type-label">Loại Voucher</InputLabel>
                 <Select
                   labelId="voucher-type-label"
                   name="voucherType"
                   value={formData.voucherType}
                   onChange={handleChange}
                   required
+                  label="Loại Voucher"
                 >
                   <MenuItem value="Percentage Discount">Percentage Discount</MenuItem>
                   <MenuItem value="Value Discount">Value Discount</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="Percentage Discount"
+                label="Percentage Discount (%)"
                 name="percentageDiscount"
                 type="number"
                 fullWidth
@@ -107,6 +134,7 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 onChange={handleChange}
                 margin="normal"
                 disabled={formData.voucherType !== "Percentage Discount"}
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="Value Discount"
@@ -117,6 +145,7 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 onChange={handleChange}
                 margin="normal"
                 disabled={formData.voucherType !== "Value Discount"}
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="Highest Discount Value"
@@ -126,9 +155,11 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 value={formData.highestDiscountValue}
                 onChange={handleChange}
                 margin="normal"
+                InputLabelProps={{ shrink: true }}
               />
             </Box>
 
+            {/* Cột Phải */}
             <Box flex={1} minWidth="300px">
               <TextField
                 label="Min Order Value"
@@ -138,6 +169,7 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 value={formData.minOrderValue}
                 onChange={handleChange}
                 margin="normal"
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="Usage Limit"
@@ -147,18 +179,20 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 value={formData.usageLimit}
                 onChange={handleChange}
                 margin="normal"
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label="Rank"
+                label="Rank Yêu cầu (ID/Level)"
                 name="rank"
                 type="number"
                 fullWidth
                 value={formData.rank}
                 onChange={handleChange}
                 margin="normal"
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label="Start Date"
+                label="Ngày bắt đầu"
                 name="startDate"
                 type="date"
                 fullWidth
@@ -169,7 +203,7 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label="End Date"
+                label="Ngày kết thúc"
                 name="endDate"
                 type="date"
                 fullWidth
@@ -182,8 +216,8 @@ const UpdateRankVoucher = ({ selectedVoucher, onClose }) => {
             </Box>
           </Box>
 
-          <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
-            <Button onClick={onClose} disabled={isLoading}>Cancel</Button>
+          <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+            <Button variant="outlined" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
               {isLoading ? 'Updating...' : 'Update'}
             </Button>
