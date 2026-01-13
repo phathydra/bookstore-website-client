@@ -22,14 +22,31 @@ const VoucherDrawer = ({
   isVoucherApplicable,
   applyVoucher,
 }) => {
+  const formatMoney = (value) =>
+    value != null ? value.toLocaleString("vi-VN") : "";
+
   const renderVoucherCard = (voucher) => {
+    if (!voucher) return null;
+
     const isApplicable = isVoucherApplicable(voucher);
-    const discountText =
-      voucher.voucherType === "Percentage Discount"
-        ? `Giảm ${voucher.percentageDiscount}% (tối đa ${voucher.highestDiscountValue.toLocaleString(
-            "vi-VN"
-          )} VND)`
-        : `Giảm ${voucher.valueDiscount.toLocaleString("vi-VN")} VND`;
+
+    let discountText = "";
+    let maxDiscountPart = "";
+
+    if (voucher.voucherType === "Percentage Discount") {
+      discountText = `Giảm ${voucher.percentageDiscount}%`;
+
+      if (voucher.highestDiscountValue != null) {
+        maxDiscountPart = ` (tối đa ${formatMoney(voucher.highestDiscountValue)} VND)`;
+      }
+    } else {
+      const fixedValue = formatMoney(voucher.valueDiscount);
+      discountText = fixedValue
+        ? `Giảm ${fixedValue} VND`
+        : "Giảm giá đặc biệt";
+    }
+
+    const fullDiscountText = discountText + maxDiscountPart;
 
     const cardBgColor = isApplicable
       ? "bg-gradient-to-r from-red-50 to-red-100"
@@ -42,12 +59,15 @@ const VoucherDrawer = ({
       : "bg-gray-400";
     const buttonText = isApplicable ? "Áp dụng" : "Không dùng được";
 
-    const endDate = new Date(voucher.endDate);
+    const endDate = voucher.endDate ? new Date(voucher.endDate) : null;
     const now = new Date();
-    const timeLeftInDays = Math.ceil(
-      (endDate - now) / (1000 * 60 * 60 * 24)
-    );
-    const isExpiringSoon = timeLeftInDays > 0 && timeLeftInDays <= 10;
+    let timeLeftInDays = null;
+    let isExpiringSoon = false;
+
+    if (endDate && !isNaN(endDate)) {
+      timeLeftInDays = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+      isExpiringSoon = timeLeftInDays > 0 && timeLeftInDays <= 10;
+    }
 
     return (
       <div
@@ -71,15 +91,24 @@ const VoucherDrawer = ({
             variant="h6"
             className={`text-lg font-bold ${discountColor}`}
           >
-            {discountText}
+            {fullDiscountText}
           </Typography>
+
           <Typography variant="body2" className={`mt-1 ${textColor}`}>
-            Đơn tối thiểu: {voucher.minOrderValue.toLocaleString("vi-VN")} VND
+            Đơn tối thiểu:{" "}
+            {voucher.minOrderValue != null
+              ? `${formatMoney(voucher.minOrderValue)} VND`
+              : "Không yêu cầu"}
           </Typography>
+
           <div className="flex items-center mt-1 text-sm">
             <span className={textColor}>
-              Hạn dùng: {new Date(voucher.endDate).toLocaleDateString()}
+              Hạn dùng:{" "}
+              {voucher.endDate
+                ? new Date(voucher.endDate).toLocaleDateString("vi-VN")
+                : "Không giới hạn"}
             </span>
+
             {isExpiringSoon && (
               <span className="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-bold text-xs animate-pulse">
                 Còn {timeLeftInDays} ngày
@@ -179,7 +208,7 @@ const VoucherDrawer = ({
           style={{ scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}
         >
           {tabValue === 0 &&
-            (publicVouchers.length > 0 ? (
+            (publicVouchers?.length > 0 ? (
               publicVouchers.map(renderVoucherCard)
             ) : (
               <Typography className="text-center text-gray-500 mt-4 text-lg">
@@ -188,7 +217,7 @@ const VoucherDrawer = ({
             ))}
 
           {tabValue === 1 &&
-            (personalVouchers.length > 0 ? (
+            (personalVouchers?.length > 0 ? (
               personalVouchers.map(renderVoucherCard)
             ) : (
               <Typography className="text-center text-gray-500 mt-4 text-lg">

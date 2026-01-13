@@ -17,6 +17,7 @@ import ImportManagement from "./pages/ImportManagement/ImportManagement";
 import ChatPage from "./pages/ChatPage/ChatPage";
 import ComboManagement from "./pages/ComboManagement/ComboManagement";
 import BannerManagement from "./pages/BannerManagement/BannerManagement";
+import TestPage from "./pages/TestPage/TestPage";
 
 const PrivateRoute = ({ children }) => {
     const navigate = useNavigate();
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/api-management" element={<PrivateRoute><ApiManagement /></PrivateRoute>} />
                 <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
                 <Route path="/chat" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
+                <Route path="/test" element={<PrivateRoute><TestPage /></PrivateRoute>} />
                 <Route path="/combo-management" element={<PrivateRoute><ComboManagement /></PrivateRoute>} />
                 <Route path="/banner-management" element={<PrivateRoute><BannerManagement /></PrivateRoute>} />
             </Routes>

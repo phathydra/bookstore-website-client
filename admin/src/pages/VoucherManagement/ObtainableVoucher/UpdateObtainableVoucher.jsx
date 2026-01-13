@@ -19,8 +19,8 @@ const UpdateObtainableVoucher = ({ voucher, onClose, onSuccess }) => {
     code: '',
     voucherType: 'Percentage Discount', // Giá trị mặc định tránh lỗi select
     percentageDiscount: '',
-    valueDiscount: '',
-    highestDiscountValue: '',
+    valueDiscount: '0',
+    highestDiscountValue: '0',
     minOrderValue: '',
     usageLimit: '',
     publicClaimable: false,
