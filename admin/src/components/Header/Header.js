@@ -56,6 +56,9 @@ const Header = ({ title, isCollapsed }) => {
                 <Link to="/profile">Thông tin cá nhân</Link>
               </li>
               <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                <Link to="/chat">Message</Link>
+              </li>
+              <li className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                 <Link to="/change-password">Đổi mật khẩu</Link>
               </li>
               <li onClick={handleLogout} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">

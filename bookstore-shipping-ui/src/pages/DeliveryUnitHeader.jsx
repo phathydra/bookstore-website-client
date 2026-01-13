@@ -16,6 +16,7 @@ const DeliveryUnitHeader = ({
     handleMenuOpen,
     handleMenuClose,
     handleGoToInfo,
+    handleGoToChatPage,
     handleLogout,
     // Map props
     routeToDraw,
@@ -271,6 +272,7 @@ const DeliveryUnitHeader = ({
                         </Button>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} keepMounted>
                             <MenuItem onClick={handleGoToInfo}>Quản lý thông tin</MenuItem>
+                            <MenuItem onClick={handleGoToChatPage}>Message</MenuItem>
                             <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
                         </Menu>
                     </div>

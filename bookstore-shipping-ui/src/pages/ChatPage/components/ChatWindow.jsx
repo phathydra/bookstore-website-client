@@ -1,27 +1,34 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import MessageBubble from "./MessageBubble";
-import SockJS from "sockjs-client/dist/sockjs";
-import Stomp from "stompjs";
-
-let stompClient = null;
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 const ChatWindow = ({ conversationId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [conversation, setConversation] = useState(null);
+
   const messagesContainerRef = useRef(null);
+  const stompClientRef = useRef(null);
+
   const accountId = localStorage.getItem("accountId");
 
+  /* ===================== LOAD CONVERSATION & HISTORY ===================== */
   useEffect(() => {
     if (!conversationId) return;
 
     const fetchData = async () => {
       try {
         const [convRes, msgRes] = await Promise.all([
-          axios.get(`http://localhost:8083/api/conversation/info?conversationId=${conversationId}`),
-          axios.get(`http://localhost:8083/api/message/fetch?conversationId=${conversationId}`)
+          axios.get(
+            `http://localhost:8083/api/conversation/info?conversationId=${conversationId}`
+          ),
+          axios.get(
+            `http://localhost:8083/api/message/fetch?conversationId=${conversationId}`
+          ),
         ]);
+
         setConversation(convRes.data);
         setMessages(msgRes.data);
       } catch (err) {
@@ -32,6 +39,7 @@ const ChatWindow = ({ conversationId }) => {
     fetchData();
   }, [conversationId]);
 
+  /* ===================== AUTO SCROLL ===================== */
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -39,29 +47,43 @@ const ChatWindow = ({ conversationId }) => {
     }
   }, [messages]);
 
+  /* ===================== WEBSOCKET ===================== */
   useEffect(() => {
     if (!conversationId) return;
 
-    const socket = new SockJS("http://localhost:8083/ws");
-    stompClient = Stomp.over(socket);
+    const client = new Client({
+      webSocketFactory: () =>
+        new SockJS("http://localhost:8083/ws"),
+      reconnectDelay: 5000,
+      onConnect: () => {
+        console.log("Connected to WebSocket");
 
-    stompClient.connect({}, () => {
-      console.log("Connected to WebSocket");
-      stompClient.subscribe(`/topic/conversation/${conversationId}`, (message) => {
-        if (message.body) {
-          const newMsg = JSON.parse(message.body);
-          setMessages((prev) => [...prev, newMsg]);
-        }
-      });
+        client.subscribe(
+          `/topic/conversation/${conversationId}`,
+          (message) => {
+            if (message.body) {
+              const newMsg = JSON.parse(message.body);
+              setMessages((prev) => [...prev, newMsg]);
+            }
+          }
+        );
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error:", frame);
+      },
     });
 
+    client.activate();
+    stompClientRef.current = client;
+
     return () => {
-      if (stompClient) {
-        stompClient.disconnect(() => console.log("Disconnected WebSocket"));
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
       }
     };
   }, [conversationId]);
 
+  /* ===================== SEND MESSAGE ===================== */
   const handleSend = async () => {
     if (!input.trim() || !conversation) return;
 
@@ -72,7 +94,10 @@ const ChatWindow = ({ conversationId }) => {
     };
 
     try {
-      await axios.post("http://localhost:8083/api/message/send", userMessage);
+      await axios.post(
+        "http://localhost:8083/api/message/send",
+        userMessage
+      );
       setInput("");
 
       if (conversation.channelType === "Chatbot") {
@@ -88,7 +113,10 @@ const ChatWindow = ({ conversationId }) => {
           sender: "CHATBOT",
         };
 
-        await axios.post("http://localhost:8083/api/message/send", botMessage);
+        await axios.post(
+          "http://localhost:8083/api/message/send",
+          botMessage
+        );
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -97,19 +125,25 @@ const ChatWindow = ({ conversationId }) => {
 
   return (
     <div className="flex flex-col h-full p-4">
-      {/* Danh sách tin nhắn */}
+      {/* Messages */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto mb-3"
       >
         {[...messages]
-          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+          .sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          )
           .map((msg, idx) => (
-            <MessageBubble key={idx} {...msg} accountId={accountId} />
+            <MessageBubble
+              key={idx}
+              {...msg}
+              accountId={accountId}
+            />
           ))}
       </div>
 
-      {/* Ô nhập tin nhắn */}
+      {/* Input */}
       <div className="flex items-center border rounded-full px-3 py-2">
         <input
           type="text"

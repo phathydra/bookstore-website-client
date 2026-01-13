@@ -43,6 +43,7 @@ const DeliveryUnitDashboard = () => {
                 handleMenuOpen={handlers.handleMenuOpen}
                 handleMenuClose={handlers.handleMenuClose}
                 handleGoToInfo={handlers.handleGoToInfo}
+                handleGoToChatPage={handlers.handleGoToChatPage}
                 handleLogout={handlers.handleLogout}
                 routeToDraw={routeToDraw}
                 isRouteLoading={isRouteLoading}

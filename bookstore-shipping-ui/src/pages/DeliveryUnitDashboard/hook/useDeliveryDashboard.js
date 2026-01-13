@@ -177,6 +177,10 @@ export const useDeliveryDashboard = (userId, navigate) => {
         handleMenuClose();
         navigate('/DeliveryUnitInfo');
     };
+    const handleGoToChatPage = () => {
+        handleMenuClose();
+        navigate('/chat');
+    };
     const handleLogout = () => {
         handleMenuClose();
         localStorage.removeItem("accountId");
@@ -464,6 +468,7 @@ export const useDeliveryDashboard = (userId, navigate) => {
             handleMenuOpen,
             handleMenuClose,
             handleGoToInfo,
+            handleGoToChatPage,
             handleLogout,
             handleClearRoute,
             handleToggleOrderSelect,

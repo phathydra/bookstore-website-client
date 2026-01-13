@@ -312,6 +312,9 @@ const Header = () => {
                       <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/address" : "/login")}>
                           Địa chỉ nhận hàng
                       </button>
+                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-700" onClick={() => navigate(localStorage.getItem("accountId") ? "/chat" : "/login")}>
+                          Message
+                      </button>
                       <div className="border-t border-gray-100 my-1"></div>
                       <button className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 text-sm" onClick={handleLogout}>
                           {isLogin ? "Đăng xuất" : "Đăng nhập"}

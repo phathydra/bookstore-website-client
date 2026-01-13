@@ -9,6 +9,7 @@ import HomeShipper from  './pages/Shipper/ShipperDashboard';
 import MapView from './pages/Map/MapView';
 import DeliveryUnitInfo from './pages/DeliveryUnitInfo/DeliveryUnitInfo';
 import ShipperInfo from './pages/ShipperInfo/ShipperInfo';
+import ChatPage from './pages/ChatPage/ChatPage';
 
 // --- Components Placeholder (Chỉ để giữ chỗ cho các trang khác) ---
 
@@ -40,6 +41,8 @@ function App() {
 
         {/* Forgot password */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/chat" element={<ChatPage />} />
 
         {/* 404 */}
         <Route path="*" element={
