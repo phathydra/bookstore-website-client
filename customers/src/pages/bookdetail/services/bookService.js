@@ -2,20 +2,35 @@ import axios from "axios";
 
 const API_URLS = {
   BOOK: "http://localhost:8081/api/book",
-  REVIEW: "http://localhost:8081/api/reviews",
+  REVIEW: "http://localhost:8081/api/reviews", // Đã trỏ đúng API Review
   ANALYTICS: "http://localhost:8081/api/analytics",
   ACCOUNT: "http://localhost:8080/api/account/fetch",
   CART: "http://localhost:8082/cart/add",
   SUMMARY: "http://localhost:8081/api/summary",
-  AI_RECOMMEND: "http://127.0.0.1:8000/api/recommend",
+  AI_RECOMMEND: "http://localhost:8086/recommend",
 };
 
 export const fetchBookDetail = (id) => axios.get(`${API_URLS.BOOK}/${id}`);
-export const fetchRecommendations = (id, accountId) => 
-  axios.get(`${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`);
 
-export const fetchReviews = (id) => axios.get(`${API_URLS.REVIEW}/book/${id}`);
+// Logic cũ (Content-based)
+export const fetchRecommendations = (id, accountId) =>
+  axios.get(
+    `${API_URLS.BOOK}/${id}/recommendations?accountId=${accountId}&k=5`
+  );
+
+// Logic Collaborative Filtering (Python)
+export const fetchCollaborativeRecs = (accountId) => {
+  return axios.get(`${API_URLS.AI_RECOMMEND}/${accountId}`, {
+    params: { k: 10 },
+  });
+};
+
+// 🟢 QUAN TRỌNG: Gọi đúng API lấy review theo bookId
+export const fetchReviews = (bookId) =>
+  axios.get(`${API_URLS.REVIEW}/book/${bookId}`);
+
 export const fetchAnalytics = (id) => axios.get(`${API_URLS.ANALYTICS}/${id}`);
+
 export const fetchAccount = (accountId) =>
   axios.get(`${API_URLS.ACCOUNT}?accountId=${accountId}`);
 
@@ -40,37 +55,26 @@ export const addToCartService = (accountId, book, quantity) =>
 export const fetchSummaryService = async (title, author) => {
   try {
     const response = await axios.get(API_URLS.SUMMARY, {
-      params: {
-        title: title,
-        author: author,
-      },
+      params: { title, author },
     });
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi gọi API tóm tắt:", error);
-    throw new Error("Không thể lấy tóm tắt sách. Vui lòng thử lại.");
+    console.error("Lỗi API tóm tắt:", error);
+    return { summary: "Không thể lấy tóm tắt sách." };
   }
 };
 
 export const fetchBooksByAuthorService = (authorName, page = 0, size = 5) => {
   const encodedAuthor = encodeURIComponent(authorName);
   return axios.get(`${API_URLS.BOOK}/author/${encodedAuthor}`, {
-    params: {
-      page,
-      size,
-    },
+    params: { page, size },
   });
 };
+
+// --- CÁC HÀM TRACKING (ANALYTICS) ---
 
 export const trackAddToCart = (bookId, accountId) => {
   return axios.post(`${API_URLS.ANALYTICS}/${bookId}/add-to-cart`, {
-    accountId: accountId,
-  });
-};
-
-export const trackSearch = (searchTerm, accountId) => {
-  return axios.post(`${API_URLS.ANALYTICS}/track/search`, {
-    searchTerm: searchTerm,
     accountId: accountId,
   });
 };
@@ -81,12 +85,10 @@ export const trackClickSummary = (bookId, accountId) => {
   });
 };
 
-// --- PHẦN MỚI THÊM VÀO ---
-// Hàm gọi AI Python để lấy gợi ý (Collaborative Filtering/Hybrid)
-export const fetchCollaborativeRecs = (bookId, accountId) => {
-  return axios.post(API_URLS.AI_RECOMMEND, {
-    book_id: bookId,      // Khớp với backend Python
-    user_id: accountId,   // Khớp với backend Python (thường dùng user_id thay vì accountId)
-    k: 10                 // Số lượng gợi ý
+// 🟢 ĐÂY LÀ HÀM BẠN ĐANG BỊ THIẾU
+export const trackSearch = (searchTerm, accountId) => {
+  return axios.post(`${API_URLS.ANALYTICS}/track/search`, {
+    searchTerm: searchTerm,
+    accountId: accountId,
   });
 };
