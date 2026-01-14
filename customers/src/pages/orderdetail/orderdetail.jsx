@@ -9,15 +9,11 @@ import PaymentSummary from "./components/PaymentSummary";
 import { useVoucher } from "./hooks/useVoucher";
 import * as orderService from "./services/orderService";
 
-// PayPal options - move outside component (recommended)
 const paypalScriptOptions = {
-  "client-id": "YOUR_PAYPAL_CLIENT_ID_HERE", // ← REPLACE WITH YOUR REAL CLIENT ID
+  "client-id": "YOUR_PAYPAL_CLIENT_ID_HERE",
   currency: "USD",
   intent: "capture",
-  components: "buttons", // Required to load the Buttons component
-  // Optional: enable more funding sources
-  // enableFunding: "venmo,card",
-  // disableFunding: "credit,card", // example if you want to hide some options
+  components: "buttons",
 };
 
 const OrderDetail = () => {
