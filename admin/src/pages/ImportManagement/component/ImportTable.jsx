@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Typography, Box, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,
-    TablePagination, CircularProgress, Alert
+    Box, Typography, CircularProgress, Accordion, AccordionSummary, AccordionDetails,
+    Table, TableBody, TableCell, TableHead, TableRow, Chip
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from 'axios';
 import moment from 'moment';
 
@@ -10,98 +11,83 @@ const API_BASE = "http://localhost:8081/api/imports";
 
 const ImportTable = () => {
     const [imports, setImports] = useState([]);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [totalElements, setTotalElements] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchImports();
-    }, [page, rowsPerPage]);
-
+    // Ở đây ta load tất cả (hoặc load trang lớn) để client tự group cho đẹp
+    // Nếu dữ liệu quá lớn, nên dùng logic lazy load trong accordion (advanced)
     const fetchImports = async () => {
-        setIsLoading(true);
-        setError(null);
         try {
-            const response = await axios.get(`${API_BASE}`, {
-                params: {
-                    page: page,
-                    size: rowsPerPage
-                }
-            });
+            const response = await axios.get(`${API_BASE}?page=0&size=1000`); // Load 1000 records gần nhất
             setImports(response.data.content);
-            setTotalElements(response.data.totalElements);
         } catch (err) {
-            console.error("Lỗi khi tải thông tin nhập hàng:", err);
-            setError("Không thể tải dữ liệu nhập hàng. Vui lòng thử lại.");
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
+    useEffect(() => { fetchImports(); }, []);
 
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
+    // Hàm nhóm dữ liệu theo ngày
+    const groupedImports = imports.reduce((groups, item) => {
+        const date = moment(item.importDate).format("DD/MM/YYYY");
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(item);
+        return groups;
+    }, {});
+
+    if (isLoading) return <CircularProgress />;
 
     return (
         <Box>
-            <Typography variant="h5" mb={2} className="font-semibold">Lịch sử nhập hàng</Typography>
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-            {error && (
-                <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
-            )}
-            {!isLoading && !error && (
-                <Paper>
-                    <TableContainer>
-                        <Table stickyHeader>
+            <Typography variant="h6" mb={2}>Lịch sử nhập hàng (Gần đây)</Typography>
+            
+            {Object.keys(groupedImports).map((date) => (
+                <Accordion key={date} defaultExpanded={false}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} className="bg-gray-50">
+                        <Box className="flex items-center justify-between w-full pr-4">
+                            <Typography className="font-bold text-lg text-blue-800">
+                                📅 Ngày {date}
+                            </Typography>
+                            <Chip label={`${groupedImports[date].length} cuốn`} size="small" color="primary" />
+                        </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Table size="small">
                             <TableHead>
-                                <TableRow>
-                                    <TableCell>ID</TableCell>
+                                <TableRow className="bg-gray-100">
                                     <TableCell>Tên sách</TableCell>
                                     <TableCell>Tác giả</TableCell>
-                                    <TableCell>Số lượng</TableCell>
-                                    <TableCell>Giá nhập</TableCell>
-                                    <TableCell>Nhà cung cấp</TableCell>
-                                    <TableCell>Ngày nhập</TableCell>
+                                    <TableCell align="right">Số lượng nhập</TableCell>
+                                    <TableCell align="right">Giá nhập</TableCell>
+                                    <TableCell>Giờ nhập</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {imports.map((item) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>{item.id}</TableCell>
+                                {groupedImports[date].map((item) => (
+                                    <TableRow key={item.id} hover>
                                         <TableCell>{item.bookName}</TableCell>
                                         <TableCell>{item.bookAuthor}</TableCell>
-                                        <TableCell>{item.quantity}</TableCell>
-                                        <TableCell>{item.importPrice}</TableCell>
-                                        <TableCell>{item.bookSupplier}</TableCell>
-                                        <TableCell>{moment(item.importDate).format('DD/MM/YYYY HH:mm')}</TableCell>
+                                        <TableCell align="right" className="font-bold text-green-600">
+                                            +{item.quantity}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {item.importPrice.toLocaleString()} đ
+                                        </TableCell>
+                                        <TableCell className="text-gray-500">
+                                            {moment(item.importDate).format("HH:mm")}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={totalElements}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Số dòng mỗi trang:"
-                    />
-                </Paper>
-            )}
+                    </AccordionDetails>
+                </Accordion>
+            ))}
+            
+            {imports.length === 0 && <Typography align="center">Chưa có lịch sử nhập hàng.</Typography>}
         </Box>
     );
 };
