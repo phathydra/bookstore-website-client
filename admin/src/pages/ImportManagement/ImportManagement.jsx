@@ -9,23 +9,19 @@ import SideNav from "../../components/SideNav/SideNav";
 import Header from "../../components/Header/Header";
 import ImportTable from "./component/ImportTable";
 
+// --- IMPORT COMPONENT MODAL MỚI ---
+import ImportModal from "./component/ImportModal"; 
+
 // Endpoint API
 const API_BASE = "http://localhost:8081";
 
 const importStock = async (books) => {
-    await axios.post(`${API_BASE}/api/book/import-stock`, { books });
-};
-
-// Hàm xử lý import Excel
-const importBooksFromExcel = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return await axios.post(`${API_BASE}/api/imports/import`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
+    // Lưu ý: Đảm bảo Backend đã có endpoint này (như hướng dẫn ở bước Backend)
+    await axios.post(`${API_BASE}/api/imports/import-stock`, { books }); 
 };
 
 const ImportManagement = () => {
+    // --- STATE CHO NHẬP THỦ CÔNG (GIỮ NGUYÊN CODE CŨ) ---
     const [newBooks, setNewBooks] = useState([{
         bookName: "",
         bookAuthor: "",
@@ -42,20 +38,20 @@ const ImportManagement = () => {
     const [oldBooks, setOldBooks] = useState([]);
     const [isOldBookModalOpen, setIsOldBookModalOpen] = useState(false);
 
-    // Thêm các state cho phân trang sách cũ
+    // State phân trang sách cũ
     const [availableBooks, setAvailableBooks] = useState([]);
     const [oldBooksPage, setOldBooksPage] = useState(0);
-    const [oldBooksSize, setOldBooksSize] = useState(10); // Kích thước trang mặc định
+    const [oldBooksSize, setOldBooksSize] = useState(10);
     const [oldBooksTotal, setOldBooksTotal] = useState(0);
 
-    const [excelFile, setExcelFile] = useState(null);
+    // --- STATE ĐIỀU KHIỂN MODAL EXCEL MỚI (THAY THẾ CODE CŨ) ---
+    const [isExcelModalOpen, setIsExcelModalOpen] = useState(false); 
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const [currentPage, setCurrentPage] = useState('import');
-
     const [refreshTable, setRefreshTable] = useState(0);
 
     const [startDate, setStartDate] = useState('');
@@ -140,18 +136,16 @@ const ImportManagement = () => {
         }
     };
     
-    // Thêm sách cũ vào danh sách, sử dụng một ID tạm thời để có thể thêm nhiều lần
     const handleSelectOldBook = (book) => {
-        const tempId = `${book.id}-${Date.now()}`; // Tạo ID tạm thời duy nhất
+        const tempId = `${book.id}-${Date.now()}`;
         setOldBooks([...oldBooks, {
             ...book,
-            tempId: tempId, // Thêm tempId để phân biệt các lần thêm khác nhau của cùng một cuốn sách
+            tempId: tempId,
             bookStockQuantity: 1,
             importPrice: ""
         }]);
     };
 
-    // Cập nhật sách cũ dựa trên tempId
     const handleOldBookInputChange = (e, tempId) => {
         const { name, value } = e.target;
         const updatedOldBooks = oldBooks.map(book =>
@@ -160,7 +154,6 @@ const ImportManagement = () => {
         setOldBooks(updatedOldBooks);
     };
 
-    // Xóa sách cũ dựa trên tempId
     const handleRemoveOldBook = (tempId) => {
         const updatedOldBooks = oldBooks.filter(book => book.tempId !== tempId);
         setOldBooks(updatedOldBooks);
@@ -180,10 +173,12 @@ const ImportManagement = () => {
 
         try {
             const booksToImport = validOldBooks.map(book => ({
+                id: book.id, // Gửi kèm ID để backend biết là sách cũ
                 bookName: book.bookName,
                 bookAuthor: book.bookAuthor,
                 bookStockQuantity: parseInt(book.bookStockQuantity, 10),
                 bookSupplier: book.bookSupplier || 'NULL',
+                // Các trường khác giữ nguyên hoặc default
                 bookCategory: book.bookCategory || 'NULL',
                 bookLanguage: book.bookLanguage || 'NULL',
                 bookPublisher: book.bookPublisher || 'NULL',
@@ -205,38 +200,8 @@ const ImportManagement = () => {
         }
     };
 
-    const handleExcelChange = (e) => {
-        setExcelFile(e.target.files[0]);
-        setError(null);
-    };
-
-    const handleExcelImport = async () => {
-        if (!excelFile) {
-            setError("Vui lòng chọn file Excel để import.");
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await importBooksFromExcel(excelFile);
-
-            if (response.status === 200) {
-                alert(response.data);
-                setExcelFile(null);
-                setRefreshTable(prev => prev + 1);
-                setCurrentPage('list');
-            }
-        } catch (err) {
-            console.error('Lỗi khi import file Excel:', err);
-            if (err.response && err.response.data) {
-                setError(`Lỗi: ${err.response.data}`);
-            } else {
-                setError("Lỗi khi import file Excel. Vui lòng kiểm tra lại file và thử lại.");
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // --- ĐÃ XÓA CÁC HÀM XỬ LÝ EXCEL CŨ (handleExcelChange, handleExcelImport) ---
+    // Vì logic này giờ nằm hoàn toàn trong ImportModal
 
     const handleExportImports = async () => {
         try {
@@ -257,15 +222,13 @@ const ImportManagement = () => {
         }
     };
 
-    // Hàm xử lý khi chuyển trang
     const handleOldBooksPageChange = (event, newPage) => {
         setOldBooksPage(newPage);
     };
 
-    // Hàm xử lý khi thay đổi số lượng bản ghi trên 1 trang
     const handleOldBooksSizeChange = (event) => {
         setOldBooksSize(parseInt(event.target.value, 10));
-        setOldBooksPage(0); // Reset về trang đầu tiên khi thay đổi kích thước
+        setOldBooksPage(0);
     };
 
     const renderImportPage = () => (
@@ -276,100 +239,52 @@ const ImportManagement = () => {
 
             <Divider sx={{ my: 3 }} />
 
-{/* Form nhập sách mới */}
-<Typography variant="h6" mb={2} className="font-semibold">Nhập sách mới</Typography>
-<form onSubmit={handleManualImportNewBooks}>
-    <Box className="max-h-96 overflow-y-auto pr-2">
-        {newBooks.map((book, index) => (
-            <Grid container spacing={2} key={index} alignItems="center" sx={{ mb: 2 }}>
-                {/* 1. Tên sách - Giữ nguyên sm=3 */}
-                <Grid item xs={12} sm={3}>
-                    <TextField
-                        label="Tên sách"
-                        name="bookName"
-                        fullWidth
-                        value={book.bookName}
-                        onChange={(e) => handleNewInputChange(e, index)}
-                        required
-                    />
-                </Grid>
-
-                {/* 2. Tác giả - Giảm sm từ 3 xuống 2 */}
-                <Grid item xs={12} sm={2}>
-                    <TextField
-                        label="Tác giả"
-                        name="bookAuthor"
-                        fullWidth
-                        value={book.bookAuthor}
-                        onChange={(e) => handleNewInputChange(e, index)}
-                        required
-                    />
-                </Grid>
-
-                {/* 3. Nhà cung cấp (MỚI THÊM) - sm=2 */}
-                <Grid item xs={12} sm={2}>
-                    <TextField
-                        label="Nhà cung cấp"
-                        name="bookSupplier"
-                        fullWidth
-                        value={book.bookSupplier}
-                        onChange={(e) => handleNewInputChange(e, index)}
-                        required
-                    />
-                </Grid>
-
-                {/* 4. Số lượng - Giữ nguyên sm=2 */}
-                <Grid item xs={12} sm={2}>
-                    <TextField
-                        label="Số lượng"
-                        name="bookStockQuantity"
-                        type="number"
-                        fullWidth
-                        value={book.bookStockQuantity}
-                        onChange={(e) => handleNewInputChange(e, index)}
-                        required
-                    />
-                </Grid>
-
-                {/* 5. Giá nhập - Giảm sm từ 3 xuống 2 */}
-                <Grid item xs={12} sm={2}>
-                    <TextField
-                        label="Giá nhập"
-                        name="importPrice"
-                        type="number"
-                        fullWidth
-                        value={book.importPrice}
-                        onChange={(e) => handleNewInputChange(e, index)}
-                        required
-                    />
-                </Grid>
-
-                {/* 6. Nút xóa - Giữ nguyên sm=1 */}
-                <Grid item xs={1} sm={1}>
-                    <IconButton onClick={() => handleRemoveNewRow(index)} color="error" disabled={newBooks.length === 1}>
-                        <Delete />
-                    </IconButton>
-                </Grid>
-            </Grid>
-        ))}
-    </Box>
-    <Button onClick={handleAddNewRow} startIcon={<Add />} variant="outlined" sx={{ my: 2 }}>
-        Thêm sách mới
-    </Button>
-    <Box className="flex justify-end">
-        <Button type="submit" variant="contained" className="submit-button" disabled={isLoading}>
-            {isLoading ? "Đang lưu..." : "Lưu sách mới"}
-        </Button>
-    </Box>
-</form>
+            {/* Form nhập sách mới (GIỮ NGUYÊN) */}
+            <Typography variant="h6" mb={2} className="font-semibold">Nhập sách mới (Thủ công)</Typography>
+            <form onSubmit={handleManualImportNewBooks}>
+                <Box className="max-h-96 overflow-y-auto pr-2">
+                    {newBooks.map((book, index) => (
+                        <Grid container spacing={2} key={index} alignItems="center" sx={{ mb: 2 }}>
+                            <Grid item xs={12} sm={3}>
+                                <TextField label="Tên sách" name="bookName" fullWidth value={book.bookName} onChange={(e) => handleNewInputChange(e, index)} required />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <TextField label="Tác giả" name="bookAuthor" fullWidth value={book.bookAuthor} onChange={(e) => handleNewInputChange(e, index)} required />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <TextField label="Nhà cung cấp" name="bookSupplier" fullWidth value={book.bookSupplier} onChange={(e) => handleNewInputChange(e, index)} required />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <TextField label="Số lượng" name="bookStockQuantity" type="number" fullWidth value={book.bookStockQuantity} onChange={(e) => handleNewInputChange(e, index)} required />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <TextField label="Giá nhập" name="importPrice" type="number" fullWidth value={book.importPrice} onChange={(e) => handleNewInputChange(e, index)} required />
+                            </Grid>
+                            <Grid item xs={1} sm={1}>
+                                <IconButton onClick={() => handleRemoveNewRow(index)} color="error" disabled={newBooks.length === 1}>
+                                    <Delete />
+                                </IconButton>
+                            </Grid>
+                        </Grid>
+                    ))}
+                </Box>
+                <Button onClick={handleAddNewRow} startIcon={<Add />} variant="outlined" sx={{ my: 2 }}>
+                    Thêm dòng mới
+                </Button>
+                <Box className="flex justify-end">
+                    <Button type="submit" variant="contained" className="submit-button" disabled={isLoading}>
+                        {isLoading ? "Đang lưu..." : "Lưu sách mới"}
+                    </Button>
+                </Box>
+            </form>
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Phần nhập sách cũ */}
-            <Typography variant="h6" mb={2} className="font-semibold">Nhập sách cũ</Typography>
+            {/* Phần nhập sách cũ (GIỮ NGUYÊN) */}
+            <Typography variant="h6" mb={2} className="font-semibold">Nhập sách cũ (Thủ công)</Typography>
             <Box mb={2}>
                 <Button onClick={() => setIsOldBookModalOpen(true)} startIcon={<Add />} variant="contained" color="secondary">
-                    Thêm sách cũ
+                    Chọn sách cũ
                 </Button>
             </Box>
 
@@ -407,34 +322,35 @@ const ImportManagement = () => {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                </Box>
-            )}
-
-            {oldBooks.length > 0 && (
-                <Box className="flex justify-end mt-4">
-                    <Button onClick={handleManualImportOldBooks} variant="contained" className="submit-button" disabled={isLoading}>
-                        {isLoading ? "Đang lưu..." : "Lưu sách cũ"}
-                    </Button>
+                    <Box className="flex justify-end mt-4">
+                        <Button onClick={handleManualImportOldBooks} variant="contained" className="submit-button" disabled={isLoading}>
+                            {isLoading ? "Đang lưu..." : "Lưu sách cũ"}
+                        </Button>
+                    </Box>
                 </Box>
             )}
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Phần nhập từ Excel */}
+            {/* --- PHẦN IMPORT TỪ EXCEL (ĐƯỢC NÂNG CẤP) --- */}
+            {/* Mình đã thay phần chọn file cũ bằng nút bấm mở Modal xịn */}
             <Typography variant="h6" mb={2} className="font-semibold">Import từ file Excel</Typography>
-            <Box className="flex flex-col sm:flex-row items-center gap-4">
-                <Button variant="outlined" component="label" startIcon={<CloudUpload />}>
-                    Chọn file Excel
-                    <input type="file" accept=".xlsx,.xls" hidden onChange={handleExcelChange} />
-                </Button>
-                {excelFile && <Typography variant="body2">{excelFile.name}</Typography>}
-                <Button
-                    variant="contained"
-                    className="submit-button"
-                    onClick={handleExcelImport}
-                    disabled={isLoading || !excelFile}
+            
+            <Box className="bg-blue-50 p-6 rounded-lg border border-blue-200 flex flex-col items-center justify-center">
+                <Typography variant="body1" className="mb-4 text-blue-800">
+                    Sử dụng công cụ Import thông minh để xem trước, sửa lỗi và phân loại sách tự động.
+                </Typography>
+                
+                <Button 
+                    variant="contained" 
+                    color="success" 
+                    size="large"
+                    startIcon={<CloudUpload />}
+                    onClick={() => setIsExcelModalOpen(true)} // Mở Modal khi bấm
+                    disabled={isLoading}
+                    sx={{ px: 4, py: 1.5 }}
                 >
-                    {isLoading ? "Đang import..." : "Import Excel"}
+                    Mở công cụ Import Excel
                 </Button>
             </Box>
 
@@ -449,7 +365,7 @@ const ImportManagement = () => {
     const renderListPage = () => (
         <Box className="bg-white p-8 rounded-lg w-full max-w-6xl border-2 border-gray-300 shadow-lg mt-6">
             <Typography variant="h4" className="text-center text-gradient mb-4 font-bold">
-                Danh sách nhập
+                Lịch sử nhập kho
             </Typography>
             <Box className="flex justify-between items-center mb-4">
                 <Box className="flex space-x-4">
@@ -476,6 +392,7 @@ const ImportManagement = () => {
                     Xuất Excel
                 </Button>
             </Box>
+            {/* Component bảng lịch sử mới (theo ngày) */}
             <ImportTable key={refreshTable} startDate={startDate} endDate={endDate} />
         </Box>
     );
@@ -491,29 +408,28 @@ const ImportManagement = () => {
             >
                 <Header title="QUẢN LÝ NHẬP KHO" isCollapsed={isCollapsed} className="sticky top-0 z-50 bg-white shadow-md" />
                 
-                <div className="flex-1 overflow-auto pt-32 px-6 flex flex-col items-center">
-                    <div className="flex justify-center w-full max-w-6xl mt-4">
+                <div className="flex-1 overflow-auto pt-32 px-6 flex flex-col items-center pb-10">
+                    <div className="flex justify-center w-full max-w-6xl mt-4 gap-4">
                         <Button
                             onClick={() => setCurrentPage('import')}
                             variant={currentPage === 'import' ? 'contained' : 'outlined'}
-                            sx={{ mr: 2 }}
                             startIcon={<Add />}
                         >
-                            Nhập sách
+                            Nhập kho
                         </Button>
                         <Button
                             onClick={() => setCurrentPage('list')}
                             variant={currentPage === 'list' ? 'contained' : 'outlined'}
                             startIcon={<ListAlt />}
                         >
-                            Danh sách nhập
+                            Lịch sử nhập
                         </Button>
                     </div>
                     {currentPage === 'import' ? renderImportPage() : renderListPage()}
                 </div>
             </main>
 
-            {/* Modal chọn sách cũ */}
+            {/* --- MODAL CHỌN SÁCH CŨ (GIỮ NGUYÊN) --- */}
             <Dialog open={isOldBookModalOpen} onClose={() => setIsOldBookModalOpen(false)} maxWidth="md" fullWidth>
                 <DialogTitle>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -531,7 +447,7 @@ const ImportManagement = () => {
                                     <TableCell>ID</TableCell>
                                     <TableCell>Tên sách</TableCell>
                                     <TableCell>Tác giả</TableCell>
-                                    <TableCell>Số lượng tồn</TableCell>
+                                    <TableCell>Tồn kho</TableCell>
                                     <TableCell>Hành động</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -564,6 +480,17 @@ const ImportManagement = () => {
                     />
                 </DialogContent>
             </Dialog>
+
+            {/* --- MODAL IMPORT EXCEL THÔNG MINH (MỚI THÊM) --- */}
+            {isExcelModalOpen && (
+                <ImportModal 
+                    onClose={() => setIsExcelModalOpen(false)} 
+                    onSuccess={() => {
+                        setRefreshTable(prev => prev + 1); // Refresh lại bảng lịch sử khi nhập xong
+                        setCurrentPage('list'); // Tự động chuyển qua tab xem lịch sử
+                    }}
+                />
+            )}
         </div>
     );
 };

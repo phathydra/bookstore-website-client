@@ -1,5 +1,3 @@
-// Thay thế toàn bộ file BookDetail.jsx của bạn bằng code này
-
 "use client";
 
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -95,13 +93,15 @@ const BookDetail = () => {
     [reviewsWithUserData, filterRating]
   );
 
+  // Fix an toàn: thêm || 0
   const totalPrice = useMemo(
     () => ((displayPrice || 0) * quantity).toLocaleString(),
     [displayPrice, quantity]
   );
 
+  // Fix an toàn: kiểm tra bookPrice tồn tại
   const originalPrice = useMemo(
-    () => (book ? (book.bookPrice * quantity).toLocaleString() : 0),
+    () => (book?.bookPrice ? (book.bookPrice * quantity).toLocaleString() : "0"),
     [book, quantity]
   );
 
@@ -257,7 +257,8 @@ const BookDetail = () => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-lg text-gray-700">Giá bán:</span>
               <span className="text-2xl font-bold text-red-600">
-                {displayPrice.toLocaleString()} VNĐ
+                {/* Fix an toàn: thêm ?. */}
+                {displayPrice?.toLocaleString()} VNĐ
               </span>
             </div>
             {book.percentage > 0 && (
@@ -265,7 +266,8 @@ const BookDetail = () => {
                 <span className="text-md text-gray-500">Tiết kiệm:</span>
                 <div className="flex items-center space-x-2">
                   <span className="text-md text-gray-500 line-through">
-                    {book.bookPrice.toLocaleString()} VNĐ
+                     {/* Fix an toàn: thêm ?. */}
+                    {book.bookPrice?.toLocaleString()} VNĐ
                   </span>
                   <span className="px-2 py-0.5 bg-red-100 text-red-700 text-sm font-semibold !rounded-full">
                     -{book.percentage}%
@@ -286,7 +288,7 @@ const BookDetail = () => {
                   const discountText =
                     voucher.voucherType === "Percentage Discount"
                       ? `Giảm ${voucher.percentageDiscount}%`
-                      : `Giảm ${voucher.valueDiscount.toLocaleString()} VNĐ`;
+                      : `Giảm ${voucher.valueDiscount?.toLocaleString()} VNĐ`; // Fix an toàn
                   return (
                     <li
                       key={voucher.id}
@@ -298,7 +300,7 @@ const BookDetail = () => {
                         {discountText}
                       </span>
                       <p className="text-xs text-gray-500 italic mt-0.5">
-                        Đơn tối thiểu {voucher.minOrderValue.toLocaleString()}{" "}
+                        Đơn tối thiểu {voucher.minOrderValue?.toLocaleString()}{" "}
                         VNĐ
                       </p>
                     </li>
@@ -419,8 +421,9 @@ const BookDetail = () => {
                         {relatedBook.bookAuthor}
                       </p>
                       <p className="text-sm font-bold text-blue-600 mt-1">
+                        {/* Fix an toàn: thêm || 0 */}
                         {(
-                          relatedBook.discountedPrice || relatedBook.bookPrice
+                          relatedBook.discountedPrice || relatedBook.bookPrice || 0
                         ).toLocaleString()}{" "}
                         VNĐ
                       </p>
@@ -440,7 +443,6 @@ const BookDetail = () => {
 
 
       {/* ⬇️ SỬA ĐỔI: BẮT ĐẦU KHỐI 2 (LAYOUT 2x2) ⬇️ */}
-      {/* Đổi `lg:grid-cols-3` thành `lg:grid-cols-2` */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* === CELL 1 (Top-Left): Mô tả sản phẩm === */}
@@ -491,8 +493,9 @@ const BookDetail = () => {
                       {recBook.bookAuthor}
                     </p>
                     <p className="text-sm font-bold text-blue-600 mt-1">
+                      {/* Fix an toàn: thêm || 0 */}
                       {(
-                        recBook.discountedPrice || recBook.bookPrice
+                        recBook.discountedPrice || recBook.bookPrice || 0
                       ).toLocaleString()}{" "}
                       VNĐ
                     </p>
@@ -508,10 +511,6 @@ const BookDetail = () => {
         </div>
 
         {/* === CELL 3 (Bottom-Left): Đánh giá sản phẩm === */}
-        {/* Logic conditional: 
-          - Nếu CÓ 'Người khác cũng mua' (cell 4), cell này chiếm 1 cột.
-          - Nếu KHÔNG CÓ 'Người khác cũng mua', cell này chiếm 2 cột (full width).
-        */}
         <div 
           className={`bg-white p-6 !rounded-2xl shadow-lg ${
             collaborativeBooks.length > 0 ? "lg:col-span-1" : "lg:col-span-2"
@@ -669,8 +668,9 @@ const BookDetail = () => {
                       {recBook.bookAuthor}
                     </p>
                     <p className="text-sm font-bold text-blue-600 mt-1">
+                      {/* Fix an toàn: thêm || 0 */}
                       {(
-                        recBook.discountedPrice || recBook.bookPrice
+                        recBook.discountedPrice || recBook.bookPrice || 0
                       ).toLocaleString()}{" "}
                       VNĐ
                     </p>

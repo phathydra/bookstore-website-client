@@ -18,12 +18,11 @@ const Cart = () => {
     const [missingBookDetails, setMissingBookDetails] = useState({});
 
     // State MỚI cho gợi ý "HOT_SELLER" -> "COLD_SELLER"
-    const [hotSellerSuggestions, setHotSellerSuggestions] = useState({}); // { hotBookId: [list of cold_seller_books] }
+    const [hotSellerSuggestions, setHotSellerSuggestions] = useState({});
 
     const accountId = localStorage.getItem("accountId");
 
     const fetchCart = useCallback(async () => {
-        // ... (Không thay đổi)
         if (!accountId) return;
 
         setLoading(true);
@@ -51,7 +50,6 @@ const Cart = () => {
     }, [accountId]);
 
     const fetchAddress = useCallback(async () => {
-        // ... (Không thay đổi)
         if (!accountId) return;
         try {
             const addressResponse = await axios.get(`http://localhost:8080/api/address?accountId=${accountId}`);
@@ -75,7 +73,6 @@ const Cart = () => {
     }, [accountId]);
 
     useEffect(() => {
-        // ... (Không thay đổi)
         if (!accountId) {
             setLoading(false);
             setError("Vui lòng đăng nhập để xem giỏ hàng.");
@@ -86,7 +83,6 @@ const Cart = () => {
     }, [accountId, fetchCart, fetchAddress]);
 
     const updateQuantity = useCallback(async (bookId, newQuantity) => {
-        // ... (Không thay đổi)
         if (newQuantity <= 0) return;
         try {
             await axios.put(`http://localhost:8082/cart/update/${accountId}/${bookId}`, null, {
@@ -99,7 +95,6 @@ const Cart = () => {
     }, [accountId, fetchCart]);
 
     const removeItem = useCallback(async (bookId) => {
-        // ... (Không thay đổi)
         try {
             await axios.delete(`http://localhost:8082/cart/remove/${accountId}/${bookId}`);
             fetchCart();
@@ -129,7 +124,6 @@ const Cart = () => {
     const currentCartItems = useMemo(() => calculatedCart?.items || [], [calculatedCart]);
 
     const toggleSelect = useCallback(async (bookId) => {
-        // ... (Giữ nguyên logic gợi ý)
         const isCurrentlySelected = selectedItems[bookId];
         const newSelectedState = !isCurrentlySelected;
 
@@ -138,7 +132,7 @@ const Cart = () => {
             [bookId]: newSelectedState
         }));
 
-        // --- LOGIC GỢI Ý COMBO "CỨNG" (Giữ nguyên) ---
+        // --- LOGIC GỢI Ý COMBO "CỨNG" ---
         if (newSelectedState) {
             try {
                 const response = await axios.get(`http://localhost:8082/api/admin/combos/suggestions?bookId=${bookId}`);
@@ -207,50 +201,34 @@ const Cart = () => {
         // --- KẾT THÚC LOGIC COMBO "CỨNG" ---
 
 
-        // --- BẮT ĐẦU LOGIC GỢI Ý HOT_SELLER MỚI (Giữ nguyên) ---
+        // --- BẮT ĐẦU LOGIC GỢI Ý HOT_SELLER ---
         const item = currentCartItems.find(i => i.bookId === bookId);
-
-        // *** GIẢ ĐỊNH QUAN TRỌNG: ***
-        // Giả định rằng `item` object (từ calculatedCart.items) 
-        // BÂY GIỜ CÓ CHỨA một mảng tags. Vd: item.tags = ["HOT_SELLER", "BEST_AUTHOR"]
-        // Bạn PHẢI sửa backend (CartItemResponseDto) để thêm trường "tags" này.
         const isHotSeller = item && item.tags && item.tags.includes("HOT_SELLER");
 
         if (newSelectedState && isHotSeller) {
-            // Đây là sách HOT_SELLER vừa được chọn, ta đi tìm sách COLD_SELLER
             try {
-                // Lấy ID các sách đang có trong giỏ để lọc ra
                 const currentBookIdsInCart = currentCartItems.map(item => item.bookId);
-
-                // *** GIẢ ĐỊNH API MỚI: ***
-                // Giả định bạn có API (bên Book Service, port 8081) để lấy sách theo tag
-                // Vd: GET http://localhost:8081/api/book/by-tag/COLD_SELLER?limit=10
                 const response = await axios.get(`http://localhost:8081/api/book/by-tag/COLD_SELLER?limit=10`);
-
-                // Giả định response.data là một mảng sách: [{ bookId, bookName, bookImages, originalPrice }]
                 const allColdSellers = response.data || [];
 
-                // Lọc ra 5 sách không có trong giỏ hàng
                 const suggestions = allColdSellers
                     .filter(coldBook => !currentBookIdsInCart.includes(coldBook.bookId))
                     .slice(0, 5);
 
-                // Định dạng lại cho dễ dùng
                 const formattedSuggestions = suggestions.map(book => ({
                     id: book.bookId,
                     name: book.bookName,
                     image: (book.bookImages && book.bookImages.length > 0) ? book.bookImages[0] : null,
-                    price: book.originalPrice // (Giả định tên trường là originalPrice, nếu không có thì dùng price)
+                    price: book.originalPrice
                 }));
 
                 setHotSellerSuggestions(prev => ({
                     ...prev,
-                    [bookId]: formattedSuggestions // Lưu gợi ý vào state
+                    [bookId]: formattedSuggestions
                 }));
 
             } catch (error) {
                 console.error(`Lỗi khi lấy gợi ý COLD_SELLER cho ${bookId}:`, error);
-                // Xóa gợi ý nếu có lỗi
                 setHotSellerSuggestions(prev => {
                     const newSuggestions = { ...prev };
                     delete newSuggestions[bookId];
@@ -258,7 +236,6 @@ const Cart = () => {
                 });
             }
         } else {
-            // Nếu bỏ chọn, hoặc sách không phải HOT_SELLER, xóa gợi ý (nếu có)
             setHotSellerSuggestions(prev => {
                 const newSuggestions = { ...prev };
                 delete newSuggestions[bookId];
@@ -267,44 +244,41 @@ const Cart = () => {
         }
         // --- KẾT THÚC LOGIC GỢI Ý HOT_SELLER ---
 
-    }, [selectedItems, calculatedCart, missingBookDetails, currentCartItems]); // <-- Thêm currentCartItems vào dependencies
-
+    }, [selectedItems, calculatedCart, missingBookDetails, currentCartItems]);
 
     const allSelected = useMemo(() => {
-        // ... (Không thay đổi)
         return currentCartItems.length > 0 && currentCartItems.every(item => selectedItems[item.bookId]);
     }, [currentCartItems, selectedItems]);
 
     const someSelected = useMemo(() => {
-        // ... (Không thay đổi)
         return currentCartItems.some(item => selectedItems[item.bookId]);
     }, [currentCartItems, selectedItems]);
 
     const handleSelectAll = (event) => {
-        // ... (Không thay đổi)
         const isChecked = event.target.checked;
         const newSelectedItems = {};
         currentCartItems.forEach(item => {
             newSelectedItems[item.bookId] = isChecked;
         });
         setSelectedItems(newSelectedItems);
-        // Xóa tất cả gợi ý khi chọn tất cả
         setComboSuggestions({});
-        setHotSellerSuggestions({}); // <-- THÊM MỚI
+        setHotSellerSuggestions({});
     };
 
     useEffect(() => {
-        // ... (Không thay đổi)
         if (selectAllRef.current) {
             selectAllRef.current.indeterminate = someSelected && !allSelected;
         }
     }, [someSelected, allSelected]);
 
 
+    // =================================================================
+    // ============ FIX LỖI TÍNH TOÁN GIÁ TIỀN =========================
+    // =================================================================
     const finalSelectedTotal = useMemo(() => {
-        // ... (Không thay đổi)
         if (!calculatedCart || !calculatedCart.items) return 0;
 
+        // 1. Tính tổng tạm tính của các món được chọn
         let selectedItemsSubtotal = currentCartItems.reduce((sum, item) => {
             if (selectedItems[item.bookId]) {
                 return sum + (item.originalPrice * item.quantity);
@@ -312,9 +286,12 @@ const Cart = () => {
             return sum;
         }, 0);
 
+        // 2. Tính giảm giá
         let applicableDiscountAmount = 0;
         if (calculatedCart.appliedDiscounts && calculatedCart.appliedDiscounts.length > 0) {
-            if (allSelected) {
+            // FIX: Thay vì check allSelected, chỉ cần có item được chọn (subtotal > 0) 
+            // là sẽ hiển thị mức giảm giá trả về từ backend
+            if (selectedItemsSubtotal > 0) {
                 applicableDiscountAmount = calculatedCart.totalDiscountAmount || 0;
             }
         }
@@ -322,20 +299,15 @@ const Cart = () => {
         const total = selectedItemsSubtotal - applicableDiscountAmount;
         return total < 0 ? 0 : total;
 
-    }, [calculatedCart, selectedItems, currentCartItems, allSelected]);
+    }, [calculatedCart, selectedItems, currentCartItems]); // Đã bỏ allSelected ra khỏi dependency
+    // =================================================================
 
 
-    // =================================================================
-    // ============ 🚀 HÀM ĐÃ ĐƯỢC CẬP NHẬT 🚀 ======================
-    // =================================================================
     const handleConfirmOrder = async () => {
-
-        // (1) Lấy danh sách các item được CHỌN
         const selectedCartItems = currentCartItems.filter(
             (item) => selectedItems[item.bookId]
         );
 
-        // (2) Map data cho trang /orderdetail (như cũ)
         const selectedBooksData = selectedCartItems.map(item => ({
             bookId: item.bookId,
             bookName: item.bookName,
@@ -344,7 +316,6 @@ const Cart = () => {
             price: item.originalPrice
         }));
 
-        // (3) Validation (như cũ)
         if (selectedBooksData.length === 0) {
             alert("Vui lòng chọn ít nhất một sản phẩm để đặt hàng.");
             return;
@@ -354,37 +325,28 @@ const Cart = () => {
             return;
         }
 
-        // (4) 🚀 LOGIC MỚI: Gửi tracking "place-order attempt"
         try {
-            // (4a) Chuẩn bị payload theo DTO PlaceOrderTrackRequest
-            // (DTO: { accountId, totalPrice, items: [{ bookId, quantity, price }] })
             const trackingPayload = {
-                accountId: accountId, // Lấy từ localStorage
-                totalPrice: finalSelectedTotal, // Lấy từ useMemo
+                accountId: accountId,
+                totalPrice: finalSelectedTotal,
                 items: selectedCartItems.map((item) => ({
                     bookId: item.bookId,
                     quantity: item.quantity,
-                    price: item.originalPrice, // Đây là đơn giá
+                    price: item.originalPrice,
                 })),
             };
 
-            // (4b) Gửi request POST (fire-and-forget)
-            // Chúng ta không await và không chặn người dùng nếu API này lỗi.
-            // Việc tracking là "âm thầm", không được ảnh hưởng đến trải nghiệm đặt hàng.
             axios.post(
                 "http://localhost:8081/api/analytics/track/place-order",
                 trackingPayload
             ).catch((trackError) => {
-                // Ghi log lỗi tracking nhưng không dừng việc đặt hàng
                 console.error("Lỗi khi gửi tracking 'place-order attempt':", trackError);
             });
 
         } catch (error) {
-            // Catch lỗi đồng bộ (nếu có) khi chuẩn bị payload
             console.error("Lỗi khi chuẩn bị tracking payload:", error);
         }
 
-        // (5) Điều hướng người dùng đến trang chi tiết đơn hàng (như cũ)
         navigate("/orderdetail", {
             state: {
                 selectedBooks: selectedBooksData,
@@ -393,10 +355,6 @@ const Cart = () => {
             }
         });
     };
-    // =================================================================
-    // ============ 🚀 KẾT THÚC HÀM CẬP NHẬT 🚀 ======================
-    // =================================================================
-
 
     return (
         <div className="flex flex-col items-center p-5 w-[90%] mx-auto">
@@ -481,7 +439,7 @@ const Cart = () => {
                                             </td>
                                         </tr>
 
-                                        {/* HÀNG GỢI Ý COMBO "CỨNG" (Giữ nguyên) */}
+                                        {/* HÀNG GỢI Ý COMBO "CỨNG" */}
                                         {selectedItems[item.bookId] && comboSuggestions[item.bookId] && comboSuggestions[item.bookId].length > 0 && (
                                             <tr className="bg-yellow-50 border-b border-yellow-200 transition-all duration-300">
                                                 <td></td>
@@ -550,7 +508,7 @@ const Cart = () => {
                                         {/* --- HÀNG MỚI CHO GỢI Ý HOT_SELLER --- */}
                                         {selectedItems[item.bookId] && hotSellerSuggestions[item.bookId] && hotSellerSuggestions[item.bookId].length > 0 && (
                                             <tr className="bg-blue-50 border-b border-blue-200 transition-all duration-300">
-                                                <td></td> {/* Cột checkbox */}
+                                                <td></td>
                                                 <td colSpan="4" className="p-4 text-sm">
                                                     <div className="mb-2">
                                                         <span className="font-semibold text-blue-700">🔥 Mua kèm sách HOT:</span>
@@ -559,7 +517,6 @@ const Cart = () => {
 
                                                     <div className="flex flex-wrap gap-3">
                                                         {hotSellerSuggestions[item.bookId].map(suggestion => {
-
                                                             const handleSuggestionClick = () => {
                                                                 navigate(`/productdetail/${suggestion.id}`);
                                                             };
@@ -580,7 +537,6 @@ const Cart = () => {
                                                                         <span className="text-sm font-medium text-blue-700 hover:underline block">
                                                                             {suggestion.name}
                                                                         </span>
-                                                                        {/* Tùy chọn: Hiển thị giá gốc */}
                                                                         {suggestion.price && (
                                                                             <span className="text-xs text-gray-600 block">
                                                                                 Giá: {suggestion.price.toLocaleString('vi-VN')}₫
@@ -602,7 +558,7 @@ const Cart = () => {
                 </div>
             )}
 
-            {/* PHẦN TỔNG TIỀN (Giữ nguyên) */}
+            {/* PHẦN TỔNG TIỀN */}
             {calculatedCart && currentCartItems.length > 0 && (
                 <div className="cart-total sticky bottom-0 w-full bg-green-100 p-4 rounded-t-lg flex flex-col items-center z-10 mt-5 shadow-inner">
                     <div className="w-full max-w-md space-y-2 mb-4">
@@ -613,7 +569,8 @@ const Cart = () => {
                             </span>
                         </div>
 
-                        {allSelected && calculatedCart.appliedDiscounts && calculatedCart.appliedDiscounts.length > 0 && (
+                        {/* FIX: Sử dụng someSelected thay vì allSelected để hiển thị giảm giá */}
+                        {someSelected && calculatedCart.appliedDiscounts && calculatedCart.appliedDiscounts.length > 0 && (
                             <>
                                 <hr className="border-gray-300" />
                                 <div className="text-green-600 font-semibold">Khuyến mãi đã áp dụng:</div>
